@@ -25,6 +25,16 @@ const DISTRITOS_VALIDOS = [
   'Santa Rosa', 'Tumán', 'Zaña',
 ];
 
+// Normalize text for accent-insensitive comparison
+function normalizeText(text: string): string {
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function findDistrito(input: string): string | null {
+  const normalized = normalizeText(input);
+  return DISTRITOS_VALIDOS.find(d => normalizeText(d) === normalized) || null;
+}
+
 // --- CSV Bulk Upload logic ---
 const CSV_HEADERS = ['nombre', 'codigo_local', 'provincia', 'distrito', 'centro_poblado', 'direccion', 'tipo_gestion'];
 const TIPOS_GESTION = ['Pública', 'Privada'];
@@ -44,13 +54,15 @@ function parseCSV(text: string): ParsedRow[] {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return [];
 
-  const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+  // Auto-detect delimiter: semicolon or comma
+  const delimiter = lines[0].includes(';') ? ';' : ',';
+  const header = lines[0].split(delimiter).map(h => h.trim().toLowerCase().replace(/"/g, ''));
   const idxMap: Record<string, number> = {};
   CSV_HEADERS.forEach(h => { idxMap[h] = header.indexOf(h); });
 
   const rows: ParsedRow[] = [];
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+    const cols = lines[i].split(delimiter).map(c => c.trim().replace(/^"|"$/g, ''));
     const row: ParsedRow = {
       nombre: idxMap['nombre'] >= 0 ? cols[idxMap['nombre']] || '' : '',
       codigo_local: idxMap['codigo_local'] >= 0 ? cols[idxMap['codigo_local']] || '' : '',
@@ -63,8 +75,18 @@ function parseCSV(text: string): ParsedRow[] {
     };
     if (!row.nombre) row.errors.push('Nombre es obligatorio');
     if (!row.distrito) row.errors.push('Distrito es obligatorio');
-    else if (!DISTRITOS_VALIDOS.includes(row.distrito)) row.errors.push(`Distrito "${row.distrito}" no válido`);
-    if (row.tipo_gestion && !TIPOS_GESTION.includes(row.tipo_gestion)) row.errors.push(`Tipo de gestión "${row.tipo_gestion}" no válido (Pública o Privada)`);
+    else {
+      const matched = findDistrito(row.distrito);
+      if (!matched) row.errors.push(`Distrito "${row.distrito}" no válido`);
+      else row.distrito = matched; // Normalize to canonical name
+    }
+    // Normalize tipo_gestion
+    if (row.tipo_gestion) {
+      const normalized = normalizeText(row.tipo_gestion);
+      if (normalized === 'publica') row.tipo_gestion = 'Pública';
+      else if (normalized === 'privada') row.tipo_gestion = 'Privada';
+      else row.errors.push(`Tipo de gestión "${row.tipo_gestion}" no válido (Pública o Privada)`);
+    }
     rows.push(row);
   }
   return rows;
@@ -200,19 +222,33 @@ const CargaMasiva = () => {
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  const processCSVText = (text: string) => {
+    const rows = parseCSV(text);
+    if (rows.length === 0) {
+      toast({ title: 'Error', description: 'El archivo CSV está vacío o no tiene el formato correcto.', variant: 'destructive' });
+      return;
+    }
+    setParsedRows(rows);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadResult(null);
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const text = ev.target?.result as string;
-      const rows = parseCSV(text);
-      if (rows.length === 0) {
-        toast({ title: 'Error', description: 'El archivo CSV está vacío o no tiene el formato correcto.', variant: 'destructive' });
+      let text = ev.target?.result as string;
+      // If UTF-8 produced replacement characters, retry with Latin-1
+      if (text.includes('\uFFFD')) {
+        const latin1Reader = new FileReader();
+        latin1Reader.onload = (ev2) => {
+          const text2 = ev2.target?.result as string;
+          processCSVText(text2);
+        };
+        latin1Reader.readAsText(file, 'ISO-8859-1');
         return;
       }
-      setParsedRows(rows);
+      processCSVText(text);
     };
     reader.readAsText(file);
     e.target.value = '';

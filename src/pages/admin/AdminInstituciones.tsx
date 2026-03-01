@@ -7,7 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, Download, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, Plus } from 'lucide-react';
+import { Upload, Download, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, Plus, List } from 'lucide-react';
+import InstitucionesListado from '@/components/admin/InstitucionesListado';
 import { getUserFriendlyError } from '@/lib/errorMapper';
 import {
   Table,
@@ -401,11 +402,15 @@ const AdminInstituciones = () => {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Gestión de Instituciones</h1>
-        <p className="text-muted-foreground">Registre instituciones de forma individual o mediante carga masiva</p>
+        <p className="text-muted-foreground">Registre instituciones o consulte las ya registradas</p>
       </div>
 
-      <Tabs defaultValue="manual" className="w-full">
+      <Tabs defaultValue="listado" className="w-full">
         <TabsList>
+          <TabsTrigger value="listado">
+            <List className="h-4 w-4 mr-2" />
+            Listado
+          </TabsTrigger>
           <TabsTrigger value="manual">
             <Plus className="h-4 w-4 mr-2" />
             Registro Manual
@@ -415,6 +420,9 @@ const AdminInstituciones = () => {
             Carga Masiva
           </TabsTrigger>
         </TabsList>
+        <TabsContent value="listado">
+          <InstitucionesListado />
+        </TabsContent>
         <TabsContent value="manual">
           <ManualRegistro />
         </TabsContent>

@@ -14,6 +14,7 @@ import AppLayout from "./components/AppLayout";
 // Admin
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
+import AdminInstituciones from "./pages/admin/AdminInstituciones";
 
 // Director
 import DirectorDashboard from "./pages/director/DirectorDashboard";
@@ -52,7 +53,7 @@ const App = () => (
             <Route element={<AppLayout />}>
               <Route path="/admin" element={<ProtectedRoute allowedRoles={['administrador']}><AdminDashboard /></ProtectedRoute>} />
               <Route path="/admin/usuarios" element={<ProtectedRoute allowedRoles={['administrador']}><AdminUsuarios /></ProtectedRoute>} />
-              <Route path="/admin/instituciones" element={<ProtectedRoute allowedRoles={['administrador']}><InstitucionSetup /></ProtectedRoute>} />
+              <Route path="/admin/instituciones" element={<ProtectedRoute allowedRoles={['administrador']}><AdminInstituciones /></ProtectedRoute>} />
             </Route>
 
             {/* Director routes */}

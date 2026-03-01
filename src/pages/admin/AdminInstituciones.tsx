@@ -1,9 +1,13 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Upload, Download, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, Download, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, Plus } from 'lucide-react';
 import { getUserFriendlyError } from '@/lib/errorMapper';
 import {
   Table,
@@ -14,8 +18,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-const CSV_HEADERS = ['nombre', 'codigo_local', 'codigo_modular', 'provincia', 'distrito', 'centro_poblado', 'direccion'];
-
 const DISTRITOS_VALIDOS = [
   'Chiclayo', 'José Leonardo Ortiz', 'La Victoria', 'Cayaltí', 'Chongoyape',
   'Eten', 'Puerto Eten', 'Lagunas', 'Monsefú', 'Nueva Arica', 'Oyotún',
@@ -23,10 +25,12 @@ const DISTRITOS_VALIDOS = [
   'Santa Rosa', 'Tumán', 'Zaña',
 ];
 
+// --- CSV Bulk Upload logic ---
+const CSV_HEADERS = ['nombre', 'codigo_local', 'provincia', 'distrito', 'centro_poblado', 'direccion'];
+
 interface ParsedRow {
   nombre: string;
   codigo_local: string;
-  codigo_modular: string;
   provincia: string;
   distrito: string;
   centro_poblado: string;
@@ -39,13 +43,8 @@ function parseCSV(text: string): ParsedRow[] {
   if (lines.length < 2) return [];
 
   const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
-
-  // Map header indices
   const idxMap: Record<string, number> = {};
-  CSV_HEADERS.forEach(h => {
-    const idx = header.indexOf(h);
-    idxMap[h] = idx;
-  });
+  CSV_HEADERS.forEach(h => { idxMap[h] = header.indexOf(h); });
 
   const rows: ParsedRow[] = [];
   for (let i = 1; i < lines.length; i++) {
@@ -53,19 +52,15 @@ function parseCSV(text: string): ParsedRow[] {
     const row: ParsedRow = {
       nombre: idxMap['nombre'] >= 0 ? cols[idxMap['nombre']] || '' : '',
       codigo_local: idxMap['codigo_local'] >= 0 ? cols[idxMap['codigo_local']] || '' : '',
-      codigo_modular: idxMap['codigo_modular'] >= 0 ? cols[idxMap['codigo_modular']] || '' : '',
       provincia: idxMap['provincia'] >= 0 ? cols[idxMap['provincia']] || 'Chiclayo' : 'Chiclayo',
       distrito: idxMap['distrito'] >= 0 ? cols[idxMap['distrito']] || '' : '',
       centro_poblado: idxMap['centro_poblado'] >= 0 ? cols[idxMap['centro_poblado']] || '' : '',
       direccion: idxMap['direccion'] >= 0 ? cols[idxMap['direccion']] || '' : '',
       errors: [],
     };
-
-    // Validate
     if (!row.nombre) row.errors.push('Nombre es obligatorio');
     if (!row.distrito) row.errors.push('Distrito es obligatorio');
     else if (!DISTRITOS_VALIDOS.includes(row.distrito)) row.errors.push(`Distrito "${row.distrito}" no válido`);
-
     rows.push(row);
   }
   return rows;
@@ -73,7 +68,7 @@ function parseCSV(text: string): ParsedRow[] {
 
 function downloadTemplate() {
   const header = CSV_HEADERS.join(',');
-  const example = 'I.E. N° 10001,123456,0123456,Chiclayo,Chiclayo,Centro Ejemplo,Av. Principal 123';
+  const example = 'I.E. N° 10001,123456,Chiclayo,Chiclayo,Centro Ejemplo,Av. Principal 123';
   const blob = new Blob([header + '\n' + example + '\n'], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -83,7 +78,103 @@ function downloadTemplate() {
   URL.revokeObjectURL(url);
 }
 
-const AdminInstituciones = () => {
+// --- Manual Registration Component ---
+const ManualRegistro = () => {
+  const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    nombre: '',
+    codigo_local: '',
+    provincia: 'Chiclayo',
+    distrito: '',
+    centro_poblado: '',
+    direccion: '',
+  });
+
+  const handleChange = (field: string, value: string) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.nombre.trim() || !form.distrito) {
+      toast({ title: 'Campos obligatorios', description: 'Nombre y distrito son requeridos.', variant: 'destructive' });
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase.from('instituciones').insert({
+        nombre: form.nombre.trim(),
+        codigo_local: form.codigo_local.trim() || null,
+        provincia: form.provincia || 'Chiclayo',
+        distrito: form.distrito,
+        centro_poblado: form.centro_poblado.trim() || null,
+        direccion: form.direccion.trim() || null,
+      });
+      if (error) throw error;
+      toast({ title: 'Institución registrada', description: `"${form.nombre}" fue registrada exitosamente.` });
+      setForm({ nombre: '', codigo_local: '', provincia: 'Chiclayo', distrito: '', centro_poblado: '', direccion: '' });
+    } catch (err: any) {
+      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card className="shadow-card">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Plus className="h-5 w-5" />
+          Registro Manual
+        </CardTitle>
+        <CardDescription>Complete los datos de la institución educativa.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="nombre">Nombre de la Institución *</Label>
+            <Input id="nombre" value={form.nombre} onChange={e => handleChange('nombre', e.target.value)} placeholder="I.E. N° 10001" maxLength={200} required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="codigo_local">Código Local</Label>
+            <Input id="codigo_local" value={form.codigo_local} onChange={e => handleChange('codigo_local', e.target.value)} placeholder="123456" maxLength={20} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="distrito">Distrito *</Label>
+            <Select value={form.distrito} onValueChange={v => handleChange('distrito', v)}>
+              <SelectTrigger id="distrito">
+                <SelectValue placeholder="Seleccione distrito" />
+              </SelectTrigger>
+              <SelectContent>
+                {DISTRITOS_VALIDOS.map(d => (
+                  <SelectItem key={d} value={d}>{d}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="centro_poblado">Centro Poblado</Label>
+            <Input id="centro_poblado" value={form.centro_poblado} onChange={e => handleChange('centro_poblado', e.target.value)} placeholder="Centro Ejemplo" maxLength={100} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="direccion">Dirección</Label>
+            <Input id="direccion" value={form.direccion} onChange={e => handleChange('direccion', e.target.value)} placeholder="Av. Principal 123" maxLength={200} />
+          </div>
+          <div className="md:col-span-2 flex justify-end pt-2">
+            <Button type="submit" disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
+              {saving ? 'Guardando…' : 'Registrar Institución'}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+};
+
+// --- Bulk Upload Component ---
+const CargaMasiva = () => {
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<{ success: number; failed: number } | null>(null);
@@ -94,7 +185,6 @@ const AdminInstituciones = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadResult(null);
-
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = ev.target?.result as string;
@@ -106,7 +196,6 @@ const AdminInstituciones = () => {
       setParsedRows(rows);
     };
     reader.readAsText(file);
-    // Reset input so same file can be re-selected
     e.target.value = '';
   };
 
@@ -116,22 +205,18 @@ const AdminInstituciones = () => {
       toast({ title: 'Sin registros válidos', description: 'Corrija los errores antes de subir.', variant: 'destructive' });
       return;
     }
-
     setIsUploading(true);
     try {
       const insertData = validRows.map(r => ({
         nombre: r.nombre,
         codigo_local: r.codigo_local || null,
-        codigo_modular: r.codigo_modular || null,
         provincia: r.provincia || 'Chiclayo',
         distrito: r.distrito,
         centro_poblado: r.centro_poblado || null,
         direccion: r.direccion || null,
       }));
-
       const { error } = await supabase.from('instituciones').insert(insertData);
       if (error) throw error;
-
       const failed = parsedRows.length - validRows.length;
       setUploadResult({ success: validRows.length, failed });
       setParsedRows([]);
@@ -147,13 +232,7 @@ const AdminInstituciones = () => {
   const errorCount = parsedRows.filter(r => r.errors.length > 0).length;
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Carga Masiva de Instituciones</h1>
-        <p className="text-muted-foreground">Suba un archivo CSV con los datos de todas las instituciones educativas</p>
-      </div>
-
-      {/* Download template */}
+    <div className="space-y-6">
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -164,7 +243,7 @@ const AdminInstituciones = () => {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Columnas: <strong>nombre</strong> (obligatorio), <strong>codigo_local</strong>, <strong>codigo_modular</strong>, <strong>provincia</strong> (def. Chiclayo), <strong>distrito</strong> (obligatorio), <strong>centro_poblado</strong>, <strong>direccion</strong>.
+            Columnas: <strong>nombre</strong> (obligatorio), <strong>codigo_local</strong>, <strong>provincia</strong> (def. Chiclayo), <strong>distrito</strong> (obligatorio), <strong>centro_poblado</strong>, <strong>direccion</strong>.
           </p>
           <p className="text-sm text-muted-foreground">
             Distritos válidos: {DISTRITOS_VALIDOS.join(', ')}.
@@ -176,7 +255,6 @@ const AdminInstituciones = () => {
         </CardContent>
       </Card>
 
-      {/* Upload */}
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -185,18 +263,11 @@ const AdminInstituciones = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".csv"
-            onChange={handleFileChange}
-            className="hidden"
-          />
+          <input ref={fileRef} type="file" accept=".csv" onChange={handleFileChange} className="hidden" />
           <Button variant="outline" onClick={() => fileRef.current?.click()}>
             <FileSpreadsheet className="h-4 w-4 mr-2" />
             Seleccionar archivo CSV
           </Button>
-
           {uploadResult && (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-accent/50 text-sm">
               <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -206,7 +277,6 @@ const AdminInstituciones = () => {
         </CardContent>
       </Card>
 
-      {/* Preview table */}
       {parsedRows.length > 0 && (
         <Card className="shadow-card">
           <CardHeader>
@@ -224,7 +294,6 @@ const AdminInstituciones = () => {
                     <TableHead>#</TableHead>
                     <TableHead>Nombre</TableHead>
                     <TableHead>Cód. Local</TableHead>
-                    <TableHead>Cód. Modular</TableHead>
                     <TableHead>Distrito</TableHead>
                     <TableHead>Centro Poblado</TableHead>
                     <TableHead>Dirección</TableHead>
@@ -237,7 +306,6 @@ const AdminInstituciones = () => {
                       <TableCell className="font-mono text-xs">{i + 1}</TableCell>
                       <TableCell>{row.nombre}</TableCell>
                       <TableCell>{row.codigo_local}</TableCell>
-                      <TableCell>{row.codigo_modular}</TableCell>
                       <TableCell>{row.distrito}</TableCell>
                       <TableCell>{row.centro_poblado}</TableCell>
                       <TableCell>{row.direccion}</TableCell>
@@ -256,7 +324,6 @@ const AdminInstituciones = () => {
                 </TableBody>
               </Table>
             </div>
-
             <div className="flex justify-end mt-4">
               <Button onClick={handleUpload} disabled={isUploading || validCount === 0}>
                 {isUploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
@@ -266,6 +333,37 @@ const AdminInstituciones = () => {
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+};
+
+// --- Main Page ---
+const AdminInstituciones = () => {
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Gestión de Instituciones</h1>
+        <p className="text-muted-foreground">Registre instituciones de forma individual o mediante carga masiva</p>
+      </div>
+
+      <Tabs defaultValue="manual" className="w-full">
+        <TabsList>
+          <TabsTrigger value="manual">
+            <Plus className="h-4 w-4 mr-2" />
+            Registro Manual
+          </TabsTrigger>
+          <TabsTrigger value="masiva">
+            <Upload className="h-4 w-4 mr-2" />
+            Carga Masiva
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="manual">
+          <ManualRegistro />
+        </TabsContent>
+        <TabsContent value="masiva">
+          <CargaMasiva />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

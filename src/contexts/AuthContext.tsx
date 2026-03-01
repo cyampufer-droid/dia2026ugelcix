@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
+import { clearAllOfflineData } from '@/lib/offlineDb';
 
 type AppRole = 'estudiante' | 'docente' | 'director' | 'subdirector' | 'especialista' | 'padre' | 'administrador';
 
@@ -117,6 +118,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    // Clear offline data on logout to prevent data exposure
+    try {
+      await clearAllOfflineData();
+    } catch (e) {
+      console.warn('Failed to clear offline data on logout');
+    }
     await supabase.auth.signOut();
     setProfile(null);
     setRoles([]);

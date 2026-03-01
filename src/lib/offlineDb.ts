@@ -78,3 +78,10 @@ export async function clearSyncedRecords(): Promise<void> {
   }
   await tx.done;
 }
+
+export async function clearAllOfflineData(): Promise<void> {
+  const db = await getDb();
+  const tx = db.transaction(STORE_DIGITACION, 'readwrite');
+  await tx.objectStore(tx.objectStoreNames[0]).clear();
+  await tx.done;
+}

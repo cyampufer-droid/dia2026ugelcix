@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Save } from 'lucide-react';
+import { getUserFriendlyError } from '@/lib/errorMapper';
 
 const distritos = [
   'Chiclayo', 'José Leonardo Ortiz', 'La Victoria', 'Cayaltí', 'Chongoyape',
@@ -41,7 +42,7 @@ const InstitucionSetup = () => {
       if (error) throw error;
       toast({ title: 'Institución registrada', description: nombre });
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }

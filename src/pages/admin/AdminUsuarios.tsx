@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { UserPlus, Search } from 'lucide-react';
+import { getUserFriendlyError } from '@/lib/errorMapper';
 
 const roles = [
   { value: 'director', label: 'Director' },
@@ -52,7 +53,7 @@ const AdminUsuarios = () => {
       setOpen(false);
       setEmail(''); setPassword(''); setDni(''); setNombre(''); setRol('');
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }

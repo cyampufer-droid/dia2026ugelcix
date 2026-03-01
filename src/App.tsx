@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -49,38 +50,38 @@ const App = () => (
 
             {/* Admin routes */}
             <Route element={<AppLayout />}>
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/usuarios" element={<AdminUsuarios />} />
-              <Route path="/admin/instituciones" element={<InstitucionSetup />} />
+              <Route path="/admin" element={<ProtectedRoute allowedRoles={['administrador']}><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/admin/usuarios" element={<ProtectedRoute allowedRoles={['administrador']}><AdminUsuarios /></ProtectedRoute>} />
+              <Route path="/admin/instituciones" element={<ProtectedRoute allowedRoles={['administrador']}><InstitucionSetup /></ProtectedRoute>} />
             </Route>
 
             {/* Director routes */}
             <Route element={<AppLayout />}>
-              <Route path="/director" element={<DirectorDashboard />} />
-              <Route path="/director/institucion" element={<InstitucionSetup />} />
-              <Route path="/director/niveles" element={<NivelesSetup />} />
-              <Route path="/director/personal" element={<PersonalRegistro />} />
-              <Route path="/director/resultados" element={<DirectorResultados />} />
+              <Route path="/director" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'administrador']}><DirectorDashboard /></ProtectedRoute>} />
+              <Route path="/director/institucion" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'administrador']}><InstitucionSetup /></ProtectedRoute>} />
+              <Route path="/director/niveles" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'administrador']}><NivelesSetup /></ProtectedRoute>} />
+              <Route path="/director/personal" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'administrador']}><PersonalRegistro /></ProtectedRoute>} />
+              <Route path="/director/resultados" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'administrador']}><DirectorResultados /></ProtectedRoute>} />
             </Route>
 
             {/* Docente routes */}
             <Route element={<AppLayout />}>
-              <Route path="/docente" element={<DocenteDashboard />} />
-              <Route path="/docente/estudiantes" element={<EstudiantesRegistro />} />
-              <Route path="/docente/digitacion" element={<Digitacion />} />
-              <Route path="/docente/resultados" element={<DocenteResultados />} />
+              <Route path="/docente" element={<ProtectedRoute allowedRoles={['docente', 'administrador']}><DocenteDashboard /></ProtectedRoute>} />
+              <Route path="/docente/estudiantes" element={<ProtectedRoute allowedRoles={['docente', 'administrador']}><EstudiantesRegistro /></ProtectedRoute>} />
+              <Route path="/docente/digitacion" element={<ProtectedRoute allowedRoles={['docente', 'administrador']}><Digitacion /></ProtectedRoute>} />
+              <Route path="/docente/resultados" element={<ProtectedRoute allowedRoles={['docente', 'administrador']}><DocenteResultados /></ProtectedRoute>} />
             </Route>
 
             {/* Estudiante routes */}
             <Route element={<AppLayout />}>
-              <Route path="/estudiante" element={<EstudiantePrueba />} />
-              <Route path="/estudiante/resultados" element={<EstudianteResultados />} />
+              <Route path="/estudiante" element={<ProtectedRoute allowedRoles={['estudiante', 'administrador']}><EstudiantePrueba /></ProtectedRoute>} />
+              <Route path="/estudiante/resultados" element={<ProtectedRoute allowedRoles={['estudiante', 'padre', 'administrador']}><EstudianteResultados /></ProtectedRoute>} />
             </Route>
 
             {/* Especialista routes */}
             <Route element={<AppLayout />}>
-              <Route path="/especialista" element={<EspecialistaDashboard />} />
-              <Route path="/especialista/reportes" element={<EspecialistaDashboard />} />
+              <Route path="/especialista" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><EspecialistaDashboard /></ProtectedRoute>} />
+              <Route path="/especialista/reportes" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><EspecialistaDashboard /></ProtectedRoute>} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

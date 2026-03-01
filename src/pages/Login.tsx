@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { GraduationCap, BookOpen, Shield } from 'lucide-react';
+import { BookOpen, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import diaLogo from '@/assets/dia_ugel_cix_2026.png';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -54,20 +55,18 @@ const Login = () => {
           <div className="absolute bottom-20 right-20 w-96 h-96 rounded-full bg-accent blur-3xl" />
         </div>
         <div className="relative z-10 text-primary-foreground max-w-lg">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-3 rounded-xl bg-secondary">
-              <GraduationCap className="h-8 w-8 text-secondary-foreground" />
-            </div>
+          <div className="flex items-center gap-4 mb-8">
+            <img src={diaLogo} alt="DIA UGEL Chiclayo" className="h-20 w-20 object-contain" />
             <div>
               <h1 className="text-2xl font-bold">UGEL Chiclayo</h1>
-              <p className="text-sm opacity-80">Región Lambayeque</p>
+              <p className="text-sm opacity-80">Dirección de Gestión Pedagógica</p>
             </div>
           </div>
           <h2 className="text-4xl font-extrabold leading-tight mb-4">
             Diagnóstico Integral de Aprendizajes
           </h2>
           <p className="text-lg opacity-90 mb-8">
-            Plataforma de evaluación educativa 2026 para medir y mejorar los aprendizajes de los estudiantes de la región.
+            Plataforma de evaluación educativa 2026 para medir y mejorar los aprendizajes de los estudiantes de la provincia de Chiclayo.
           </p>
           <div className="flex gap-6">
             <div className="flex items-center gap-2">
@@ -86,9 +85,7 @@ const Login = () => {
       <div className="flex-1 flex items-center justify-center p-6 bg-background">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            <div className="p-2 rounded-lg gradient-primary">
-              <GraduationCap className="h-6 w-6 text-primary-foreground" />
-            </div>
+            <img src={diaLogo} alt="DIA UGEL Chiclayo" className="h-14 w-14 object-contain" />
             <h1 className="text-xl font-bold text-foreground">UGEL Chiclayo 2026</h1>
           </div>
 

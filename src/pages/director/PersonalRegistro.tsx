@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,21 +28,21 @@ const PersonalRegistro = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!rol) {
+      toast({ title: 'Error', description: 'Seleccione un tipo de personal', variant: 'destructive' });
+      return;
+    }
+    if (!/^\d{8}$/.test(dni)) {
+      toast({ title: 'Error', description: 'DNI debe ser exactamente 8 dígitos', variant: 'destructive' });
+      return;
+    }
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { dni, nombre_completo: nombre } },
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: { email, password, dni, nombre_completo: nombre, role: rol },
       });
       if (error) throw error;
-
-      if (data.user && rol) {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({ user_id: data.user.id, role: rol as any });
-        if (roleError) throw roleError;
-      }
+      if (data?.error) throw new Error(data.error);
 
       toast({ title: 'Personal registrado', description: `${nombre} como ${rol}` });
       setOpen(false);
@@ -79,7 +79,7 @@ const PersonalRegistro = () => {
               </div>
               <div>
                 <Label>DNI</Label>
-                <Input value={dni} onChange={e => setDni(e.target.value)} required maxLength={8} placeholder="12345678" />
+                <Input value={dni} onChange={e => setDni(e.target.value)} required maxLength={8} pattern="\d{8}" placeholder="12345678" />
               </div>
               <div>
                 <Label>Apellidos y Nombres</Label>

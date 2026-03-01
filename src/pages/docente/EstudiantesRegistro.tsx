@@ -21,18 +21,17 @@ const EstudiantesRegistro = () => {
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!/^\d{8}$/.test(dni)) {
+      toast({ title: 'Error', description: 'DNI debe ser exactamente 8 dígitos', variant: 'destructive' });
+      return;
+    }
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { dni, nombre_completo: nombre } },
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: { email, password, dni, nombre_completo: nombre, role: 'estudiante' },
       });
       if (error) throw error;
-
-      if (data.user) {
-        await supabase.from('user_roles').insert({ user_id: data.user.id, role: 'estudiante' as any });
-      }
+      if (data?.error) throw new Error(data.error);
 
       setStudents([...students, { dni, nombre }]);
       toast({ title: 'Estudiante registrado', description: nombre });
@@ -74,7 +73,7 @@ const EstudiantesRegistro = () => {
               <form onSubmit={handleAddStudent} className="space-y-4 mt-4">
                 <div>
                   <Label>DNI del Estudiante</Label>
-                  <Input value={dni} onChange={e => setDni(e.target.value)} required maxLength={8} placeholder="12345678" />
+                  <Input value={dni} onChange={e => setDni(e.target.value)} required maxLength={8} pattern="\d{8}" placeholder="12345678" />
                 </div>
                 <div>
                   <Label>Apellidos y Nombres</Label>

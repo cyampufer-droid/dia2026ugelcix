@@ -26,7 +26,8 @@ const DISTRITOS_VALIDOS = [
 ];
 
 // --- CSV Bulk Upload logic ---
-const CSV_HEADERS = ['nombre', 'codigo_local', 'provincia', 'distrito', 'centro_poblado', 'direccion'];
+const CSV_HEADERS = ['nombre', 'codigo_local', 'provincia', 'distrito', 'centro_poblado', 'direccion', 'tipo_gestion'];
+const TIPOS_GESTION = ['Pública', 'Privada'];
 
 interface ParsedRow {
   nombre: string;
@@ -35,6 +36,7 @@ interface ParsedRow {
   distrito: string;
   centro_poblado: string;
   direccion: string;
+  tipo_gestion: string;
   errors: string[];
 }
 
@@ -56,11 +58,13 @@ function parseCSV(text: string): ParsedRow[] {
       distrito: idxMap['distrito'] >= 0 ? cols[idxMap['distrito']] || '' : '',
       centro_poblado: idxMap['centro_poblado'] >= 0 ? cols[idxMap['centro_poblado']] || '' : '',
       direccion: idxMap['direccion'] >= 0 ? cols[idxMap['direccion']] || '' : '',
+      tipo_gestion: idxMap['tipo_gestion'] >= 0 ? cols[idxMap['tipo_gestion']] || 'Pública' : 'Pública',
       errors: [],
     };
     if (!row.nombre) row.errors.push('Nombre es obligatorio');
     if (!row.distrito) row.errors.push('Distrito es obligatorio');
     else if (!DISTRITOS_VALIDOS.includes(row.distrito)) row.errors.push(`Distrito "${row.distrito}" no válido`);
+    if (row.tipo_gestion && !TIPOS_GESTION.includes(row.tipo_gestion)) row.errors.push(`Tipo de gestión "${row.tipo_gestion}" no válido (Pública o Privada)`);
     rows.push(row);
   }
   return rows;
@@ -68,7 +72,7 @@ function parseCSV(text: string): ParsedRow[] {
 
 function downloadTemplate() {
   const header = CSV_HEADERS.join(',');
-  const example = 'I.E. N° 10001,123456,Chiclayo,Chiclayo,Centro Ejemplo,Av. Principal 123';
+  const example = 'I.E. N° 10001,123456,Chiclayo,Chiclayo,Centro Ejemplo,Av. Principal 123,Pública';
   const blob = new Blob([header + '\n' + example + '\n'], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -89,6 +93,7 @@ const ManualRegistro = () => {
     distrito: '',
     centro_poblado: '',
     direccion: '',
+    tipo_gestion: 'Pública',
   });
 
   const handleChange = (field: string, value: string) => {
@@ -110,10 +115,11 @@ const ManualRegistro = () => {
         distrito: form.distrito,
         centro_poblado: form.centro_poblado.trim() || null,
         direccion: form.direccion.trim() || null,
+        tipo_gestion: form.tipo_gestion,
       });
       if (error) throw error;
       toast({ title: 'Institución registrada', description: `"${form.nombre}" fue registrada exitosamente.` });
-      setForm({ nombre: '', codigo_local: '', provincia: 'Chiclayo', distrito: '', centro_poblado: '', direccion: '' });
+      setForm({ nombre: '', codigo_local: '', provincia: 'Chiclayo', distrito: '', centro_poblado: '', direccion: '', tipo_gestion: 'Pública' });
     } catch (err: any) {
       toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
     } finally {
@@ -156,6 +162,19 @@ const ManualRegistro = () => {
           <div className="space-y-2">
             <Label htmlFor="centro_poblado">Centro Poblado</Label>
             <Input id="centro_poblado" value={form.centro_poblado} onChange={e => handleChange('centro_poblado', e.target.value)} placeholder="Centro Ejemplo" maxLength={100} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="tipo_gestion">Tipo de Gestión *</Label>
+            <Select value={form.tipo_gestion} onValueChange={v => handleChange('tipo_gestion', v)}>
+              <SelectTrigger id="tipo_gestion">
+                <SelectValue placeholder="Seleccione tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                {TIPOS_GESTION.map(t => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="direccion">Dirección</Label>
@@ -214,6 +233,7 @@ const CargaMasiva = () => {
         distrito: r.distrito,
         centro_poblado: r.centro_poblado || null,
         direccion: r.direccion || null,
+        tipo_gestion: r.tipo_gestion || 'Pública',
       }));
       const { error } = await supabase.from('instituciones').insert(insertData);
       if (error) throw error;
@@ -243,7 +263,7 @@ const CargaMasiva = () => {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Columnas: <strong>nombre</strong> (obligatorio), <strong>codigo_local</strong>, <strong>provincia</strong> (def. Chiclayo), <strong>distrito</strong> (obligatorio), <strong>centro_poblado</strong>, <strong>direccion</strong>.
+            Columnas: <strong>nombre</strong> (obligatorio), <strong>codigo_local</strong>, <strong>provincia</strong> (def. Chiclayo), <strong>distrito</strong> (obligatorio), <strong>centro_poblado</strong>, <strong>direccion</strong>, <strong>tipo_gestion</strong> (Pública o Privada, def. Pública).
           </p>
           <p className="text-sm text-muted-foreground">
             Distritos válidos: {DISTRITOS_VALIDOS.join(', ')}.
@@ -295,9 +315,10 @@ const CargaMasiva = () => {
                     <TableHead>Nombre</TableHead>
                     <TableHead>Cód. Local</TableHead>
                     <TableHead>Distrito</TableHead>
-                    <TableHead>Centro Poblado</TableHead>
-                    <TableHead>Dirección</TableHead>
-                    <TableHead>Estado</TableHead>
+                     <TableHead>Centro Poblado</TableHead>
+                     <TableHead>Dirección</TableHead>
+                     <TableHead>Tipo Gestión</TableHead>
+                     <TableHead>Estado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -309,6 +330,7 @@ const CargaMasiva = () => {
                       <TableCell>{row.distrito}</TableCell>
                       <TableCell>{row.centro_poblado}</TableCell>
                       <TableCell>{row.direccion}</TableCell>
+                      <TableCell>{row.tipo_gestion}</TableCell>
                       <TableCell>
                         {row.errors.length > 0 ? (
                           <span className="flex items-center gap-1 text-destructive text-xs">

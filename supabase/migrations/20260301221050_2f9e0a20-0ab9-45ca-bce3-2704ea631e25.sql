@@ -1,0 +1,1 @@
+ALTER TABLE public.instituciones ADD COLUMN tipo_gestion text NOT NULL DEFAULT 'Pública';

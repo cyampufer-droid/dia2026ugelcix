@@ -6,8 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Save } from 'lucide-react';
 import { getUserFriendlyError } from '@/lib/errorMapper';
+
+const nivelesOptions = ['Inicial', 'Primaria', 'Secundaria'];
 
 const distritos = [
   'Chiclayo', 'José Leonardo Ortiz', 'La Victoria', 'Cayaltí', 'Chongoyape',
@@ -18,21 +21,30 @@ const distritos = [
 
 const InstitucionSetup = () => {
   const [nombre, setNombre] = useState('');
-  const [codigoModular, setCodigoModular] = useState('');
   const [codigoLocal, setCodigoLocal] = useState('');
+  const [niveles, setNiveles] = useState<string[]>([]);
   const [distrito, setDistrito] = useState('');
   const [centroPoblado, setCentroPoblado] = useState('');
   const [direccion, setDireccion] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  const toggleNivel = (nivel: string) => {
+    setNiveles(prev =>
+      prev.includes(nivel) ? prev.filter(n => n !== nivel) : [...prev, nivel]
+    );
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (niveles.length === 0) {
+      toast({ title: 'Error', description: 'Seleccione al menos un nivel', variant: 'destructive' });
+      return;
+    }
     setIsLoading(true);
     try {
       const { error } = await supabase.from('instituciones').insert({
         nombre,
-        codigo_modular: codigoModular,
         codigo_local: codigoLocal,
         provincia: 'Chiclayo',
         distrito,
@@ -63,14 +75,23 @@ const InstitucionSetup = () => {
               <Label>Nombre de la Institución Educativa</Label>
               <Input value={nombre} onChange={e => setNombre(e.target.value)} required placeholder="I.E. N° 10001" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Código Modular</Label>
-                <Input value={codigoModular} onChange={e => setCodigoModular(e.target.value)} placeholder="0123456" />
-              </div>
-              <div>
-                <Label>Código de Local</Label>
-                <Input value={codigoLocal} onChange={e => setCodigoLocal(e.target.value)} placeholder="123456" />
+            <div>
+              <Label>Código de Local</Label>
+              <Input value={codigoLocal} onChange={e => setCodigoLocal(e.target.value)} placeholder="123456" />
+            </div>
+            <div>
+              <Label>Niveles que atiende</Label>
+              <div className="flex gap-4 mt-2">
+                {nivelesOptions.map(n => (
+                  <div key={n} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`nivel-${n}`}
+                      checked={niveles.includes(n)}
+                      onCheckedChange={() => toggleNivel(n)}
+                    />
+                    <Label htmlFor={`nivel-${n}`} className="cursor-pointer font-normal">{n}</Label>
+                  </div>
+                ))}
               </div>
             </div>
             <div>

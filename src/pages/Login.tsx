@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BookOpen, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getUserFriendlyError } from '@/lib/errorMapper';
@@ -14,10 +13,8 @@ import diaLogo from '@/assets/dia_ugel_cix_2026.png';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [dni, setDni] = useState('');
-  const [nombre, setNombre] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -29,19 +26,6 @@ const Login = () => {
       navigate('/');
     } catch (err: any) {
       toast({ title: 'Error de acceso', description: getUserFriendlyError(err), variant: 'destructive' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      await signUp(email, password, { dni, nombre_completo: nombre });
-      toast({ title: 'Cuenta creada', description: 'Puede iniciar sesión.' });
-    } catch (err: any) {
-      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -96,52 +80,22 @@ const Login = () => {
               <CardDescription>Accede a la plataforma de diagnóstico</CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="login">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="login">Ingresar</TabsTrigger>
-                  <TabsTrigger value="register">Registrarse</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="login">
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div>
-                      <Label htmlFor="login-email">Correo electrónico</Label>
-                      <Input id="login-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="correo@ejemplo.com" />
-                    </div>
-                    <div>
-                      <Label htmlFor="login-pass">Contraseña</Label>
-                      <Input id="login-pass" type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••" />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? 'Ingresando…' : 'Ingresar'}
-                    </Button>
-                  </form>
-                </TabsContent>
-
-                <TabsContent value="register">
-                  <form onSubmit={handleRegister} className="space-y-4">
-                    <div>
-                      <Label htmlFor="reg-dni">DNI</Label>
-                      <Input id="reg-dni" value={dni} onChange={e => setDni(e.target.value)} required placeholder="12345678" maxLength={8} />
-                    </div>
-                    <div>
-                      <Label htmlFor="reg-nombre">Nombre Completo</Label>
-                      <Input id="reg-nombre" value={nombre} onChange={e => setNombre(e.target.value)} required placeholder="Juan Pérez García" />
-                    </div>
-                    <div>
-                      <Label htmlFor="reg-email">Correo electrónico</Label>
-                      <Input id="reg-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="correo@ejemplo.com" />
-                    </div>
-                    <div>
-                      <Label htmlFor="reg-pass">Contraseña</Label>
-                      <Input id="reg-pass" type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="Mínimo 6 caracteres" minLength={6} />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? 'Registrando…' : 'Crear Cuenta'}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <Label htmlFor="login-email">Correo electrónico</Label>
+                  <Input id="login-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="correo@ejemplo.com" />
+                </div>
+                <div>
+                  <Label htmlFor="login-pass">Contraseña</Label>
+                  <Input id="login-pass" type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••" />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? 'Ingresando…' : 'Ingresar'}
+                </Button>
+              </form>
+              <p className="text-xs text-muted-foreground text-center mt-4">
+                Las cuentas son creadas por el administrador o director de su institución.
+              </p>
             </CardContent>
           </Card>
         </div>

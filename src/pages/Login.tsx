@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BookOpen, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getUserFriendlyError } from '@/lib/errorMapper';
 import diaLogo from '@/assets/dia_ugel_cix_2026.png';
 
 const Login = () => {
@@ -27,7 +28,7 @@ const Login = () => {
       await signIn(email, password);
       navigate('/');
     } catch (err: any) {
-      toast({ title: 'Error de acceso', description: err.message, variant: 'destructive' });
+      toast({ title: 'Error de acceso', description: getUserFriendlyError(err), variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -40,7 +41,7 @@ const Login = () => {
       await signUp(email, password, { dni, nombre_completo: nombre });
       toast({ title: 'Cuenta creada', description: 'Puede iniciar sesión.' });
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }

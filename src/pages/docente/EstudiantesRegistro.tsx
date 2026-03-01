@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { UserPlus, Upload } from 'lucide-react';
+import { getUserFriendlyError } from '@/lib/errorMapper';
 
 const EstudiantesRegistro = () => {
   const [open, setOpen] = useState(false);
@@ -38,7 +39,7 @@ const EstudiantesRegistro = () => {
       setOpen(false);
       setDni(''); setNombre(''); setEmail(''); setPassword('');
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }

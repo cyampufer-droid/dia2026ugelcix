@@ -33,21 +33,11 @@ const AdminUsuarios = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      // Create auth user
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { dni, nombre_completo: nombre } },
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: { email, password, dni, nombre_completo: nombre, role: rol },
       });
       if (error) throw error;
-
-      // Assign role
-      if (data.user && rol) {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({ user_id: data.user.id, role: rol as any });
-        if (roleError) throw roleError;
-      }
+      if (data?.error) throw new Error(data.error);
 
       toast({ title: 'Usuario creado', description: `${nombre} registrado como ${rol}` });
       setOpen(false);

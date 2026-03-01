@@ -39,9 +39,10 @@ const Login = () => {
     setIsLoading(true);
     try {
       await signIn(email, password);
-      // Navigation is handled by the auth state change + Index redirect
+      // Navigation is handled by the useEffect above
     } catch (err: any) {
       toast({ title: 'Error de acceso', description: getUserFriendlyError(err), variant: 'destructive' });
+    } finally {
       setIsLoading(false);
     }
   };

@@ -64,35 +64,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Fetch profile/roles whenever user changes
+  useEffect(() => {
+    if (user) {
+      fetchProfileAndRoles(user.id);
+    } else {
+      setProfile(null);
+      setRoles([]);
+    }
+  }, [user]);
+
   useEffect(() => {
     let initialSessionHandled = false;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await fetchProfileAndRoles(session.user.id);
-        } else {
-          setProfile(null);
-          setRoles([]);
-        }
         initialSessionHandled = true;
         setLoading(false);
       }
     );
 
-    // Fallback: if onAuthStateChange doesn't fire quickly (e.g. invalid refresh token),
-    // ensure loading is set to false after a timeout
     const timeout = setTimeout(() => {
       if (!initialSessionHandled) {
         console.warn('Auth session check timed out, clearing stale session');
         supabase.auth.signOut().catch(() => {});
         setSession(null);
         setUser(null);
-        setProfile(null);
-        setRoles([]);
         setLoading(false);
       }
     }, 5000);

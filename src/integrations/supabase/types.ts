@@ -58,6 +58,7 @@ export type Database = {
           id: string
           nombre: string
           provincia: string
+          tipo_gestion: string
         }
         Insert: {
           centro_poblado?: string | null
@@ -69,6 +70,7 @@ export type Database = {
           id?: string
           nombre: string
           provincia?: string
+          tipo_gestion?: string
         }
         Update: {
           centro_poblado?: string | null
@@ -80,6 +82,7 @@ export type Database = {
           id?: string
           nombre?: string
           provincia?: string
+          tipo_gestion?: string
         }
         Relationships: []
       }

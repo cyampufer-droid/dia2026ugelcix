@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -14,19 +14,34 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, user, primaryRole, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Redirect authenticated users away from login
+  useEffect(() => {
+    if (!loading && user && primaryRole) {
+      const roleRoutes: Record<string, string> = {
+        administrador: '/admin',
+        director: '/director',
+        subdirector: '/director',
+        docente: '/docente',
+        especialista: '/especialista',
+        estudiante: '/estudiante',
+        padre: '/estudiante/resultados',
+      };
+      navigate(roleRoutes[primaryRole] || '/admin', { replace: true });
+    }
+  }, [loading, user, primaryRole, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
       await signIn(email, password);
-      navigate('/');
+      // Navigation is handled by the auth state change + Index redirect
     } catch (err: any) {
       toast({ title: 'Error de acceso', description: getUserFriendlyError(err), variant: 'destructive' });
-    } finally {
       setIsLoading(false);
     }
   };

@@ -27,6 +27,7 @@ const DocenteResultados = lazy(() => import("./pages/docente/DocenteResultados")
 const EstudiantePrueba = lazy(() => import("./pages/estudiante/EstudiantePrueba"));
 const EstudianteResultados = lazy(() => import("./pages/estudiante/EstudianteResultados"));
 const EspecialistaDashboard = lazy(() => import("./pages/especialista/EspecialistaDashboard"));
+const MiPerfil = lazy(() => import("./pages/shared/MiPerfil"));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
@@ -90,6 +91,11 @@ const App = () => (
               <Route element={<AppLayout />}>
                 <Route path="/especialista" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><EspecialistaDashboard /></ProtectedRoute>} />
                 <Route path="/especialista/reportes" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><EspecialistaDashboard /></ProtectedRoute>} />
+              </Route>
+
+              {/* Shared routes */}
+              <Route element={<AppLayout />}>
+                <Route path="/perfil" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'docente', 'estudiante', 'especialista', 'administrador']}><MiPerfil /></ProtectedRoute>} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

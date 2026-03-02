@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, School, BookOpen, ClipboardList,
-  BarChart3, LogOut, GraduationCap, UserCog, Building2, FileSpreadsheet
+  BarChart3, LogOut, GraduationCap, UserCog, Building2, FileSpreadsheet, UserCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -17,6 +17,7 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
     { label: 'Usuarios', icon: Users, path: '/admin/usuarios' },
     { label: 'Instituciones', icon: Building2, path: '/admin/instituciones' },
+    { label: 'Mi Perfil', icon: UserCircle, path: '/perfil' },
   ],
   director: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/director' },
@@ -24,6 +25,7 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: 'Niveles y Grados', icon: GraduationCap, path: '/director/niveles' },
     { label: 'Personal', icon: UserCog, path: '/director/personal' },
     { label: 'Resultados', icon: BarChart3, path: '/director/resultados' },
+    { label: 'Mi Perfil', icon: UserCircle, path: '/perfil' },
   ],
   subdirector: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/director' },
@@ -31,20 +33,24 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: 'Niveles y Grados', icon: GraduationCap, path: '/director/niveles' },
     { label: 'Personal', icon: UserCog, path: '/director/personal' },
     { label: 'Resultados', icon: BarChart3, path: '/director/resultados' },
+    { label: 'Mi Perfil', icon: UserCircle, path: '/perfil' },
   ],
   docente: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/docente' },
     { label: 'Estudiantes', icon: Users, path: '/docente/estudiantes' },
     { label: 'Digitación', icon: FileSpreadsheet, path: '/docente/digitacion' },
     { label: 'Resultados', icon: ClipboardList, path: '/docente/resultados' },
+    { label: 'Mi Perfil', icon: UserCircle, path: '/perfil' },
   ],
   especialista: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/especialista' },
     { label: 'Reportes', icon: BarChart3, path: '/especialista/reportes' },
+    { label: 'Mi Perfil', icon: UserCircle, path: '/perfil' },
   ],
   estudiante: [
     { label: 'Mis Pruebas', icon: BookOpen, path: '/estudiante' },
     { label: 'Resultados', icon: ClipboardList, path: '/estudiante/resultados' },
+    { label: 'Mi Perfil', icon: UserCircle, path: '/perfil' },
   ],
 };
 

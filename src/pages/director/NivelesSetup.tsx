@@ -106,15 +106,26 @@ const NivelesSetup = () => {
             </div>
             <div>
               <Label>Sección / Aula</Label>
-              <select
-                className={selectClass}
-                value={seccion}
-                onChange={e => setSeccion(e.target.value)}
-                disabled={!grado}
-              >
-                <option value="">Seleccione sección</option>
-                {seccionesDisponibles.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
+              {nivel === 'Inicial' ? (
+                <input
+                  className={selectClass}
+                  type="text"
+                  placeholder="Ej: Ositos, Estrellitas..."
+                  value={seccion}
+                  onChange={e => setSeccion(e.target.value)}
+                  disabled={!grado}
+                />
+              ) : (
+                <select
+                  className={selectClass}
+                  value={seccion}
+                  onChange={e => setSeccion(e.target.value)}
+                  disabled={!grado}
+                >
+                  <option value="">Seleccione sección</option>
+                  {seccionesDisponibles.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              )}
             </div>
           </div>
           <Button onClick={handleAdd} disabled={!nivel || !grado || !seccion}>

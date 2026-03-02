@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { UserPlus, Search, Pencil, Trash2, Loader2, RefreshCw } from 'lucide-react';
 import { getUserFriendlyError } from '@/lib/errorMapper';
+import BulkUserUpload from '@/components/admin/BulkUserUpload';
 
 const roles = [
   { value: 'director', label: 'Director' },
@@ -181,10 +182,12 @@ const AdminUsuarios = () => {
           <h1 className="text-2xl font-bold text-foreground">Gestión de Usuarios</h1>
           <p className="text-muted-foreground">Registre directores, docentes, estudiantes y demás personal</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><UserPlus className="h-4 w-4 mr-2" />Nuevo Usuario</Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <BulkUserUpload onComplete={fetchUsers} />
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button><UserPlus className="h-4 w-4 mr-2" />Nuevo Usuario</Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Registrar Nuevo Usuario</DialogTitle>
@@ -221,6 +224,7 @@ const AdminUsuarios = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Card className="shadow-card">

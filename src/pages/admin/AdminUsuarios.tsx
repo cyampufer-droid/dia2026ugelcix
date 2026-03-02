@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -189,9 +189,10 @@ const AdminUsuarios = () => {
               <Button><UserPlus className="h-4 w-4 mr-2" />Nuevo Usuario</Button>
             </DialogTrigger>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Registrar Nuevo Usuario</DialogTitle>
-            </DialogHeader>
+             <DialogHeader>
+               <DialogTitle>Registrar Nuevo Usuario</DialogTitle>
+               <DialogDescription>Complete los datos del nuevo usuario del sistema</DialogDescription>
+             </DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4 mt-4">
               <div>
                 <Label>DNI</Label>

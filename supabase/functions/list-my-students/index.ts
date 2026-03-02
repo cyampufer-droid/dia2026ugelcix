@@ -97,16 +97,20 @@ Deno.serve(async (req) => {
         .map((r: any) => r.user_id)
     );
 
-    // Get emails from auth for student users
+    // Get emails from auth for student users - fetch individually instead of listing all users
     const emailMap = new Map<string, string>();
     if (studentUserIdSet.size > 0) {
-      // Fetch users in batches
-      const { data: { users: allAuthUsers } } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
-      for (const u of allAuthUsers || []) {
-        if (studentUserIdSet.has(u.id)) {
-          emailMap.set(u.id, u.email || "");
+      const emailPromises = Array.from(studentUserIdSet).map(async (uid) => {
+        try {
+          const { data: { user: authUser } } = await adminClient.auth.admin.getUserById(uid);
+          if (authUser?.email) {
+            emailMap.set(uid, authUser.email);
+          }
+        } catch {
+          // Skip users that can't be fetched
         }
-      }
+      });
+      await Promise.all(emailPromises);
     }
 
     const students = (studentProfiles || [])

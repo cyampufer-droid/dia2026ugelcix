@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppLayout from "./components/AppLayout";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 // Lazy-loaded pages for code splitting (optimized for low-end devices)
 const Index = lazy(() => import("./pages/Index"));
@@ -46,65 +47,67 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Index />} />
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/" element={<Index />} />
 
-              {/* Admin routes */}
-              <Route element={<AppLayout />}>
-                <Route path="/admin" element={<ProtectedRoute allowedRoles={['administrador']}><AdminDashboard /></ProtectedRoute>} />
-                <Route path="/admin/usuarios" element={<ProtectedRoute allowedRoles={['administrador']}><AdminUsuarios /></ProtectedRoute>} />
-                <Route path="/admin/instituciones" element={<ProtectedRoute allowedRoles={['administrador']}><AdminInstituciones /></ProtectedRoute>} />
-              </Route>
+                {/* Admin routes */}
+                <Route element={<AppLayout />}>
+                  <Route path="/admin" element={<ProtectedRoute allowedRoles={['administrador']}><AdminDashboard /></ProtectedRoute>} />
+                  <Route path="/admin/usuarios" element={<ProtectedRoute allowedRoles={['administrador']}><AdminUsuarios /></ProtectedRoute>} />
+                  <Route path="/admin/instituciones" element={<ProtectedRoute allowedRoles={['administrador']}><AdminInstituciones /></ProtectedRoute>} />
+                </Route>
 
-              {/* Director routes */}
-              <Route element={<AppLayout />}>
-                <Route path="/director" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'administrador']}><DirectorDashboard /></ProtectedRoute>} />
-                <Route path="/director/institucion" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'administrador']}><InstitucionSetup /></ProtectedRoute>} />
-                <Route path="/director/niveles" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'administrador']}><NivelesSetup /></ProtectedRoute>} />
-                <Route path="/director/personal" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'administrador']}><PersonalRegistro /></ProtectedRoute>} />
-                <Route path="/director/resultados" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'administrador']}><DirectorResultados /></ProtectedRoute>} />
-              </Route>
+                {/* Director routes */}
+                <Route element={<AppLayout />}>
+                  <Route path="/director" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'administrador']}><DirectorDashboard /></ProtectedRoute>} />
+                  <Route path="/director/institucion" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'administrador']}><InstitucionSetup /></ProtectedRoute>} />
+                  <Route path="/director/niveles" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'administrador']}><NivelesSetup /></ProtectedRoute>} />
+                  <Route path="/director/personal" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'administrador']}><PersonalRegistro /></ProtectedRoute>} />
+                  <Route path="/director/resultados" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'administrador']}><DirectorResultados /></ProtectedRoute>} />
+                </Route>
 
-              {/* Docente routes */}
-              <Route element={<AppLayout />}>
-                <Route path="/docente" element={<ProtectedRoute allowedRoles={['docente', 'administrador']}><DocenteDashboard /></ProtectedRoute>} />
-                <Route path="/docente/estudiantes" element={<ProtectedRoute allowedRoles={['docente', 'administrador']}><EstudiantesRegistro /></ProtectedRoute>} />
-                <Route path="/docente/digitacion" element={<ProtectedRoute allowedRoles={['docente', 'administrador']}><Digitacion /></ProtectedRoute>} />
-                <Route path="/docente/resultados" element={<ProtectedRoute allowedRoles={['docente', 'administrador']}><DocenteResultados /></ProtectedRoute>} />
-              </Route>
+                {/* Docente routes */}
+                <Route element={<AppLayout />}>
+                  <Route path="/docente" element={<ProtectedRoute allowedRoles={['docente', 'administrador']}><DocenteDashboard /></ProtectedRoute>} />
+                  <Route path="/docente/estudiantes" element={<ProtectedRoute allowedRoles={['docente', 'administrador']}><EstudiantesRegistro /></ProtectedRoute>} />
+                  <Route path="/docente/digitacion" element={<ProtectedRoute allowedRoles={['docente', 'administrador']}><Digitacion /></ProtectedRoute>} />
+                  <Route path="/docente/resultados" element={<ProtectedRoute allowedRoles={['docente', 'administrador']}><DocenteResultados /></ProtectedRoute>} />
+                </Route>
 
-              {/* Estudiante routes */}
-              <Route element={<AppLayout />}>
-                <Route path="/estudiante" element={<ProtectedRoute allowedRoles={['estudiante', 'administrador']}><EstudiantePrueba /></ProtectedRoute>} />
-                <Route path="/estudiante/resultados" element={<ProtectedRoute allowedRoles={['estudiante', 'padre', 'administrador']}><EstudianteResultados /></ProtectedRoute>} />
-              </Route>
+                {/* Estudiante routes */}
+                <Route element={<AppLayout />}>
+                  <Route path="/estudiante" element={<ProtectedRoute allowedRoles={['estudiante', 'administrador']}><EstudiantePrueba /></ProtectedRoute>} />
+                  <Route path="/estudiante/resultados" element={<ProtectedRoute allowedRoles={['estudiante', 'padre', 'administrador']}><EstudianteResultados /></ProtectedRoute>} />
+                </Route>
 
-              {/* Especialista routes */}
-              <Route element={<AppLayout />}>
-                <Route path="/especialista" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><EspecialistaDashboard /></ProtectedRoute>} />
-                <Route path="/especialista/reportes" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><EspecialistaDashboard /></ProtectedRoute>} />
-              </Route>
+                {/* Especialista routes */}
+                <Route element={<AppLayout />}>
+                  <Route path="/especialista" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><EspecialistaDashboard /></ProtectedRoute>} />
+                  <Route path="/especialista/reportes" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><EspecialistaDashboard /></ProtectedRoute>} />
+                </Route>
 
-              {/* Shared routes */}
-              <Route element={<AppLayout />}>
-                <Route path="/perfil" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'docente', 'estudiante', 'especialista', 'administrador']}><MiPerfil /></ProtectedRoute>} />
-              </Route>
+                {/* Shared routes */}
+                <Route element={<AppLayout />}>
+                  <Route path="/perfil" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'docente', 'estudiante', 'especialista', 'administrador']}><MiPerfil /></ProtectedRoute>} />
+                </Route>
 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

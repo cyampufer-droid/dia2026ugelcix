@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,11 +21,19 @@ const personalRoles = [
   { value: 'estudiante', label: 'Estudiante' },
 ];
 
+interface NivelGrado {
+  id: string;
+  nivel: string;
+  grado: string;
+  seccion: string;
+}
+
 interface PersonalItem {
   id: string;
   dni: string;
   nombre_completo: string;
   user_id: string | null;
+  grado_seccion_id: string | null;
   roles: string[];
 }
 
@@ -43,9 +51,11 @@ const PersonalRegistro = () => {
   const [password, setPassword] = useState('');
   const [dni, setDni] = useState('');
   const [nombre, setNombre] = useState('');
+  const [selectedGradoSeccion, setSelectedGradoSeccion] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [personal, setPersonal] = useState<PersonalItem[]>([]);
   const [loadingList, setLoadingList] = useState(true);
+  const [nivelesGrados, setNivelesGrados] = useState<NivelGrado[]>([]);
   const { toast } = useToast();
   const { profile, user } = useAuth();
 
@@ -55,6 +65,7 @@ const PersonalRegistro = () => {
   const [editDni, setEditDni] = useState('');
   const [editNombre, setEditNombre] = useState('');
   const [editRol, setEditRol] = useState('');
+  const [editGradoSeccion, setEditGradoSeccion] = useState('');
   const [editLoading, setEditLoading] = useState(false);
 
   // Delete state
@@ -64,6 +75,29 @@ const PersonalRegistro = () => {
   // Reset password state
   const [resetItem, setResetItem] = useState<PersonalItem | null>(null);
   const [resetLoading, setResetLoading] = useState(false);
+
+  // Fetch niveles/grados for the director's institution
+  useEffect(() => {
+    const fetchNiveles = async () => {
+      if (!profile?.institucion_id) return;
+      const { data } = await supabase
+        .from('niveles_grados')
+        .select('id, nivel, grado, seccion')
+        .eq('institucion_id', profile.institucion_id)
+        .order('nivel')
+        .order('grado')
+        .order('seccion');
+      setNivelesGrados(data ?? []);
+    };
+    fetchNiveles();
+  }, [profile?.institucion_id]);
+
+  // Build a map for quick lookup
+  const nivelesMap = useMemo(() => {
+    const map = new Map<string, NivelGrado>();
+    nivelesGrados.forEach(ng => map.set(ng.id, ng));
+    return map;
+  }, [nivelesGrados]);
 
   const fetchPersonal = useCallback(async () => {
     if (!profile?.institucion_id) {
@@ -75,7 +109,7 @@ const PersonalRegistro = () => {
     try {
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, dni, nombre_completo, user_id')
+        .select('id, dni, nombre_completo, user_id, grado_seccion_id')
         .eq('institucion_id', profile.institucion_id)
         .neq('user_id', user?.id ?? '');
 
@@ -123,14 +157,18 @@ const PersonalRegistro = () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-user', {
-        body: { email, password, dni, nombre_completo: nombre, role: rol },
+        body: {
+          email, password, dni, nombre_completo: nombre, role: rol,
+          institucion_id: profile?.institucion_id || undefined,
+          grado_seccion_id: selectedGradoSeccion || undefined,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
       toast({ title: 'Personal registrado', description: `${nombre} como ${rol}` });
       setOpen(false);
-      setRol(''); setEmail(''); setPassword(''); setDni(''); setNombre('');
+      setRol(''); setEmail(''); setPassword(''); setDni(''); setNombre(''); setSelectedGradoSeccion('');
       fetchPersonal();
     } catch (err: any) {
       toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
@@ -144,6 +182,7 @@ const PersonalRegistro = () => {
     setEditDni(item.dni);
     setEditNombre(item.nombre_completo);
     setEditRol(item.roles[0] || '');
+    setEditGradoSeccion(item.grado_seccion_id || '');
     setEditOpen(true);
   };
 
@@ -167,6 +206,15 @@ const PersonalRegistro = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+
+      // Update grado_seccion_id directly on profile (using service role via manage-user would be better, but for now update directly)
+      if (editItem.user_id) {
+        await supabase
+          .from('profiles')
+          .update({ grado_seccion_id: editGradoSeccion || null })
+          .eq('user_id', editItem.user_id);
+      }
+
       toast({ title: 'Actualizado', description: `${editNombre} actualizado correctamente` });
       setEditOpen(false);
       fetchPersonal();
@@ -214,6 +262,29 @@ const PersonalRegistro = () => {
     }
   };
 
+  const formatAula = (gradoSeccionId: string | null) => {
+    if (!gradoSeccionId) return null;
+    const ng = nivelesMap.get(gradoSeccionId);
+    if (!ng) return null;
+    return `${ng.nivel} - ${ng.grado} "${ng.seccion}"`;
+  };
+
+  const AulaSelector = ({ value, onChange, label = 'Nivel / Grado / Sección' }: { value: string; onChange: (v: string) => void; label?: string }) => (
+    <div>
+      <Label>{label}</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger><SelectValue placeholder="Seleccione aula (opcional)" /></SelectTrigger>
+        <SelectContent>
+          {nivelesGrados.map(ng => (
+            <SelectItem key={ng.id} value={ng.id}>
+              {ng.nivel} - {ng.grado} "{ng.seccion}"
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -222,7 +293,7 @@ const PersonalRegistro = () => {
           <p className="text-muted-foreground">Registre subdirectores, docentes y estudiantes de su institución</p>
         </div>
         <div className="flex gap-2">
-          <BulkPersonalUpload onComplete={fetchPersonal} />
+          <BulkPersonalUpload onComplete={fetchPersonal} nivelesGrados={nivelesGrados} institucionId={profile?.institucion_id ?? null} />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button><UserPlus className="h-4 w-4 mr-2" />Registrar Individual</Button>
@@ -255,6 +326,7 @@ const PersonalRegistro = () => {
                   <Label>Contraseña</Label>
                   <Input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder="Mínimo 6 caracteres" />
                 </div>
+                <AulaSelector value={selectedGradoSeccion} onChange={setSelectedGradoSeccion} />
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Registrando…' : 'Registrar'}
                 </Button>
@@ -287,6 +359,7 @@ const PersonalRegistro = () => {
                     <TableHead>DNI</TableHead>
                     <TableHead>Apellidos y Nombres</TableHead>
                     <TableHead>Rol</TableHead>
+                    <TableHead>Nivel / Grado / Sección</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -302,6 +375,13 @@ const PersonalRegistro = () => {
                           ))}
                           {p.roles.length === 0 && <span className="text-muted-foreground text-xs">Sin rol</span>}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {formatAula(p.grado_seccion_id) ? (
+                          <Badge variant="outline">{formatAula(p.grado_seccion_id)}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">Sin asignar</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-1 justify-end">
@@ -350,6 +430,7 @@ const PersonalRegistro = () => {
               <Label>Apellidos y Nombres</Label>
               <Input value={editNombre} onChange={e => setEditNombre(e.target.value)} required />
             </div>
+            <AulaSelector value={editGradoSeccion} onChange={setEditGradoSeccion} />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={editLoading}>

@@ -59,7 +59,6 @@ const Login = () => {
         <div className="relative z-10 text-primary-foreground max-w-lg">
           <div className="flex items-center gap-4 mb-8">
             <img src={diaLogo} alt="DIA UGEL Chiclayo" className="h-20 w-20 object-contain" />
-            <img src={dgpLogo} alt="DGP UGEL Chiclayo" className="h-20 w-20 object-contain rounded-full" />
             <div>
               <h1 className="text-2xl font-bold">UGEL Chiclayo</h1>
               <p className="text-sm opacity-80">Dirección de Gestión Pedagógica</p>
@@ -89,12 +88,12 @@ const Login = () => {
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
             <img src={diaLogo} alt="DIA UGEL Chiclayo" className="h-14 w-14 object-contain" />
-            <img src={dgpLogo} alt="DGP UGEL Chiclayo" className="h-14 w-14 object-contain rounded-full" />
             <h1 className="text-xl font-bold text-foreground">UGEL Chiclayo 2026</h1>
           </div>
 
           <Card className="shadow-card border-border">
             <CardHeader className="text-center">
+              <img src={dgpLogo} alt="DGP UGEL Chiclayo" className="h-16 w-16 object-contain rounded-full mx-auto mb-2" />
               <CardTitle className="text-2xl font-bold text-foreground">Bienvenido</CardTitle>
               <CardDescription>Accede a la plataforma de diagnóstico</CardDescription>
             </CardHeader>

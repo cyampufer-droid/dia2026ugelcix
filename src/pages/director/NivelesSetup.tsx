@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, GraduationCap, X, Loader2 } from 'lucide-react';
+import { Plus, GraduationCap, X, Loader2, School, Building2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -46,30 +46,32 @@ const NivelesSetup = () => {
   const [added, setAdded] = useState<GradoSeccion[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [institucionNombre, setInstitucionNombre] = useState('');
   const { toast } = useToast();
   const { profile } = useAuth();
 
   const institucionId = profile?.institucion_id;
 
-  // Load existing data from DB
+  // Load existing data and institution info from DB
   useEffect(() => {
     if (!institucionId) {
       setLoading(false);
       return;
     }
-    const fetchNiveles = async () => {
-      const { data, error } = await supabase
-        .from('niveles_grados')
-        .select('id, nivel, grado, seccion')
-        .eq('institucion_id', institucionId);
-      if (error) {
-        console.error('Error loading niveles:', error);
-      } else if (data) {
-        setAdded(data.map(d => ({ id: d.id, nivel: d.nivel, grado: d.grado, seccion: d.seccion })));
+    const fetchData = async () => {
+      const [nivelesRes, instRes] = await Promise.all([
+        supabase.from('niveles_grados').select('id, nivel, grado, seccion').eq('institucion_id', institucionId),
+        supabase.from('instituciones').select('nombre').eq('id', institucionId).single(),
+      ]);
+      if (nivelesRes.data) {
+        setAdded(nivelesRes.data.map(d => ({ id: d.id, nivel: d.nivel, grado: d.grado, seccion: d.seccion })));
+      }
+      if (instRes.data) {
+        setInstitucionNombre(instRes.data.nombre);
       }
       setLoading(false);
     };
-    fetchNiveles();
+    fetchData();
   }, [institucionId]);
 
   const gradosDisponibles = nivel ? nivelesConfig[nivel as keyof typeof nivelesConfig]?.grados || [] : [];
@@ -160,6 +162,18 @@ const NivelesSetup = () => {
         <p className="text-muted-foreground">Configure la estructura académica de su institución</p>
       </div>
 
+      {institucionNombre && (
+        <Card className="shadow-card border-primary/20 bg-primary/5">
+          <CardContent className="flex items-center gap-3 py-4">
+            <Building2 className="h-6 w-6 text-primary shrink-0" />
+            <div>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Institución Educativa</p>
+              <p className="text-lg font-semibold text-foreground">{institucionNombre}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="shadow-card">
         <CardHeader><CardTitle className="flex items-center gap-2"><GraduationCap className="h-5 w-5" />Agregar Grado/Sección</CardTitle></CardHeader>
         <CardContent className="space-y-4">
@@ -221,31 +235,54 @@ const NivelesSetup = () => {
 
       {added.length > 0 && (
         <Card className="shadow-card">
-          <CardHeader><CardTitle>Estructura Configurada ({added.length})</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <School className="h-5 w-5" />
+              Estructura Configurada ({added.length})
+            </CardTitle>
+            {institucionNombre && (
+              <p className="text-sm text-muted-foreground">Institución: <span className="font-medium text-foreground">{institucionNombre}</span></p>
+            )}
+          </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {['Inicial', 'Primaria', 'Secundaria'].map(n => {
                 const items = added.filter(a => a.nivel === n);
                 if (items.length === 0) return null;
+                // Group by grado
+                const gradosMap: Record<string, GradoSeccion[]> = {};
+                items.forEach(item => {
+                  if (!gradosMap[item.grado]) gradosMap[item.grado] = [];
+                  gradosMap[item.grado].push(item);
+                });
                 return (
-                  <div key={n}>
-                    <h3 className="text-sm font-semibold text-foreground mb-2">{n}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {items.map((item, i) => {
-                        const globalIndex = added.findIndex(a => a === item);
-                        return (
-                          <Badge key={i} variant="secondary" className="gap-1 pr-1">
-                            {item.grado} – {item.seccion}
-                            {!item.id && <span className="text-xs text-muted-foreground">(nuevo)</span>}
-                            <button
-                              onClick={() => handleRemove(globalIndex)}
-                              className="ml-1 rounded-full hover:bg-muted p-0.5"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </Badge>
-                        );
-                      })}
+                  <div key={n} className="border rounded-lg p-3">
+                    <h3 className="text-sm font-bold text-primary mb-2 flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4" />{n}
+                    </h3>
+                    <div className="space-y-2">
+                      {Object.entries(gradosMap).map(([gradoName, secciones]) => (
+                        <div key={gradoName} className="ml-4">
+                          <span className="text-sm font-medium text-foreground">{gradoName}:</span>
+                          <div className="inline-flex flex-wrap gap-1 ml-2">
+                            {secciones.map((item) => {
+                              const globalIndex = added.findIndex(a => a === item);
+                              return (
+                                <Badge key={item.id || globalIndex} variant="secondary" className="gap-1 pr-1">
+                                  {item.seccion}
+                                  {!item.id && <span className="text-xs text-muted-foreground">(nuevo)</span>}
+                                  <button
+                                    onClick={() => handleRemove(globalIndex)}
+                                    className="ml-1 rounded-full hover:bg-muted p-0.5"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </Badge>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );

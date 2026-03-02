@@ -1,13 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { UserPlus, Upload } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { UserPlus, Upload, Loader2, Users, Building2 } from 'lucide-react';
 import { getUserFriendlyError } from '@/lib/errorMapper';
+
+interface Student {
+  id: string;
+  dni: string;
+  nombre_completo: string;
+  email: string;
+  institucion: string;
+  nivel: string;
+  grado: string;
+  seccion: string;
+}
 
 const EstudiantesRegistro = () => {
   const [open, setOpen] = useState(false);
@@ -16,8 +29,30 @@ const EstudiantesRegistro = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [students, setStudents] = useState<{ dni: string; nombre: string }[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(true);
   const { toast } = useToast();
+  const { profile } = useAuth();
+
+  const fetchStudents = async () => {
+    setLoadingStudents(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('list-my-students');
+      if (error) throw error;
+      if (data?.students) {
+        setStudents(data.students);
+      }
+    } catch (err: any) {
+      console.error('Error loading students:', err);
+      toast({ title: 'Error', description: 'No se pudo cargar la lista de estudiantes', variant: 'destructive' });
+    } finally {
+      setLoadingStudents(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,15 +63,24 @@ const EstudiantesRegistro = () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-user', {
-        body: { email, password, dni, nombre_completo: nombre, role: 'estudiante' },
+        body: {
+          email,
+          password,
+          dni,
+          nombre_completo: nombre,
+          role: 'estudiante',
+          institucion_id: profile?.institucion_id,
+          grado_seccion_id: profile?.grado_seccion_id,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      setStudents([...students, { dni, nombre }]);
       toast({ title: 'Estudiante registrado', description: nombre });
       setOpen(false);
       setDni(''); setNombre(''); setEmail(''); setPassword('');
+      // Refresh list
+      fetchStudents();
     } catch (err: any) {
       toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
     } finally {
@@ -49,6 +93,10 @@ const EstudiantesRegistro = () => {
     if (!file) return;
     toast({ title: 'Archivo recibido', description: `${file.name} – La importación masiva estará disponible próximamente.` });
   };
+
+  const aulaLabel = students.length > 0
+    ? `${students[0].institucion} — ${students[0].nivel} / ${students[0].grado} / Sección "${students[0].seccion}"`
+    : null;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -96,12 +144,31 @@ const EstudiantesRegistro = () => {
         </div>
       </div>
 
+      {/* Aula info banner */}
+      {aulaLabel && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border">
+          <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+          <span className="text-sm font-medium text-muted-foreground">{aulaLabel}</span>
+          <Badge variant="secondary" className="ml-auto">{students.length} estudiante{students.length !== 1 ? 's' : ''}</Badge>
+        </div>
+      )}
+
       <Card className="shadow-card">
-        <CardHeader><CardTitle>Lista de Estudiantes</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Lista de Estudiantes
+          </CardTitle>
+        </CardHeader>
         <CardContent>
-          {students.length === 0 ? (
+          {loadingStudents ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="ml-2 text-sm text-muted-foreground">Cargando estudiantes…</span>
+            </div>
+          ) : students.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              No hay estudiantes registrados. Agregue estudiantes manualmente o importe un archivo Excel/CSV.
+              No hay estudiantes registrados en su aula. Agregue estudiantes manualmente o importe un archivo Excel/CSV.
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -111,14 +178,22 @@ const EstudiantesRegistro = () => {
                     <th className="text-left py-2 px-3 font-medium text-muted-foreground">N°</th>
                     <th className="text-left py-2 px-3 font-medium text-muted-foreground">DNI</th>
                     <th className="text-left py-2 px-3 font-medium text-muted-foreground">Apellidos y Nombres</th>
+                    <th className="text-left py-2 px-3 font-medium text-muted-foreground">Correo Electrónico</th>
+                    <th className="text-left py-2 px-3 font-medium text-muted-foreground">Nivel</th>
+                    <th className="text-left py-2 px-3 font-medium text-muted-foreground">Grado</th>
+                    <th className="text-left py-2 px-3 font-medium text-muted-foreground">Sección</th>
                   </tr>
                 </thead>
                 <tbody>
                   {students.map((s, i) => (
-                    <tr key={i} className="border-b border-border hover:bg-muted/50">
+                    <tr key={s.id} className="border-b border-border hover:bg-muted/50">
                       <td className="py-2 px-3">{i + 1}</td>
                       <td className="py-2 px-3 font-mono">{s.dni}</td>
-                      <td className="py-2 px-3">{s.nombre}</td>
+                      <td className="py-2 px-3">{s.nombre_completo}</td>
+                      <td className="py-2 px-3 text-muted-foreground">{s.email}</td>
+                      <td className="py-2 px-3">{s.nivel}</td>
+                      <td className="py-2 px-3">{s.grado}</td>
+                      <td className="py-2 px-3">{s.seccion}</td>
                     </tr>
                   ))}
                 </tbody>

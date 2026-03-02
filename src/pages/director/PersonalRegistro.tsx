@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, RefreshCw } from 'lucide-react';
 import { getUserFriendlyError } from '@/lib/errorMapper';
 import BulkPersonalUpload from '@/components/director/BulkPersonalUpload';
 
@@ -17,6 +20,21 @@ const personalRoles = [
   { value: 'estudiante', label: 'Estudiante' },
 ];
 
+interface PersonalItem {
+  id: string;
+  dni: string;
+  nombre_completo: string;
+  user_id: string | null;
+  roles: string[];
+}
+
+const roleLabelMap: Record<string, string> = {
+  subdirector: 'Subdirector(a)',
+  docente: 'Docente',
+  estudiante: 'Estudiante',
+  director: 'Director(a)',
+};
+
 const PersonalRegistro = () => {
   const [open, setOpen] = useState(false);
   const [rol, setRol] = useState('');
@@ -25,7 +43,56 @@ const PersonalRegistro = () => {
   const [dni, setDni] = useState('');
   const [nombre, setNombre] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [personal, setPersonal] = useState<PersonalItem[]>([]);
+  const [loadingList, setLoadingList] = useState(true);
   const { toast } = useToast();
+  const { profile, user } = useAuth();
+
+  const fetchPersonal = useCallback(async () => {
+    if (!profile?.institucion_id) {
+      setPersonal([]);
+      setLoadingList(false);
+      return;
+    }
+    setLoadingList(true);
+    try {
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('id, dni, nombre_completo, user_id')
+        .eq('institucion_id', profile.institucion_id)
+        .neq('user_id', user?.id ?? '');
+
+      if (error) throw error;
+
+      // Fetch roles for these users
+      const userIds = (profiles || []).map(p => p.user_id).filter(Boolean) as string[];
+      let rolesMap = new Map<string, string[]>();
+      if (userIds.length > 0) {
+        const { data: rolesData } = await supabase
+          .from('user_roles')
+          .select('user_id, role')
+          .in('user_id', userIds);
+        for (const r of rolesData || []) {
+          const existing = rolesMap.get(r.user_id) || [];
+          existing.push(r.role);
+          rolesMap.set(r.user_id, existing);
+        }
+      }
+
+      setPersonal((profiles || []).map(p => ({
+        ...p,
+        roles: p.user_id ? (rolesMap.get(p.user_id) || []) : [],
+      })));
+    } catch (err) {
+      console.error('Error fetching personal:', err);
+    } finally {
+      setLoadingList(false);
+    }
+  }, [profile?.institucion_id, user?.id]);
+
+  useEffect(() => {
+    fetchPersonal();
+  }, [fetchPersonal]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +115,7 @@ const PersonalRegistro = () => {
       toast({ title: 'Personal registrado', description: `${nombre} como ${rol}` });
       setOpen(false);
       setRol(''); setEmail(''); setPassword(''); setDni(''); setNombre('');
+      fetchPersonal();
     } catch (err: any) {
       toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
     } finally {
@@ -63,7 +131,7 @@ const PersonalRegistro = () => {
           <p className="text-muted-foreground">Registre subdirectores, docentes y estudiantes de su institución</p>
         </div>
         <div className="flex gap-2">
-          <BulkPersonalUpload onComplete={() => {}} />
+          <BulkPersonalUpload onComplete={fetchPersonal} />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button><UserPlus className="h-4 w-4 mr-2" />Registrar Individual</Button>
@@ -105,10 +173,49 @@ const PersonalRegistro = () => {
         </div>
       </div>
       <Card className="shadow-card">
-        <CardContent className="py-8">
-          <p className="text-sm text-muted-foreground text-center">
-            El personal registrado aparecerá aquí. Use "Registrar Personal" para agregar subdirectores, docentes y estudiantes.
-          </p>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-foreground">Personal Registrado</h2>
+            <Button variant="outline" size="sm" onClick={fetchPersonal} disabled={loadingList}>
+              <RefreshCw className={`h-4 w-4 mr-1 ${loadingList ? 'animate-spin' : ''}`} />
+              Actualizar
+            </Button>
+          </div>
+          {loadingList ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Cargando personal…</p>
+          ) : personal.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No hay personal registrado aún. Use los botones superiores para agregar.
+            </p>
+          ) : (
+            <div className="overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>DNI</TableHead>
+                    <TableHead>Apellidos y Nombres</TableHead>
+                    <TableHead>Rol</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {personal.map(p => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-mono">{p.dni}</TableCell>
+                      <TableCell>{p.nombre_completo}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1 flex-wrap">
+                          {p.roles.map(r => (
+                            <Badge key={r} variant="secondary">{roleLabelMap[r] || r}</Badge>
+                          ))}
+                          {p.roles.length === 0 && <span className="text-muted-foreground text-xs">Sin rol</span>}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

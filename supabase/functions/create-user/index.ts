@@ -96,7 +96,15 @@ Deno.serve(async (req) => {
 
     if (createError) {
       console.error("User creation error:", createError.message);
-      return jsonResponse({ error: "No se pudo crear el usuario. Verifique que el correo no esté registrado." }, 400);
+      let errorMsg = "No se pudo crear el usuario.";
+      if (createError.message.includes("already been registered")) {
+        errorMsg = "El correo electrónico ya está registrado.";
+      } else if (createError.message.includes("profiles_dni_key") || createError.message.includes("duplicate key")) {
+        errorMsg = "El DNI ya está registrado en el sistema.";
+      } else {
+        errorMsg += " " + createError.message;
+      }
+      return jsonResponse({ error: errorMsg }, 400);
     }
 
     if (role && newUser.user) {

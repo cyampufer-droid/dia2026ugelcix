@@ -109,11 +109,36 @@ const InstitucionSetup = () => {
     }
   };
 
+  const handleDisassociate = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ institucion_id: null })
+        .eq('user_id', user.id);
+      if (error) throw error;
+      toast({ title: 'Asociación eliminada', description: 'Ahora puede seleccionar otra institución.' });
+      queryClient.invalidateQueries({ queryKey: ['my-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['mi-institucion'] });
+    } catch (err: any) {
+      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const isAssociated = !!currentInstitucion;
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Mi Institución Educativa</h1>
-        <p className="text-muted-foreground">Seleccione la institución educativa a la que pertenece</p>
+        <p className="text-muted-foreground">
+          {isAssociated
+            ? 'Está asociado a la siguiente institución educativa'
+            : 'Seleccione la institución educativa a la que pertenece'}
+        </p>
       </div>
 
       {/* Current association */}
@@ -125,7 +150,7 @@ const InstitucionSetup = () => {
               Institución Asociada
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div>
                 <span className="text-muted-foreground">Nombre:</span>
@@ -146,16 +171,23 @@ const InstitucionSetup = () => {
                 </Badge>
               </div>
             </div>
+            <div className="flex justify-end">
+              <Button variant="destructive" size="sm" onClick={handleDisassociate} disabled={isLoading}>
+                {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                Eliminar Asociación
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Search and select */}
+      {/* Search and select - only when NOT associated */}
+      {!isAssociated && (
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <School className="h-5 w-5" />
-            {currentInstitucion ? 'Cambiar Institución' : 'Seleccionar Institución'}
+            Seleccionar Institución
           </CardTitle>
           <CardDescription>
             Busque por nombre, código, distrito o centro poblado
@@ -261,6 +293,7 @@ const InstitucionSetup = () => {
           )}
         </CardContent>
       </Card>
+      )}
     </div>
   );
 };

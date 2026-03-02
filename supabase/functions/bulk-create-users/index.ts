@@ -81,8 +81,8 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Debe enviar un arreglo de usuarios" }, 400);
     }
 
-    if (users.length > 200) {
-      return jsonResponse({ error: "Máximo 200 usuarios por lote" }, 400);
+    if (users.length > 2000) {
+      return jsonResponse({ error: "Máximo 2000 usuarios por lote" }, 400);
     }
 
     const allowedRoles = ALLOWED_ROLE_MAP[callerBestRole] || [];

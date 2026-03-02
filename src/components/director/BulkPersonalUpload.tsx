@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -14,6 +16,7 @@ interface ParsedUser {
   email: string;
   rol: string;
   password: string;
+  grado_seccion_id?: string;
 }
 
 interface ResultItem {
@@ -23,8 +26,17 @@ interface ResultItem {
   error?: string;
 }
 
+interface NivelGrado {
+  id: string;
+  nivel: string;
+  grado: string;
+  seccion: string;
+}
+
 interface BulkPersonalUploadProps {
   onComplete: () => void;
+  nivelesGrados: NivelGrado[];
+  institucionId: string | null;
 }
 
 const TEMPLATE_HEADER = 'Tipo de Personal,DNI,Apellidos y Nombres,Correo Electrónico,Contraseña';
@@ -46,12 +58,13 @@ const rolLabel: Record<string, string> = {
   estudiante: 'Estudiante',
 };
 
-const BulkPersonalUpload = ({ onComplete }: BulkPersonalUploadProps) => {
+const BulkPersonalUpload = ({ onComplete, nivelesGrados, institucionId }: BulkPersonalUploadProps) => {
   const [open, setOpen] = useState(false);
   const [parsed, setParsed] = useState<ParsedUser[]>([]);
   const [results, setResults] = useState<ResultItem[]>([]);
   const [step, setStep] = useState<'upload' | 'preview' | 'processing' | 'done'>('upload');
   const [progress, setProgress] = useState(0);
+  const [defaultGradoSeccion, setDefaultGradoSeccion] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -71,6 +84,7 @@ const BulkPersonalUpload = ({ onComplete }: BulkPersonalUploadProps) => {
     setResults([]);
     setStep('upload');
     setProgress(0);
+    setDefaultGradoSeccion('');
     if (fileRef.current) fileRef.current.value = '';
   };
 
@@ -103,9 +117,7 @@ const BulkPersonalUpload = ({ onComplete }: BulkPersonalUploadProps) => {
         const emailRaw = (cols[3] || '').trim();
         const passwordRaw = (cols[4] || '').trim();
 
-        // Auto-generate email from DNI if not provided
         const email = emailRaw || (dni ? `${dni}@dia.ugel.local` : '');
-        // Default password = DNI
         const password = passwordRaw || dni;
 
         users.push({ dni, nombre_completo: nombre, email, rol, password });
@@ -130,9 +142,18 @@ const BulkPersonalUpload = ({ onComplete }: BulkPersonalUploadProps) => {
     setStep('processing');
     setProgress(10);
 
+    // Assign grado_seccion_id to all users if a default was selected
+    const usersWithAula = parsed.map(u => ({
+      ...u,
+      grado_seccion_id: defaultGradoSeccion || undefined,
+    }));
+
     try {
       const { data, error } = await supabase.functions.invoke('bulk-create-users', {
-        body: { users: parsed },
+        body: {
+          users: usersWithAula,
+          default_institucion_id: institucionId || undefined,
+        },
       });
 
       setProgress(90);
@@ -156,6 +177,11 @@ const BulkPersonalUpload = ({ onComplete }: BulkPersonalUploadProps) => {
       setStep('preview');
       setProgress(0);
     }
+  };
+
+  const formatAula = (id: string) => {
+    const ng = nivelesGrados.find(n => n.id === id);
+    return ng ? `${ng.nivel} - ${ng.grado} "${ng.seccion}"` : '';
   };
 
   return (
@@ -196,6 +222,23 @@ const BulkPersonalUpload = ({ onComplete }: BulkPersonalUploadProps) => {
             <p className="text-sm text-muted-foreground">
               Se encontraron <strong>{parsed.length}</strong> registros. Verifique los datos antes de continuar.
             </p>
+
+            {nivelesGrados.length > 0 && (
+              <div className="max-w-sm">
+                <Label>Asignar Nivel / Grado / Sección a todos</Label>
+                <Select value={defaultGradoSeccion} onValueChange={setDefaultGradoSeccion}>
+                  <SelectTrigger><SelectValue placeholder="Sin asignar (opcional)" /></SelectTrigger>
+                  <SelectContent>
+                    {nivelesGrados.map(ng => (
+                      <SelectItem key={ng.id} value={ng.id}>
+                        {ng.nivel} - {ng.grado} "{ng.seccion}"
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="overflow-x-auto max-h-[40vh] overflow-y-auto border rounded-md">
               <Table>
                 <TableHeader>
@@ -220,6 +263,13 @@ const BulkPersonalUpload = ({ onComplete }: BulkPersonalUploadProps) => {
                 </TableBody>
               </Table>
             </div>
+
+            {defaultGradoSeccion && (
+              <p className="text-sm text-muted-foreground">
+                Aula asignada: <Badge variant="outline">{formatAula(defaultGradoSeccion)}</Badge>
+              </p>
+            )}
+
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={reset}>Cancelar</Button>
               <Button onClick={handleUpload}>

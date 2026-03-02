@@ -28,6 +28,8 @@ interface UserInput {
   email: string;
   rol: string;
   password: string;
+  institucion_id?: string;
+  grado_seccion_id?: string;
 }
 
 interface ResultItem {
@@ -73,7 +75,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { users } = body as { users: UserInput[] };
+    const { users, default_institucion_id } = body as { users: UserInput[]; default_institucion_id?: string };
 
     if (!Array.isArray(users) || users.length === 0) {
       return jsonResponse({ error: "Debe enviar un arreglo de usuarios" }, 400);
@@ -151,6 +153,14 @@ Deno.serve(async (req) => {
             item.error = "Error al asignar rol";
             results.push(item);
             continue;
+          }
+
+          // Update profile with institucion_id and grado_seccion_id
+          const profileUpdate: Record<string, string> = {};
+          if (default_institucion_id) profileUpdate.institucion_id = default_institucion_id;
+          if (u.grado_seccion_id) profileUpdate.grado_seccion_id = u.grado_seccion_id;
+          if (Object.keys(profileUpdate).length > 0) {
+            await adminClient.from("profiles").update(profileUpdate).eq("user_id", newUser.user.id);
           }
         }
 

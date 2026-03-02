@@ -9,6 +9,7 @@ import { BookOpen, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getUserFriendlyError } from '@/lib/errorMapper';
 import diaLogo from '@/assets/dia_ugel_cix_2026.png';
+import dgpLogo from '@/assets/logo_dgp_ugel_cix.jpg';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -58,6 +59,7 @@ const Login = () => {
         <div className="relative z-10 text-primary-foreground max-w-lg">
           <div className="flex items-center gap-4 mb-8">
             <img src={diaLogo} alt="DIA UGEL Chiclayo" className="h-20 w-20 object-contain" />
+            <img src={dgpLogo} alt="DGP UGEL Chiclayo" className="h-20 w-20 object-contain rounded-full" />
             <div>
               <h1 className="text-2xl font-bold">UGEL Chiclayo</h1>
               <p className="text-sm opacity-80">Dirección de Gestión Pedagógica</p>
@@ -87,6 +89,7 @@ const Login = () => {
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
             <img src={diaLogo} alt="DIA UGEL Chiclayo" className="h-14 w-14 object-contain" />
+            <img src={dgpLogo} alt="DGP UGEL Chiclayo" className="h-14 w-14 object-contain rounded-full" />
             <h1 className="text-xl font-bold text-foreground">UGEL Chiclayo 2026</h1>
           </div>
 

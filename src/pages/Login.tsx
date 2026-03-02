@@ -12,7 +12,7 @@ import diaLogo from '@/assets/dia_ugel_cix_2026.png';
 import dgpLogo from '@/assets/logo_dgp_ugel_cix.jpg';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [usuario, setUsuario] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, user, primaryRole, loading } = useAuth();
@@ -39,8 +39,11 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await signIn(email, password);
-      // Navigation is handled by the useEffect above
+      // If user enters 8-digit DNI, convert to auto-generated email
+      const loginEmail = /^\d{8}$/.test(usuario.trim())
+        ? `${usuario.trim()}@dia.ugel.local`
+        : usuario.trim();
+      await signIn(loginEmail, password);
     } catch (err: any) {
       toast({ title: 'Error de acceso', description: getUserFriendlyError(err), variant: 'destructive' });
     } finally {
@@ -100,8 +103,8 @@ const Login = () => {
             <CardContent>
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <Label htmlFor="login-email">Correo electrónico</Label>
-                  <Input id="login-email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="correo@ejemplo.com" />
+                  <Label htmlFor="login-usuario">DNI o Correo electrónico</Label>
+                  <Input id="login-usuario" type="text" value={usuario} onChange={e => setUsuario(e.target.value)} required placeholder="12345678 o correo@ejemplo.com" />
                 </div>
                 <div>
                   <Label htmlFor="login-pass">Contraseña</Label>

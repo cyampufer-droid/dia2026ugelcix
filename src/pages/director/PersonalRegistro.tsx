@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { UserPlus } from 'lucide-react';
 import { getUserFriendlyError } from '@/lib/errorMapper';
+import BulkPersonalUpload from '@/components/director/BulkPersonalUpload';
 
 const personalRoles = [
   { value: 'subdirector', label: 'Subdirector(a)' },
@@ -61,10 +62,12 @@ const PersonalRegistro = () => {
           <h1 className="text-2xl font-bold text-foreground">Registro de Personal</h1>
           <p className="text-muted-foreground">Registre subdirectores, docentes y estudiantes de su institución</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><UserPlus className="h-4 w-4 mr-2" />Registrar Personal</Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <BulkPersonalUpload onComplete={() => {}} />
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button><UserPlus className="h-4 w-4 mr-2" />Registrar Individual</Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Registrar Personal</DialogTitle></DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4 mt-4">
@@ -98,9 +101,9 @@ const PersonalRegistro = () => {
               </Button>
             </form>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
-
       <Card className="shadow-card">
         <CardContent className="py-8">
           <p className="text-sm text-muted-foreground text-center">

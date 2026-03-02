@@ -37,8 +37,13 @@ Deno.serve(async (req) => {
       .select("role")
       .eq("user_id", caller.id);
 
-    const isAdmin = (callerRoles || []).some((r: { role: string }) => r.role === "administrador");
-    if (!isAdmin) return jsonResponse({ error: "Solo administradores" }, 403);
+    const roles = (callerRoles || []).map((r: { role: string }) => r.role);
+    const isAdmin = roles.includes("administrador");
+    const isDirector = roles.includes("director") || roles.includes("subdirector");
+
+    if (!isAdmin && !isDirector) {
+      return jsonResponse({ error: "No tiene permisos para esta acción" }, 403);
+    }
 
     const body = await req.json();
     const { action, user_id } = body;
@@ -47,15 +52,47 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "user_id requerido" }, 400);
     }
 
-    // Prevent self-deletion
-    if (action === "delete" && user_id === caller.id) {
-      return jsonResponse({ error: "No puede eliminarse a sí mismo" }, 400);
+    // Prevent self-modification/deletion
+    if (user_id === caller.id) {
+      return jsonResponse({ error: "No puede modificarse a sí mismo" }, 400);
+    }
+
+    // If director, verify target user belongs to same institution
+    if (isDirector && !isAdmin) {
+      const { data: callerProfile } = await adminClient
+        .from("profiles")
+        .select("institucion_id")
+        .eq("user_id", caller.id)
+        .single();
+
+      if (!callerProfile?.institucion_id) {
+        return jsonResponse({ error: "No tiene una institución asociada" }, 400);
+      }
+
+      const { data: targetProfile } = await adminClient
+        .from("profiles")
+        .select("institucion_id")
+        .eq("user_id", user_id)
+        .single();
+
+      if (!targetProfile || targetProfile.institucion_id !== callerProfile.institucion_id) {
+        return jsonResponse({ error: "Solo puede gestionar personal de su institución" }, 403);
+      }
+
+      // Directors cannot modify other directors/admins
+      const { data: targetRoles } = await adminClient
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user_id);
+      const targetRoleList = (targetRoles || []).map((r: { role: string }) => r.role);
+      if (targetRoleList.includes("administrador") || targetRoleList.includes("director") || targetRoleList.includes("especialista")) {
+        return jsonResponse({ error: "No tiene permisos para gestionar este usuario" }, 403);
+      }
     }
 
     if (action === "update") {
       const { email, dni, nombre_completo, role, password } = body;
 
-      // Update auth user
       const updateData: any = {};
       if (email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -94,7 +131,6 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Update profile
       const profileUpdate: any = {};
       if (dni) profileUpdate.dni = dni.trim();
       if (nombre_completo) profileUpdate.nombre_completo = nombre_completo.trim();
@@ -102,7 +138,6 @@ Deno.serve(async (req) => {
         await adminClient.from("profiles").update(profileUpdate).eq("user_id", user_id);
       }
 
-      // Update role
       if (role) {
         await adminClient.from("user_roles").delete().eq("user_id", user_id);
         await adminClient.from("user_roles").insert({ user_id, role });
@@ -112,13 +147,34 @@ Deno.serve(async (req) => {
     }
 
     if (action === "delete") {
-      // Delete role, profile will cascade via trigger or we delete manually
       await adminClient.from("user_roles").delete().eq("user_id", user_id);
+      await adminClient.from("resultados").delete().eq("estudiante_id", user_id);
       await adminClient.from("profiles").delete().eq("user_id", user_id);
       const { error: deleteError } = await adminClient.auth.admin.deleteUser(user_id);
       if (deleteError) {
         console.error("Delete error:", deleteError.message);
         return jsonResponse({ error: "Error al eliminar usuario" }, 400);
+      }
+      return jsonResponse({ success: true }, 200);
+    }
+
+    if (action === "reset-password") {
+      // Reset password to DNI
+      const { data: targetProfile } = await adminClient
+        .from("profiles")
+        .select("dni")
+        .eq("user_id", user_id)
+        .single();
+
+      if (!targetProfile?.dni) {
+        return jsonResponse({ error: "No se encontró el DNI del usuario" }, 400);
+      }
+
+      const { error: resetError } = await adminClient.auth.admin.updateUserById(user_id, {
+        password: targetProfile.dni,
+      });
+      if (resetError) {
+        return jsonResponse({ error: "Error al resetear contraseña" }, 400);
       }
       return jsonResponse({ success: true }, 200);
     }

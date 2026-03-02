@@ -76,8 +76,22 @@ const AdminUsuarios = () => {
     setLoadingUsers(true);
     try {
       const { data, error } = await supabase.functions.invoke('list-users');
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) {
+        if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+          toast({ title: 'Sesión expirada', description: 'Por favor, cierre sesión y vuelva a ingresar.', variant: 'destructive' });
+          setLoadingUsers(false);
+          return;
+        }
+        throw error;
+      }
+      if (data?.error) {
+        if (data.error === 'No autorizado') {
+          toast({ title: 'Sesión expirada', description: 'Por favor, cierre sesión y vuelva a ingresar.', variant: 'destructive' });
+          setLoadingUsers(false);
+          return;
+        }
+        throw new Error(data.error);
+      }
       setUsers(data.users || []);
     } catch (err: any) {
       toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });

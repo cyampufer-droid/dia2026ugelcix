@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -117,7 +117,7 @@ const EstudiantesRegistro = () => {
               <Button><UserPlus className="h-4 w-4 mr-2" />Agregar Estudiante</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Registrar Estudiante</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>Registrar Estudiante</DialogTitle><DialogDescription>Complete los datos del nuevo estudiante</DialogDescription></DialogHeader>
               <form onSubmit={handleAddStudent} className="space-y-4 mt-4">
                 <div>
                   <Label>DNI del Estudiante</Label>

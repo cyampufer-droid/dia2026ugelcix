@@ -147,8 +147,17 @@ Deno.serve(async (req) => {
     }
 
     if (action === "delete") {
+      // Look up the profile id for this user to clean up resultados
+      const { data: targetProfile } = await adminClient
+        .from("profiles")
+        .select("id")
+        .eq("user_id", user_id)
+        .single();
+
       await adminClient.from("user_roles").delete().eq("user_id", user_id);
-      await adminClient.from("resultados").delete().eq("estudiante_id", user_id);
+      if (targetProfile?.id) {
+        await adminClient.from("resultados").delete().eq("estudiante_id", targetProfile.id);
+      }
       await adminClient.from("profiles").delete().eq("user_id", user_id);
       const { error: deleteError } = await adminClient.auth.admin.deleteUser(user_id);
       if (deleteError) {

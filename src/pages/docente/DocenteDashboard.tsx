@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Users, FileSpreadsheet, ClipboardList, BookOpen, School } from 'lucide-react';
+import { Users, FileSpreadsheet, ClipboardList, BookOpen, School, Building2, RefreshCw } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface Aula {
   id: string;
@@ -14,12 +15,35 @@ interface Aula {
   seccion: string;
 }
 
+interface Estudiante {
+  id: string;
+  dni: string;
+  nombre_completo: string;
+}
+
 const DocenteDashboard = () => {
   const { profile, user } = useAuth();
   const [stats, setStats] = useState({ students: 0, evaluaciones: 0, digitados: 0, pendientes: 0 });
   const [aulas, setAulas] = useState<Aula[]>([]);
   const [selectedAula, setSelectedAula] = useState<string>('');
   const [saving, setSaving] = useState(false);
+  const [institucionNombre, setInstitucionNombre] = useState<string>('');
+  const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+  const [loadingEstudiantes, setLoadingEstudiantes] = useState(false);
+
+  // Load institution name
+  useEffect(() => {
+    const loadInstitucion = async () => {
+      if (!profile?.institucion_id) return;
+      const { data } = await supabase
+        .from('instituciones')
+        .select('nombre')
+        .eq('id', profile.institucion_id)
+        .single();
+      if (data) setInstitucionNombre(data.nombre);
+    };
+    loadInstitucion();
+  }, [profile?.institucion_id]);
 
   // Load available aulas for the docente's institution
   useEffect(() => {
@@ -39,6 +63,24 @@ const DocenteDashboard = () => {
 
   useEffect(() => {
     if (profile?.grado_seccion_id) setSelectedAula(profile.grado_seccion_id);
+  }, [profile?.grado_seccion_id]);
+
+  // Load students for the docente's aula
+  const loadEstudiantes = async () => {
+    if (!profile?.grado_seccion_id) { setEstudiantes([]); return; }
+    setLoadingEstudiantes(true);
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, dni, nombre_completo')
+      .eq('grado_seccion_id', profile.grado_seccion_id)
+      .neq('user_id', user?.id ?? '')
+      .order('nombre_completo');
+    setEstudiantes(data ?? []);
+    setLoadingEstudiantes(false);
+  };
+
+  useEffect(() => {
+    loadEstudiantes();
   }, [profile?.grado_seccion_id]);
 
   const handleAsociarAula = async () => {
@@ -91,22 +133,36 @@ const DocenteDashboard = () => {
         <p className="text-muted-foreground">Gestione sus estudiantes y registre resultados de evaluación</p>
       </div>
 
-      {/* Aula association section */}
+      {/* Institution & Aula info */}
       <div className="bg-card rounded-xl border p-6 shadow-card">
-        <div className="flex items-center gap-2 mb-3">
-          <School className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold text-foreground">Mi Aula</h2>
+        <div className="flex items-center gap-2 mb-4">
+          <Building2 className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold text-foreground">Mi Institución y Aula</h2>
         </div>
-        {aulaActual ? (
-          <p className="text-sm text-muted-foreground mb-3">
-            Actualmente asociado a: <span className="font-semibold text-foreground">{aulaActual.nivel} — {aulaActual.grado} «{aulaActual.seccion}»</span>
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground mb-3">No tiene un aula asociada. Seleccione una para comenzar.</p>
-        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div>
+            <p className="text-xs text-muted-foreground">Institución</p>
+            <p className="text-sm font-semibold text-foreground">{institucionNombre || '—'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Nivel</p>
+            <p className="text-sm font-semibold text-foreground">{aulaActual?.nivel || '—'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Grado</p>
+            <p className="text-sm font-semibold text-foreground">{aulaActual?.grado || '—'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Sección</p>
+            <p className="text-sm font-semibold text-foreground">{aulaActual?.seccion || '—'}</p>
+          </div>
+        </div>
+
+        {/* Aula selector */}
         {aulas.length > 0 ? (
-          <div className="flex items-end gap-3 flex-wrap">
+          <div className="flex items-end gap-3 flex-wrap border-t pt-4">
             <div className="flex-1 min-w-[200px]">
+              <p className="text-xs text-muted-foreground mb-1">{aulaActual ? 'Cambiar aula' : 'Seleccionar aula'}</p>
               <Select value={selectedAula} onValueChange={setSelectedAula}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccione un aula" />
@@ -125,7 +181,7 @@ const DocenteDashboard = () => {
             </Button>
           </div>
         ) : (
-          <p className="text-sm text-destructive">No hay aulas registradas en su institución. Contacte a su director.</p>
+          <p className="text-sm text-destructive border-t pt-4">No hay aulas registradas en su institución. Contacte a su director.</p>
         )}
       </div>
 
@@ -135,6 +191,47 @@ const DocenteDashboard = () => {
         <StatCard title="Digitados" value={String(stats.digitados)} icon={FileSpreadsheet} variant="success" />
         <StatCard title="Pendientes" value={String(stats.pendientes)} icon={ClipboardList} variant="warning" />
       </div>
+
+      {/* Students list */}
+      {profile?.grado_seccion_id && (
+        <div className="bg-card rounded-xl border p-6 shadow-card">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">Mis Estudiantes</h2>
+              <span className="text-xs text-muted-foreground">({estudiantes.length})</span>
+            </div>
+            <Button variant="ghost" size="icon" onClick={loadEstudiantes} disabled={loadingEstudiantes}>
+              <RefreshCw className={`h-4 w-4 ${loadingEstudiantes ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+          {estudiantes.length > 0 ? (
+            <div className="rounded-md border overflow-auto max-h-[400px]">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>DNI</TableHead>
+                    <TableHead>Nombre Completo</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {estudiantes.map((e, i) => (
+                    <TableRow key={e.id}>
+                      <TableCell className="text-muted-foreground">{i + 1}</TableCell>
+                      <TableCell className="font-mono">{e.dni}</TableCell>
+                      <TableCell>{e.nombre_completo}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No hay estudiantes registrados en esta aula aún.</p>
+          )}
+        </div>
+      )}
+
       <div className="bg-card rounded-xl border p-6 shadow-card">
         <h2 className="text-lg font-semibold mb-2 text-foreground">Acciones Rápidas</h2>
         <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">

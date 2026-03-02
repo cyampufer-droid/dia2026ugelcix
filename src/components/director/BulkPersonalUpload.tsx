@@ -127,8 +127,8 @@ const BulkPersonalUpload = ({ onComplete, nivelesGrados, institucionId }: BulkPe
         toast({ title: 'Error', description: 'No se encontraron datos válidos en el archivo.', variant: 'destructive' });
         return;
       }
-      if (users.length > 200) {
-        toast({ title: 'Error', description: 'Máximo 200 registros por lote.', variant: 'destructive' });
+      if (users.length > 2000) {
+        toast({ title: 'Error', description: 'Máximo 2000 registros por lote.', variant: 'destructive' });
         return;
       }
 

@@ -100,8 +100,8 @@ const BulkUserUpload = ({ onComplete }: BulkUserUploadProps) => {
         return;
       }
 
-      if (users.length > 200) {
-        toast({ title: 'Error', description: 'Máximo 200 usuarios por lote.', variant: 'destructive' });
+      if (users.length > 2000) {
+        toast({ title: 'Error', description: 'Máximo 2000 usuarios por lote.', variant: 'destructive' });
         return;
       }
 

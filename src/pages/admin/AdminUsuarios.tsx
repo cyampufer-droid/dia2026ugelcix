@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { UserPlus, Search } from 'lucide-react';
+import { UserPlus, Search, Pencil, Trash2, Loader2, RefreshCw } from 'lucide-react';
 import { getUserFriendlyError } from '@/lib/errorMapper';
 
 const roles = [
@@ -17,7 +19,27 @@ const roles = [
   { value: 'estudiante', label: 'Estudiante' },
   { value: 'especialista', label: 'Especialista' },
   { value: 'padre', label: 'Padre de Familia' },
+  { value: 'administrador', label: 'Administrador' },
 ];
+
+const roleLabelMap: Record<string, string> = {
+  director: 'Director',
+  subdirector: 'Subdirector',
+  docente: 'Docente',
+  estudiante: 'Estudiante',
+  especialista: 'Especialista',
+  padre: 'Padre de Familia',
+  administrador: 'Administrador',
+};
+
+interface UserRow {
+  id: string;
+  email: string;
+  dni: string;
+  nombre_completo: string;
+  roles: string[];
+  created_at: string;
+}
 
 const AdminUsuarios = () => {
   const [open, setOpen] = useState(false);
@@ -29,6 +51,44 @@ const AdminUsuarios = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  // List state
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Edit state
+  const [editOpen, setEditOpen] = useState(false);
+  const [editUser, setEditUser] = useState<UserRow | null>(null);
+  const [editEmail, setEditEmail] = useState('');
+  const [editDni, setEditDni] = useState('');
+  const [editNombre, setEditNombre] = useState('');
+  const [editRol, setEditRol] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [editLoading, setEditLoading] = useState(false);
+
+  // Delete state
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteUser, setDeleteUser] = useState<UserRow | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const fetchUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('list-users');
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setUsers(data.users || []);
+    } catch (err: any) {
+      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -38,16 +98,81 @@ const AdminUsuarios = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
-      toast({ title: 'Usuario creado', description: `${nombre} registrado como ${rol}` });
+      toast({ title: 'Usuario creado', description: `${nombre} registrado como ${roleLabelMap[rol] || rol}` });
       setOpen(false);
       setEmail(''); setPassword(''); setDni(''); setNombre(''); setRol('');
+      fetchUsers();
     } catch (err: any) {
       toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
   };
+
+  const openEdit = (user: UserRow) => {
+    setEditUser(user);
+    setEditEmail(user.email);
+    setEditDni(user.dni);
+    setEditNombre(user.nombre_completo);
+    setEditRol(user.roles[0] || '');
+    setEditPassword('');
+    setEditOpen(true);
+  };
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editUser) return;
+    setEditLoading(true);
+    try {
+      const body: any = { action: 'update', user_id: editUser.id };
+      if (editEmail !== editUser.email) body.email = editEmail;
+      if (editDni !== editUser.dni) body.dni = editDni;
+      if (editNombre !== editUser.nombre_completo) body.nombre_completo = editNombre;
+      if (editRol !== editUser.roles[0]) body.role = editRol;
+      if (editPassword) body.password = editPassword;
+
+      const { data, error } = await supabase.functions.invoke('manage-user', { body });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: 'Usuario actualizado' });
+      setEditOpen(false);
+      fetchUsers();
+    } catch (err: any) {
+      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteUser) return;
+    setDeleteLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-user', {
+        body: { action: 'delete', user_id: deleteUser.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: 'Usuario eliminado', description: `${deleteUser.nombre_completo} ha sido eliminado` });
+      setDeleteOpen(false);
+      setDeleteUser(null);
+      fetchUsers();
+    } catch (err: any) {
+      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const filteredUsers = users.filter((u) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      u.dni.toLowerCase().includes(term) ||
+      u.nombre_completo.toLowerCase().includes(term) ||
+      u.email.toLowerCase().includes(term) ||
+      u.roles.some((r) => (roleLabelMap[r] || r).toLowerCase().includes(term))
+    );
+  });
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -100,17 +225,145 @@ const AdminUsuarios = () => {
 
       <Card className="shadow-card">
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar por DNI o nombre…" className="max-w-sm" />
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 flex-1">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por DNI, nombre, correo o rol…"
+                className="max-w-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Button variant="outline" size="sm" onClick={fetchUsers} disabled={loadingUsers}>
+              <RefreshCw className={`h-4 w-4 mr-1 ${loadingUsers ? 'animate-spin' : ''}`} />
+              Actualizar
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground text-center py-8">
-            Los usuarios registrados aparecerán aquí. Use el botón "Nuevo Usuario" para comenzar.
-          </p>
+          {loadingUsers ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              {users.length === 0
+                ? 'No hay usuarios registrados. Use el botón "Nuevo Usuario" para comenzar.'
+                : 'No se encontraron usuarios con ese criterio de búsqueda.'}
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>DNI</TableHead>
+                    <TableHead>Nombre Completo</TableHead>
+                    <TableHead>Correo Electrónico</TableHead>
+                    <TableHead>Rol</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-mono">{user.dni}</TableCell>
+                      <TableCell>{user.nombre_completo}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        {user.roles.map((r) => (
+                          <Badge key={r} variant="secondary" className="mr-1">
+                            {roleLabelMap[r] || r}
+                          </Badge>
+                        ))}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(user)} title="Editar">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => { setDeleteUser(user); setDeleteOpen(true); }}
+                            title="Eliminar"
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <p className="text-xs text-muted-foreground mt-2">
+                {filteredUsers.length} de {users.length} usuarios
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Usuario</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEdit} className="space-y-4 mt-4">
+            <div>
+              <Label>DNI</Label>
+              <Input value={editDni} onChange={e => setEditDni(e.target.value)} required maxLength={8} />
+            </div>
+            <div>
+              <Label>Nombre Completo</Label>
+              <Input value={editNombre} onChange={e => setEditNombre(e.target.value)} required />
+            </div>
+            <div>
+              <Label>Correo Electrónico</Label>
+              <Input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} required />
+            </div>
+            <div>
+              <Label>Nueva Contraseña (dejar vacío para no cambiar)</Label>
+              <Input type="password" value={editPassword} onChange={e => setEditPassword(e.target.value)} minLength={6} placeholder="••••••" />
+            </div>
+            <div>
+              <Label>Rol</Label>
+              <Select value={editRol} onValueChange={setEditRol}>
+                <SelectTrigger><SelectValue placeholder="Seleccione rol" /></SelectTrigger>
+                <SelectContent>
+                  {roles.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button type="submit" className="w-full" disabled={editLoading}>
+              {editLoading ? 'Guardando…' : 'Guardar Cambios'}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Eliminación</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground py-4">
+            ¿Está seguro de que desea eliminar al usuario <strong>{deleteUser?.nombre_completo}</strong> ({deleteUser?.dni})?
+            Esta acción no se puede deshacer.
+          </p>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleteLoading}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteLoading}>
+              {deleteLoading ? 'Eliminando…' : 'Eliminar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

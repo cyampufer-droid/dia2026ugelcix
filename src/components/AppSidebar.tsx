@@ -27,6 +27,8 @@ const roleNavItems: Record<string, NavItem[]> = {
   ],
   subdirector: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/director' },
+    { label: 'Institución', icon: School, path: '/director/institucion' },
+    { label: 'Niveles y Grados', icon: GraduationCap, path: '/director/niveles' },
     { label: 'Personal', icon: UserCog, path: '/director/personal' },
     { label: 'Resultados', icon: BarChart3, path: '/director/resultados' },
   ],

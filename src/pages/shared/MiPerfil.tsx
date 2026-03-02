@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { User, Building2, GraduationCap, Save, Loader2 } from 'lucide-react';
+import { User, Building2, GraduationCap, Save, Loader2, KeyRound } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 interface NivelGrado {
   id: string;
@@ -24,6 +25,9 @@ const MiPerfil = () => {
   const [aulaInfo, setAulaInfo] = useState<NivelGrado | null>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const roleLabels: Record<string, string> = {
     administrador: 'Administrador',
@@ -97,6 +101,29 @@ const MiPerfil = () => {
       toast.error('Error al actualizar: ' + (err.message || 'Error desconocido'));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('Las contraseñas no coinciden');
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setNewPassword('');
+      setConfirmPassword('');
+      toast.success('Contraseña actualizada correctamente');
+    } catch (err: any) {
+      toast.error('Error al cambiar contraseña: ' + (err.message || 'Error desconocido'));
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -245,6 +272,30 @@ const MiPerfil = () => {
                 : 'No hay aulas configuradas en su institución aún.'}
             </p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Cambiar Contraseña */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <KeyRound className="h-5 w-5" />
+            Cambiar Contraseña
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div>
+            <Label htmlFor="new-pass">Nueva contraseña</Label>
+            <Input id="new-pass" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Mínimo 6 caracteres" />
+          </div>
+          <div>
+            <Label htmlFor="confirm-pass">Confirmar contraseña</Label>
+            <Input id="confirm-pass" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Repita la contraseña" />
+          </div>
+          <Button onClick={handleChangePassword} disabled={changingPassword || !newPassword}>
+            {changingPassword ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <KeyRound className="h-4 w-4 mr-2" />}
+            {changingPassword ? 'Cambiando…' : 'Cambiar Contraseña'}
+          </Button>
         </CardContent>
       </Card>
     </div>

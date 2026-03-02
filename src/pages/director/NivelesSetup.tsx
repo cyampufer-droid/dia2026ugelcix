@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, GraduationCap, X } from 'lucide-react';
+import { Plus, GraduationCap, X, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const nivelesConfig = {
   Inicial: {
@@ -31,6 +33,7 @@ const generateSections = (range: string): string[] => {
 };
 
 interface GradoSeccion {
+  id?: string;
   nivel: string;
   grado: string;
   seccion: string;
@@ -41,7 +44,33 @@ const NivelesSetup = () => {
   const [grado, setGrado] = useState('');
   const [seccion, setSeccion] = useState('');
   const [added, setAdded] = useState<GradoSeccion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+  const { profile } = useAuth();
+
+  const institucionId = profile?.institucion_id;
+
+  // Load existing data from DB
+  useEffect(() => {
+    if (!institucionId) {
+      setLoading(false);
+      return;
+    }
+    const fetchNiveles = async () => {
+      const { data, error } = await supabase
+        .from('niveles_grados')
+        .select('id, nivel, grado, seccion')
+        .eq('institucion_id', institucionId);
+      if (error) {
+        console.error('Error loading niveles:', error);
+      } else if (data) {
+        setAdded(data.map(d => ({ id: d.id, nivel: d.nivel, grado: d.grado, seccion: d.seccion })));
+      }
+      setLoading(false);
+    };
+    fetchNiveles();
+  }, [institucionId]);
 
   const gradosDisponibles = nivel ? nivelesConfig[nivel as keyof typeof nivelesConfig]?.grados || [] : [];
   const seccionesRaw = nivel ? nivelesConfig[nivel as keyof typeof nivelesConfig]?.secciones : [];
@@ -58,15 +87,71 @@ const NivelesSetup = () => {
     setSeccion('');
   };
 
-  const handleRemove = (index: number) => {
+  const handleRemove = async (index: number) => {
+    const item = added[index];
+    // If it has an id, delete from DB
+    if (item.id) {
+      const { error } = await supabase.from('niveles_grados').delete().eq('id', item.id);
+      if (error) {
+        toast({ title: 'Error', description: 'No se pudo eliminar', variant: 'destructive' });
+        return;
+      }
+    }
     setAdded(added.filter((_, i) => i !== index));
   };
 
-  const handleSave = () => {
-    toast({ title: 'Niveles guardados', description: `${added.length} grados/secciones configurados` });
+  const handleSave = async () => {
+    if (!institucionId) {
+      toast({ title: 'Sin institución', description: 'Primero debe asociar su cuenta a una institución educativa', variant: 'destructive' });
+      return;
+    }
+    setSaving(true);
+    // Only insert items without an id (new ones)
+    const newItems = added.filter(a => !a.id);
+    if (newItems.length > 0) {
+      const rows = newItems.map(a => ({
+        institucion_id: institucionId,
+        nivel: a.nivel,
+        grado: a.grado,
+        seccion: a.seccion,
+      }));
+      const { data, error } = await supabase.from('niveles_grados').insert(rows).select('id, nivel, grado, seccion');
+      if (error) {
+        toast({ title: 'Error al guardar', description: error.message, variant: 'destructive' });
+        setSaving(false);
+        return;
+      }
+      // Update local state with returned ids
+      if (data) {
+        const existingWithIds = added.filter(a => a.id);
+        const savedWithIds = data.map(d => ({ id: d.id, nivel: d.nivel, grado: d.grado, seccion: d.seccion }));
+        setAdded([...existingWithIds, ...savedWithIds]);
+      }
+    }
+    toast({ title: 'Estructura guardada', description: `${added.length} grados/secciones configurados` });
+    setSaving(false);
   };
 
   const selectClass = "flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!institucionId) {
+    return (
+      <div className="space-y-6 animate-fade-in max-w-3xl">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Niveles, Grados y Secciones</h1>
+          <p className="text-muted-foreground">Primero debe asociar su cuenta a una institución educativa desde la configuración.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in max-w-3xl">
@@ -151,6 +236,7 @@ const NivelesSetup = () => {
                         return (
                           <Badge key={i} variant="secondary" className="gap-1 pr-1">
                             {item.grado} – {item.seccion}
+                            {!item.id && <span className="text-xs text-muted-foreground">(nuevo)</span>}
                             <button
                               onClick={() => handleRemove(globalIndex)}
                               className="ml-1 rounded-full hover:bg-muted p-0.5"
@@ -165,7 +251,10 @@ const NivelesSetup = () => {
                 );
               })}
             </div>
-            <Button onClick={handleSave} className="mt-4">Guardar Estructura</Button>
+            <Button onClick={handleSave} className="mt-4" disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Guardar Estructura
+            </Button>
           </CardContent>
         </Card>
       )}

@@ -96,11 +96,13 @@ Deno.serve(async (req) => {
 
     if (createError) {
       console.error("User creation error:", createError.message);
+      const msg = createError.message.toLowerCase();
       let errorMsg = "No se pudo crear el usuario.";
-      if (createError.message.includes("already been registered")) {
+      if (msg.includes("already been registered") || msg.includes("already exists")) {
         errorMsg = "El correo electrónico ya está registrado.";
-      } else if (createError.message.includes("profiles_dni_key") || createError.message.includes("duplicate key")) {
-        errorMsg = "El DNI ya está registrado en el sistema.";
+      } else if (msg.includes("profiles_dni_key") || msg.includes("duplicate key") || msg.includes("database error")) {
+        // "Database error creating new user" typically means the trigger failed due to duplicate DNI
+        errorMsg = "El DNI ya está registrado en el sistema. Verifique que no exista un usuario previo con ese DNI.";
       } else {
         errorMsg += " " + createError.message;
       }

@@ -185,6 +185,13 @@ Deno.serve(async (req) => {
       if (resetError) {
         return jsonResponse({ error: "Error al resetear contraseña" }, 400);
       }
+
+      // Force password change on next login
+      await adminClient
+        .from("profiles")
+        .update({ must_change_password: true })
+        .eq("user_id", user_id);
+
       return jsonResponse({ success: true }, 200);
     }
 

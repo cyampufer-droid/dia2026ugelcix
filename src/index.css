@@ -118,3 +118,13 @@
     box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.04);
   }
 }
+
+/* Print styles for guide page */
+@media print {
+  body { background: white !important; }
+  .print\:hidden { display: none !important; }
+  article { font-size: 11pt; line-height: 1.5; }
+  h2 { page-break-after: avoid; }
+  section { page-break-inside: avoid; }
+  table { page-break-inside: avoid; }
+}

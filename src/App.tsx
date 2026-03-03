@@ -29,6 +29,7 @@ const EstudiantePrueba = lazy(() => import("./pages/estudiante/EstudiantePrueba"
 const EstudianteResultados = lazy(() => import("./pages/estudiante/EstudianteResultados"));
 const EspecialistaDashboard = lazy(() => import("./pages/especialista/EspecialistaDashboard"));
 const MiPerfil = lazy(() => import("./pages/shared/MiPerfil"));
+const GuiaUsuario = lazy(() => import("./pages/shared/GuiaUsuario"));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
@@ -100,6 +101,7 @@ const App = () => (
                   <Route path="/perfil" element={<ProtectedRoute allowedRoles={['director', 'subdirector', 'docente', 'estudiante', 'especialista', 'administrador']}><MiPerfil /></ProtectedRoute>} />
                 </Route>
 
+                <Route path="/guia" element={<GuiaUsuario />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

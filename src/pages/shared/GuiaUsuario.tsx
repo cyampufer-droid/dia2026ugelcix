@@ -20,7 +20,7 @@ const GuiaUsuario = () => {
       </div>
 
       {/* Document content */}
-      <article className="max-w-4xl mx-auto px-6 py-10 print:px-0 print:py-0 print:max-w-none prose prose-sm sm:prose-base print:prose-sm dark:prose-invert">
+      <article className="max-w-4xl mx-auto px-6 py-10 print:px-0 print:py-0 print:max-w-none text-foreground text-sm sm:text-base leading-relaxed [&_p]:mb-3 [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-3 [&_li]:mb-1 [&_h3]:text-base [&_h3]:mt-5 [&_h3]:mb-2 [&_h4]:mt-3 [&_h4]:mb-1 [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs">
         
         {/* PORTADA */}
         <div className="text-center mb-12 print:mb-8 border-b-4 border-primary pb-8">

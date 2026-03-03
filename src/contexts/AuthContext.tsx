@@ -43,6 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Single loading flag: true until auth + profile/roles are fully resolved
   const [loading, setLoading] = useState(true);
   const [mustChangePassword, setMustChangePassword] = useState(false);
+  const loadingRef = React.useRef(true);
 
   const fetchProfileAndRoles = useCallback(async (userId: string) => {
     try {
@@ -83,13 +84,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setMustChangePassword(false);
         }
 
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+          loadingRef.current = false;
+        }
       }
     );
 
     // Safety timeout for stale sessions
     const timeout = setTimeout(() => {
-      if (mounted && loading) {
+      if (mounted && loadingRef.current) {
         console.warn('Auth session check timed out, clearing stale session');
         supabase.auth.signOut().catch(() => {});
         setSession(null);
@@ -97,8 +101,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfile(null);
         setRoles([]);
         setLoading(false);
+        loadingRef.current = false;
       }
-    }, 8000);
+    }, 10000);
 
     return () => {
       mounted = false;

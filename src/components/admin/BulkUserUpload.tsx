@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import { Upload, Download, FileSpreadsheet, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 
 interface ParsedUser {
@@ -117,14 +117,11 @@ const BulkUserUpload = ({ onComplete }: BulkUserUploadProps) => {
     setProgress(10);
 
     try {
-      const { data, error } = await supabase.functions.invoke('bulk-create-users', {
-        body: { users: parsed },
-      });
+      const data = await invokeEdgeFunction('bulk-create-users', { users: parsed });
 
       setProgress(90);
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      setResults(data.results || []);
 
       setResults(data.results || []);
       setStep('done');

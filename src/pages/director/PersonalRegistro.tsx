@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { UserPlus, RefreshCw, Pencil, Trash2, KeyRound } from 'lucide-react';
-import { getUserFriendlyError } from '@/lib/errorMapper';
+import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import BulkPersonalUpload from '@/components/director/BulkPersonalUpload';
 
 const personalRoles = [
@@ -156,22 +156,18 @@ const PersonalRegistro = () => {
     try {
       const email = `${dni.trim()}@dia.ugel.local`;
       const password = dni.trim();
-      const { data, error } = await supabase.functions.invoke('create-user', {
-        body: {
-          email, password, dni, nombre_completo: nombre, role: rol,
-          institucion_id: profile?.institucion_id || undefined,
-          grado_seccion_id: selectedGradoSeccion || undefined,
-        },
+      await invokeEdgeFunction('create-user', {
+        email, password, dni, nombre_completo: nombre, role: rol,
+        institucion_id: profile?.institucion_id || undefined,
+        grado_seccion_id: selectedGradoSeccion || undefined,
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
 
       toast({ title: 'Personal registrado', description: `${nombre} como ${rol}. Credenciales: DNI como usuario y contraseña.` });
       setOpen(false);
       setRol(''); setDni(''); setNombre(''); setSelectedGradoSeccion('');
       fetchPersonal();
     } catch (err: any) {
-      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
+      toast({ title: 'Error', description: err.message || 'Error al registrar personal', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -195,17 +191,13 @@ const PersonalRegistro = () => {
     }
     setEditLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('manage-user', {
-        body: {
-          action: 'update',
-          user_id: editItem.user_id,
-          dni: editDni,
-          nombre_completo: editNombre,
-          role: editRol || undefined,
-        },
+      await invokeEdgeFunction('manage-user', {
+        action: 'update',
+        user_id: editItem.user_id,
+        dni: editDni,
+        nombre_completo: editNombre,
+        role: editRol || undefined,
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
 
       // Update grado_seccion_id directly on profile (using service role via manage-user would be better, but for now update directly)
       if (editItem.user_id) {
@@ -219,7 +211,7 @@ const PersonalRegistro = () => {
       setEditOpen(false);
       fetchPersonal();
     } catch (err: any) {
-      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
+      toast({ title: 'Error', description: err.message || 'Error al actualizar', variant: 'destructive' });
     } finally {
       setEditLoading(false);
     }
@@ -229,16 +221,14 @@ const PersonalRegistro = () => {
     if (!deleteItem?.user_id) return;
     setDeleteLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('manage-user', {
-        body: { action: 'delete', user_id: deleteItem.user_id },
+      await invokeEdgeFunction('manage-user', {
+        action: 'delete', user_id: deleteItem.user_id,
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
       toast({ title: 'Eliminado', description: `${deleteItem.nombre_completo} ha sido eliminado` });
       setDeleteItem(null);
       fetchPersonal();
     } catch (err: any) {
-      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
+      toast({ title: 'Error', description: err.message || 'Error al eliminar', variant: 'destructive' });
     } finally {
       setDeleteLoading(false);
     }
@@ -248,15 +238,13 @@ const PersonalRegistro = () => {
     if (!resetItem?.user_id) return;
     setResetLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('manage-user', {
-        body: { action: 'reset-password', user_id: resetItem.user_id },
+      await invokeEdgeFunction('manage-user', {
+        action: 'reset-password', user_id: resetItem.user_id,
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
       toast({ title: 'Contraseña reseteada', description: `La contraseña de ${resetItem.nombre_completo} fue reseteada a su DNI` });
       setResetItem(null);
     } catch (err: any) {
-      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
+      toast({ title: 'Error', description: err.message || 'Error al resetear contraseña', variant: 'destructive' });
     } finally {
       setResetLoading(false);
     }

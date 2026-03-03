@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserPlus, Upload, Loader2, Users, Building2, FileSpreadsheet, Download, CheckCircle2, XCircle } from 'lucide-react';
-import { getUserFriendlyError } from '@/lib/errorMapper';
+import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import * as XLSX from 'xlsx';
 
 interface Student {
@@ -60,8 +60,7 @@ const EstudiantesRegistro = () => {
   const fetchStudents = async () => {
     setLoadingStudents(true);
     try {
-      const { data, error } = await supabase.functions.invoke('list-my-students');
-      if (error) throw error;
+      const data = await invokeEdgeFunction('list-my-students', {});
       if (data?.students) setStudents(data.students);
     } catch (err: any) {
       console.error('Error loading students:', err);
@@ -83,25 +82,21 @@ const EstudiantesRegistro = () => {
     setIsLoading(true);
     try {
       const email = `${dni}@dia.ugel.local`;
-      const { data, error } = await supabase.functions.invoke('create-user', {
-        body: {
-          email,
-          password: dni,
-          dni,
-          nombre_completo: nombre,
-          role: 'estudiante',
-          institucion_id: profile?.institucion_id,
-          grado_seccion_id: profile?.grado_seccion_id,
-        },
+      await invokeEdgeFunction('create-user', {
+        email,
+        password: dni,
+        dni,
+        nombre_completo: nombre,
+        role: 'estudiante',
+        institucion_id: profile?.institucion_id,
+        grado_seccion_id: profile?.grado_seccion_id,
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
       toast({ title: 'Estudiante registrado', description: nombre });
       setOpen(false);
       setDni(''); setNombre('');
       fetchStudents();
     } catch (err: any) {
-      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
+      toast({ title: 'Error', description: err.message || 'Error al registrar estudiante', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -232,16 +227,14 @@ const EstudiantesRegistro = () => {
         grado_seccion_id: profile?.grado_seccion_id || undefined,
       }));
 
-      const { data, error } = await supabase.functions.invoke('bulk-create-users', {
-        body: {
-          users,
-          default_institucion_id: profile?.institucion_id || undefined,
-        },
+      const data = await invokeEdgeFunction('bulk-create-users', {
+        users,
+        default_institucion_id: profile?.institucion_id || undefined,
       });
 
       setImportProgress(90);
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+
+      setImportResults(data.results || []);
 
       setImportResults(data.results || []);
       setImportStep('done');

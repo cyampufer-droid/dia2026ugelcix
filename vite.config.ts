@@ -37,6 +37,11 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ["**/*.{js,css,html,ico,png,jpg,svg,woff2}"],
         navigateFallback: "index.html",
         navigateFallbackDenylist: [/^\/~oauth/],
+        // Force immediate activation of new service worker
+        skipWaiting: true,
+        clientsClaim: true,
+        // Clean old caches on update
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -49,13 +54,13 @@ export default defineConfig(({ mode }) => ({
             options: { cacheName: "gstatic-fonts-cache", expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 } },
           },
           {
-            // Cache Supabase API calls with NetworkFirst for offline support
+            // Supabase API calls - always prefer network
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: "NetworkFirst",
             options: {
               cacheName: "supabase-api-cache",
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 },
-              networkTimeoutSeconds: 5,
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 30 },
+              networkTimeoutSeconds: 10,
             },
           },
         ],

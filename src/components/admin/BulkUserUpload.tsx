@@ -27,10 +27,10 @@ interface BulkUserUploadProps {
   onComplete: () => void;
 }
 
-const TEMPLATE_HEADER = 'DNI,Nombre Completo,Correo Electrónico,Rol,Contraseña';
+const TEMPLATE_HEADER = 'DNI,Nombre Completo,Rol,Contraseña';
 const TEMPLATE_EXAMPLE = [
-  '12345678,Juan Pérez López,juan.perez@ejemplo.com,docente,12345678',
-  '87654321,María García Torres,maria.garcia@ejemplo.com,estudiante,87654321',
+  '12345678,Juan Pérez López,docente,',
+  '87654321,María García Torres,estudiante,',
 ];
 
 const BulkUserUpload = ({ onComplete }: BulkUserUploadProps) => {
@@ -83,14 +83,15 @@ const BulkUserUpload = ({ onComplete }: BulkUserUploadProps) => {
       const users: ParsedUser[] = [];
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(delimiter).map((c) => c.trim().replace(/^"|"$/g, ''));
-        if (cols.length < 4) continue;
+        if (cols.length < 3) continue;
 
-        const dni = cols[0] || '';
-        const nombre = cols[1] || '';
-        const email = cols[2] || '';
-        const rol = (cols[3] || '').toLowerCase();
+        const dni = (cols[0] || '').trim();
+        const nombre = (cols[1] || '').trim();
+        const rol = (cols[2] || '').toLowerCase().trim();
         // Password defaults to DNI if not provided
-        const password = cols[4]?.trim() || dni;
+        const password = (cols[3] || '').trim() || dni;
+        // Auto-generate email from DNI
+        const email = dni ? `${dni}@dia.ugel.local` : '';
 
         users.push({ dni, nombre_completo: nombre, email, rol, password });
       }
@@ -167,7 +168,8 @@ const BulkUserUpload = ({ onComplete }: BulkUserUploadProps) => {
           <div className="space-y-4 py-4">
             <p className="text-sm text-muted-foreground">
               Descargue la plantilla CSV, llénela con los datos de los usuarios y súbala aquí.
-              La contraseña es opcional; si se deja vacía, se usará el DNI como contraseña por defecto.
+              El correo se generará automáticamente como <strong>DNI@dia.ugel.local</strong>.
+              La contraseña por defecto será el <strong>DNI</strong>.
             </p>
             <div className="flex gap-3">
               <Button variant="outline" onClick={downloadTemplate}>
@@ -198,14 +200,12 @@ const BulkUserUpload = ({ onComplete }: BulkUserUploadProps) => {
             </p>
             <div className="overflow-x-auto max-h-[40vh] overflow-y-auto border rounded-md">
               <Table>
-                <TableHeader>
+                 <TableHeader>
                   <TableRow>
                     <TableHead>#</TableHead>
                     <TableHead>DNI</TableHead>
                     <TableHead>Nombre Completo</TableHead>
-                    <TableHead>Correo</TableHead>
                     <TableHead>Rol</TableHead>
-                    <TableHead>Contraseña</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -214,11 +214,9 @@ const BulkUserUpload = ({ onComplete }: BulkUserUploadProps) => {
                       <TableCell className="text-muted-foreground">{i + 1}</TableCell>
                       <TableCell className="font-mono">{u.dni}</TableCell>
                       <TableCell>{u.nombre_completo}</TableCell>
-                      <TableCell className="text-xs">{u.email}</TableCell>
                       <TableCell>
                         <Badge variant="secondary">{rolLabel[u.rol] || u.rol}</Badge>
                       </TableCell>
-                      <TableCell className="font-mono text-xs">{'•'.repeat(Math.min(u.password.length, 8))}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

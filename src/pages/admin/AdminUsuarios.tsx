@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { UserPlus, Search, Pencil, Trash2, Loader2, RefreshCw, Download } from 'lucide-react';
-import { getUserFriendlyError } from '@/lib/errorMapper';
+import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import BulkUserUpload from '@/components/admin/BulkUserUpload';
 import * as XLSX from 'xlsx';
 
@@ -82,26 +82,15 @@ const AdminUsuarios = () => {
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
-      const { data, error } = await supabase.functions.invoke('list-users');
-      if (error) {
-        if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
-          toast({ title: 'Sesión expirada', description: 'Por favor, cierre sesión y vuelva a ingresar.', variant: 'destructive' });
-          setLoadingUsers(false);
-          return;
-        }
-        throw error;
-      }
-      if (data?.error) {
-        if (data.error === 'No autorizado') {
-          toast({ title: 'Sesión expirada', description: 'Por favor, cierre sesión y vuelva a ingresar.', variant: 'destructive' });
-          setLoadingUsers(false);
-          return;
-        }
-        throw new Error(data.error);
-      }
+      const data = await invokeEdgeFunction('list-users', {});
       setUsers(data.users || []);
     } catch (err: any) {
-      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
+      const msg = err.message || '';
+      if (msg.includes('No autorizado') || msg.includes('401') || msg.includes('Unauthorized')) {
+        toast({ title: 'Sesión expirada', description: 'Por favor, cierre sesión y vuelva a ingresar.', variant: 'destructive' });
+      } else {
+        toast({ title: 'Error', description: msg || 'Error al cargar usuarios', variant: 'destructive' });
+      }
     } finally {
       setLoadingUsers(false);
     }
@@ -117,17 +106,15 @@ const AdminUsuarios = () => {
     try {
       const email = `${dni.trim()}@dia.ugel.local`;
       const password = dni.trim();
-      const { data, error } = await supabase.functions.invoke('create-user', {
-        body: { email, password, dni, nombre_completo: nombre, role: rol },
+      await invokeEdgeFunction('create-user', {
+        email, password, dni, nombre_completo: nombre, role: rol,
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
       toast({ title: 'Usuario creado', description: `${nombre} registrado como ${roleLabelMap[rol] || rol}. Credenciales: DNI como usuario y contraseña.` });
       setOpen(false);
       setDni(''); setNombre(''); setRol('');
       fetchUsers();
     } catch (err: any) {
-      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
+      toast({ title: 'Error', description: err.message || 'Error al crear usuario', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -155,14 +142,12 @@ const AdminUsuarios = () => {
       if (editRol !== editUser.roles[0]) body.role = editRol;
       if (editPassword) body.password = editPassword;
 
-      const { data, error } = await supabase.functions.invoke('manage-user', { body });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      await invokeEdgeFunction('manage-user', body);
       toast({ title: 'Usuario actualizado' });
       setEditOpen(false);
       fetchUsers();
     } catch (err: any) {
-      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
+      toast({ title: 'Error', description: err.message || 'Error al actualizar', variant: 'destructive' });
     } finally {
       setEditLoading(false);
     }
@@ -172,17 +157,15 @@ const AdminUsuarios = () => {
     if (!deleteUser) return;
     setDeleteLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('manage-user', {
-        body: { action: 'delete', user_id: deleteUser.id },
+      await invokeEdgeFunction('manage-user', {
+        action: 'delete', user_id: deleteUser.id,
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
       toast({ title: 'Usuario eliminado', description: `${deleteUser.nombre_completo} ha sido eliminado` });
       setDeleteOpen(false);
       setDeleteUser(null);
       fetchUsers();
     } catch (err: any) {
-      toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
+      toast({ title: 'Error', description: err.message || 'Error al eliminar', variant: 'destructive' });
     } finally {
       setDeleteLoading(false);
     }

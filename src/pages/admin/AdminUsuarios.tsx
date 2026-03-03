@@ -44,8 +44,6 @@ interface UserRow {
 
 const AdminUsuarios = () => {
   const [open, setOpen] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [dni, setDni] = useState('');
   const [nombre, setNombre] = useState('');
   const [rol, setRol] = useState('');
@@ -108,14 +106,16 @@ const AdminUsuarios = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
+      const email = `${dni.trim()}@dia.ugel.local`;
+      const password = dni.trim();
       const { data, error } = await supabase.functions.invoke('create-user', {
         body: { email, password, dni, nombre_completo: nombre, role: rol },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast({ title: 'Usuario creado', description: `${nombre} registrado como ${roleLabelMap[rol] || rol}` });
+      toast({ title: 'Usuario creado', description: `${nombre} registrado como ${roleLabelMap[rol] || rol}. Credenciales: DNI como usuario y contraseña.` });
       setOpen(false);
-      setEmail(''); setPassword(''); setDni(''); setNombre(''); setRol('');
+      setDni(''); setNombre(''); setRol('');
       fetchUsers();
     } catch (err: any) {
       toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
@@ -216,14 +216,10 @@ const AdminUsuarios = () => {
                 <Label>Nombre Completo</Label>
                 <Input value={nombre} onChange={e => setNombre(e.target.value)} required placeholder="Apellidos y Nombres" />
               </div>
-              <div>
-                <Label>Correo Electrónico</Label>
-                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="correo@ejemplo.com" />
-              </div>
-              <div>
-                <Label>Contraseña</Label>
-                <Input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder="Mínimo 6 caracteres" />
-              </div>
+              <p className="text-xs text-muted-foreground bg-muted rounded p-2">
+                📧 El correo se generará automáticamente como <strong>{dni ? `${dni}@dia.ugel.local` : '{DNI}@dia.ugel.local'}</strong><br/>
+                🔑 La contraseña inicial será el <strong>DNI</strong>. El usuario deberá cambiarla en su primer inicio de sesión.
+              </p>
               <div>
                 <Label>Rol</Label>
                 <Select value={rol} onValueChange={setRol}>

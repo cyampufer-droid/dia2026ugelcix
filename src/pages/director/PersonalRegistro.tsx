@@ -47,8 +47,6 @@ const roleLabelMap: Record<string, string> = {
 const PersonalRegistro = () => {
   const [open, setOpen] = useState(false);
   const [rol, setRol] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [dni, setDni] = useState('');
   const [nombre, setNombre] = useState('');
   const [selectedGradoSeccion, setSelectedGradoSeccion] = useState('');
@@ -156,6 +154,8 @@ const PersonalRegistro = () => {
     }
     setIsLoading(true);
     try {
+      const email = `${dni.trim()}@dia.ugel.local`;
+      const password = dni.trim();
       const { data, error } = await supabase.functions.invoke('create-user', {
         body: {
           email, password, dni, nombre_completo: nombre, role: rol,
@@ -166,9 +166,9 @@ const PersonalRegistro = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast({ title: 'Personal registrado', description: `${nombre} como ${rol}` });
+      toast({ title: 'Personal registrado', description: `${nombre} como ${rol}. Credenciales: DNI como usuario y contraseña.` });
       setOpen(false);
-      setRol(''); setEmail(''); setPassword(''); setDni(''); setNombre(''); setSelectedGradoSeccion('');
+      setRol(''); setDni(''); setNombre(''); setSelectedGradoSeccion('');
       fetchPersonal();
     } catch (err: any) {
       toast({ title: 'Error', description: getUserFriendlyError(err), variant: 'destructive' });
@@ -318,14 +318,10 @@ const PersonalRegistro = () => {
                   <Label>Apellidos y Nombres</Label>
                   <Input value={nombre} onChange={e => setNombre(e.target.value)} required placeholder="García Pérez, Juan Carlos" />
                 </div>
-                <div>
-                  <Label>Correo Electrónico</Label>
-                  <Input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="correo@ejemplo.com" />
-                </div>
-                <div>
-                  <Label>Contraseña</Label>
-                  <Input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder="Mínimo 6 caracteres" />
-                </div>
+                <p className="text-xs text-muted-foreground bg-muted rounded p-2">
+                  📧 Correo: <strong>{dni ? `${dni}@dia.ugel.local` : '{DNI}@dia.ugel.local'}</strong><br/>
+                  🔑 Contraseña inicial: <strong>DNI</strong>. El usuario deberá cambiarla al ingresar por primera vez.
+                </p>
                 <AulaSelector value={selectedGradoSeccion} onChange={setSelectedGradoSeccion} />
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Registrando…' : 'Registrar'}

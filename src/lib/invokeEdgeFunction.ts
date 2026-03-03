@@ -25,11 +25,30 @@ export async function invokeEdgeFunction<T = any>(
         message = responseBody?.error || '';
       }
     } catch {
-      // ignore parse errors
+      // If json() fails, try text() as fallback
+      try {
+        const context = (error as any).context;
+        if (context && typeof context.text === 'function') {
+          const text = await context.text();
+          try {
+            const parsed = JSON.parse(text);
+            message = parsed?.error || '';
+          } catch {
+            message = text || '';
+          }
+        }
+      } catch {
+        // ignore
+      }
     }
 
     if (!message) {
       message = error.message || 'Error de conexión con el servidor';
+    }
+
+    // Clean up generic SDK messages
+    if (message === 'Edge Function returned a non-2xx status code') {
+      message = 'Error del servidor. Intente nuevamente.';
     }
 
     throw new Error(message);

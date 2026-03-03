@@ -68,23 +68,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let mounted = true;
 
+    // 1. Set up the auth state listener (non-blocking)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
         if (!mounted) return;
         setSession(session);
         const currentUser = session?.user ?? null;
         setUser(currentUser);
 
         if (currentUser) {
-          // Fetch profile/roles BEFORE setting loading=false
-          await fetchProfileAndRoles(currentUser.id);
+          // IMPORTANT: Don't await inside onAuthStateChange to avoid deadlocks.
+          // Use setTimeout(0) to defer DB queries to the next tick,
+          // allowing the auth state to fully settle first.
+          setTimeout(() => {
+            if (!mounted) return;
+            fetchProfileAndRoles(currentUser.id).finally(() => {
+              if (mounted) {
+                setLoading(false);
+                loadingRef.current = false;
+              }
+            });
+          }, 0);
         } else {
           setProfile(null);
           setRoles([]);
           setMustChangePassword(false);
-        }
-
-        if (mounted) {
           setLoading(false);
           loadingRef.current = false;
         }
@@ -103,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
         loadingRef.current = false;
       }
-    }, 10000);
+    }, 15000);
 
     return () => {
       mounted = false;

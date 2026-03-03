@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 import { clearAllOfflineData } from '@/lib/offlineDb';
@@ -40,68 +40,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  // Single loading flag: true until auth + profile/roles are fully resolved
   const [loading, setLoading] = useState(true);
   const [mustChangePassword, setMustChangePassword] = useState(false);
 
-  const fetchProfileAndRoles = async (userId: string) => {
+  const fetchProfileAndRoles = useCallback(async (userId: string) => {
     try {
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-      
-      if (profileData) {
-        setProfile(profileData as Profile);
-        setMustChangePassword(!!(profileData as any).must_change_password);
+      const [profileRes, rolesRes] = await Promise.all([
+        supabase.from('profiles').select('*').eq('user_id', userId).single(),
+        supabase.from('user_roles').select('role').eq('user_id', userId),
+      ]);
+
+      if (profileRes.data) {
+        setProfile(profileRes.data as Profile);
+        setMustChangePassword(!!(profileRes.data as any).must_change_password);
       }
 
-      const { data: rolesData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
-
-      if (rolesData) {
-        setRoles(rolesData.map(r => r.role as AppRole));
+      if (rolesRes.data) {
+        setRoles(rolesRes.data.map(r => r.role as AppRole));
       }
     } catch (err) {
       console.error('Error fetching profile/roles:', err);
     }
-  };
-
-  // Fetch profile/roles whenever user changes
-  useEffect(() => {
-    if (user) {
-      fetchProfileAndRoles(user.id);
-    } else {
-      setProfile(null);
-      setRoles([]);
-    }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
-    let initialSessionHandled = false;
+    let mounted = true;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
+        if (!mounted) return;
         setSession(session);
-        setUser(session?.user ?? null);
-        initialSessionHandled = true;
-        setLoading(false);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+
+        if (currentUser) {
+          // Fetch profile/roles BEFORE setting loading=false
+          await fetchProfileAndRoles(currentUser.id);
+        } else {
+          setProfile(null);
+          setRoles([]);
+          setMustChangePassword(false);
+        }
+
+        if (mounted) setLoading(false);
       }
     );
 
+    // Safety timeout for stale sessions
     const timeout = setTimeout(() => {
-      if (!initialSessionHandled) {
+      if (mounted && loading) {
         console.warn('Auth session check timed out, clearing stale session');
         supabase.auth.signOut().catch(() => {});
         setSession(null);
         setUser(null);
+        setProfile(null);
+        setRoles([]);
         setLoading(false);
       }
-    }, 5000);
+    }, 8000);
 
     return () => {
+      mounted = false;
       clearTimeout(timeout);
       subscription.unsubscribe();
     };
@@ -122,7 +122,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    // Clear offline data on logout to prevent data exposure
     try {
       await clearAllOfflineData();
     } catch (e) {
@@ -131,6 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
     setProfile(null);
     setRoles([]);
+    setMustChangePassword(false);
   };
 
   const refreshProfile = async () => {

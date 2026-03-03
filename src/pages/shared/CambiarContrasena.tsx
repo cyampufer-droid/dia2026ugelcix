@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,11 +11,23 @@ import { KeyRound, Loader2, ShieldAlert } from 'lucide-react';
 import diaLogo from '@/assets/dia_ugel_cix_2026.png';
 
 const CambiarContrasena = () => {
-  const { user, profile, primaryRole, refreshProfile } = useAuth();
+  const { user, profile, primaryRole, refreshProfile, loading } = useAuth();
   const navigate = useNavigate();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Redirect to login if not authenticated
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
   const handleChange = async (e: React.FormEvent) => {
     e.preventDefault();

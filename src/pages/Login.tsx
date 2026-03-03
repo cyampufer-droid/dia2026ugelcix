@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { BookOpen, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getUserFriendlyError } from '@/lib/errorMapper';
@@ -15,6 +16,7 @@ const Login = () => {
   const [usuario, setUsuario] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   const { signIn, user, primaryRole, loading, mustChangePassword } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -41,6 +43,10 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!acceptPrivacy) {
+      toast({ title: 'Aviso de privacidad', description: 'Debe aceptar el tratamiento de datos personales para continuar.', variant: 'destructive' });
+      return;
+    }
     setIsLoading(true);
     try {
       // If user enters 8-digit DNI, convert to auto-generated email
@@ -114,7 +120,13 @@ const Login = () => {
                   <Label htmlFor="login-pass">Contraseña</Label>
                   <Input id="login-pass" type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••" />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <div className="flex items-start gap-2">
+                  <Checkbox id="privacy-consent" checked={acceptPrivacy} onCheckedChange={(v) => setAcceptPrivacy(!!v)} className="mt-0.5" />
+                  <Label htmlFor="privacy-consent" className="text-xs text-muted-foreground leading-tight cursor-pointer">
+                    Acepto el tratamiento de mis datos personales conforme a la <strong>Ley N.° 29733</strong> – Ley de Protección de Datos Personales. Los datos recopilados serán utilizados exclusivamente con fines educativos y de diagnóstico por la UGEL Chiclayo.
+                  </Label>
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading || !acceptPrivacy}>
                   {isLoading ? 'Ingresando…' : 'Ingresar'}
                 </Button>
               </form>

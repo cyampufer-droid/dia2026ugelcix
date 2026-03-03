@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -17,6 +17,53 @@ interface Student {
   dni: string;
 }
 
+// Memoized cell to prevent re-renders across the entire grid
+const RespuestaCell = memo(({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
+  <td className="py-1 px-0.5 text-center">
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      className="w-9 h-7 text-xs rounded border border-border bg-background text-center focus:ring-1 focus:ring-primary focus:border-primary"
+    >
+      <option value="">–</option>
+      {opciones.map(o => <option key={o} value={o}>{o}</option>)}
+    </select>
+  </td>
+));
+RespuestaCell.displayName = 'RespuestaCell';
+
+// Memoized row
+const StudentRow = memo(({ student, answers, numPreguntas, onRespuesta }: {
+  student: Student;
+  answers: string[];
+  numPreguntas: number;
+  onRespuesta: (studentId: string, idx: number, val: string) => void;
+}) => {
+  const answered = answers.filter(a => a !== '' && a !== undefined).length;
+  return (
+    <tr className="border-b border-border hover:bg-muted/30">
+      <td className="sticky left-0 bg-card py-1.5 px-3 z-10 border-r border-border">
+        <div className="text-xs font-medium text-foreground truncate max-w-[170px]">{student.nombre_completo}</div>
+        <div className="text-[10px] text-muted-foreground font-mono">{student.dni}</div>
+      </td>
+      {Array.from({ length: numPreguntas }, (_, idx) => (
+        <RespuestaCell
+          key={idx}
+          value={answers[idx] || ''}
+          onChange={(val) => onRespuesta(student.id, idx, val)}
+        />
+      ))}
+      <td className="py-1 px-2 text-center">
+        <span className={`text-xs font-bold ${answered === numPreguntas ? 'text-accent' : 'text-muted-foreground'}`}>
+          {answered}/{numPreguntas}
+        </span>
+        {answered === numPreguntas && <CheckCircle2 className="h-3 w-3 text-accent inline ml-0.5" />}
+      </td>
+    </tr>
+  );
+});
+StudentRow.displayName = 'StudentRow';
+
 const Digitacion = () => {
   const [numPreguntas] = useState(20);
   const [respuestas, setRespuestas] = useState<Record<string, string[]>>({});
@@ -27,7 +74,6 @@ const Digitacion = () => {
   const { profile } = useAuth();
   const { isOnline, pendingCount, isSyncing, syncToCloud, refreshPendingCount } = useOfflineSync();
 
-  // Load students for this docente's grado_seccion
   useEffect(() => {
     const loadStudents = async () => {
       if (!profile?.grado_seccion_id) return;
@@ -36,14 +82,11 @@ const Digitacion = () => {
         .select('id, nombre_completo, dni')
         .eq('grado_seccion_id', profile.grado_seccion_id)
         .order('nombre_completo');
-      if (data && data.length > 0) {
-        setStudents(data);
-      }
+      if (data && data.length > 0) setStudents(data);
     };
     loadStudents();
   }, [profile?.grado_seccion_id]);
 
-  // Load any saved offline data
   useEffect(() => {
     const loadOffline = async () => {
       const saved = await getAllDigitaciones();
@@ -84,7 +127,6 @@ const Digitacion = () => {
     }
   };
 
-  // Use mock students if no real data
   const displayStudents = students.length > 0 ? students : [
     { id: 'demo-1', nombre_completo: 'García López, Ana María', dni: '71234567' },
     { id: 'demo-2', nombre_completo: 'Pérez Torres, Carlos', dni: '71234568' },
@@ -93,46 +135,28 @@ const Digitacion = () => {
 
   return (
     <div className="space-y-4 animate-fade-in">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-foreground">Grilla de Digitación</h1>
-          <p className="text-sm text-muted-foreground">Ingrese las respuestas de cada estudiante</p>
+          <p className="text-sm text-muted-foreground">Ingrese las respuestas de cada estudiante (A, B, C, D)</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Connection status */}
           <Badge variant={isOnline ? 'default' : 'destructive'} className="gap-1">
             {isOnline ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
             {isOnline ? 'En línea' : 'Sin conexión'}
           </Badge>
-
-          {/* Pending count */}
-          {pendingCount > 0 && (
-            <Badge variant="secondary" className="gap-1">
-              {pendingCount} pendientes
-            </Badge>
-          )}
-
-          {/* Save locally */}
+          {pendingCount > 0 && <Badge variant="secondary" className="gap-1">{pendingCount} pendientes</Badge>}
           <Button size="sm" variant="outline" onClick={handleSaveLocal} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             <span className="hidden sm:inline ml-1">Guardar</span>
           </Button>
-
-          {/* Sync to cloud */}
-          <Button
-            size="sm"
-            onClick={syncToCloud}
-            disabled={!isOnline || isSyncing || pendingCount === 0}
-            className="gap-1"
-          >
+          <Button size="sm" onClick={syncToCloud} disabled={!isOnline || isSyncing || pendingCount === 0} className="gap-1">
             {isSyncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudUpload className="h-4 w-4" />}
             <span className="hidden sm:inline">Sincronizar</span>
           </Button>
         </div>
       </div>
 
-      {/* Grid */}
       <Card className="shadow-card">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -143,55 +167,29 @@ const Digitacion = () => {
                     Estudiante
                   </th>
                   {Array.from({ length: numPreguntas }, (_, i) => (
-                    <th key={i} className="py-2 px-1 text-center font-medium text-muted-foreground min-w-[40px]">
-                      P{i + 1}
-                    </th>
+                    <th key={i} className="py-2 px-1 text-center font-medium text-muted-foreground min-w-[40px]">P{i + 1}</th>
                   ))}
-                  <th className="py-2 px-2 text-center font-medium text-muted-foreground min-w-[50px]">
-                    Total
-                  </th>
+                  <th className="py-2 px-2 text-center font-medium text-muted-foreground min-w-[50px]">Total</th>
                 </tr>
               </thead>
               <tbody>
-                {displayStudents.map((student) => {
-                  const answers = respuestas[student.id] || [];
-                  const answered = answers.filter(a => a !== '' && a !== undefined).length;
-                  return (
-                    <tr key={student.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                      <td className="sticky left-0 bg-card py-1.5 px-3 z-10 border-r border-border">
-                        <div className="text-xs font-medium text-foreground truncate max-w-[170px]">{student.nombre_completo}</div>
-                        <div className="text-[10px] text-muted-foreground font-mono">{student.dni}</div>
-                      </td>
-                      {Array.from({ length: numPreguntas }, (_, idx) => (
-                        <td key={idx} className="py-1 px-0.5 text-center">
-                          <select
-                            value={answers[idx] || ''}
-                            onChange={e => handleRespuesta(student.id, idx, e.target.value)}
-                            className="w-9 h-7 text-xs rounded border border-border bg-background text-center focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
-                          >
-                            <option value="">–</option>
-                            {opciones.map(o => <option key={o} value={o}>{o}</option>)}
-                          </select>
-                        </td>
-                      ))}
-                      <td className="py-1 px-2 text-center">
-                        <span className={`text-xs font-bold ${answered === numPreguntas ? 'text-accent' : 'text-muted-foreground'}`}>
-                          {answered}/{numPreguntas}
-                        </span>
-                        {answered === numPreguntas && <CheckCircle2 className="h-3 w-3 text-accent inline ml-0.5" />}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {displayStudents.map((student) => (
+                  <StudentRow
+                    key={student.id}
+                    student={student}
+                    answers={respuestas[student.id] || []}
+                    numPreguntas={numPreguntas}
+                    onRespuesta={handleRespuesta}
+                  />
+                ))}
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
 
-      {/* Offline info banner */}
       {!isOnline && (
-        <div className="rounded-lg bg-warning/10 border border-warning/30 p-3 text-sm text-warning-foreground flex items-center gap-2">
+        <div className="rounded-lg bg-secondary/10 border border-secondary/30 p-3 text-sm text-foreground flex items-center gap-2">
           <WifiOff className="h-4 w-4 text-secondary shrink-0" />
           <span>Trabajando sin conexión. Los datos se guardan en el dispositivo. Sincronice cuando tenga internet.</span>
         </div>

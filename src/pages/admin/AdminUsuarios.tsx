@@ -9,9 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { UserPlus, Search, Pencil, Trash2, Loader2, RefreshCw } from 'lucide-react';
+import { UserPlus, Search, Pencil, Trash2, Loader2, RefreshCw, Download } from 'lucide-react';
 import { getUserFriendlyError } from '@/lib/errorMapper';
 import BulkUserUpload from '@/components/admin/BulkUserUpload';
+import * as XLSX from 'xlsx';
 
 const roles = [
   { value: 'director', label: 'Director' },
@@ -40,6 +41,14 @@ interface UserRow {
   nombre_completo: string;
   roles: string[];
   created_at: string;
+  institucion_nombre?: string;
+  distrito?: string;
+  centro_poblado?: string;
+  direccion?: string;
+  tipo_gestion?: string;
+  nivel?: string;
+  grado?: string;
+  seccion?: string;
 }
 
 const AdminUsuarios = () => {
@@ -189,6 +198,27 @@ const AdminUsuarios = () => {
     );
   });
 
+  const downloadExcel = () => {
+    const data = filteredUsers.map((u) => ({
+      'Distrito': u.distrito || '',
+      'Centro Poblado': u.centro_poblado || '',
+      'Dirección': u.direccion || '',
+      'Gestión': u.tipo_gestion || '',
+      'Institución Educativa': u.institucion_nombre || '',
+      'Nivel': u.nivel || '',
+      'Grado': u.grado || '',
+      'Sección': u.seccion || '',
+      'DNI': u.dni,
+      'Nombre Completo': u.nombre_completo,
+      'Correo Electrónico': u.email,
+      'Rol': u.roles.map((r) => roleLabelMap[r] || r).join(', '),
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
+    XLSX.writeFile(wb, 'usuarios_dia2026.xlsx');
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -197,6 +227,9 @@ const AdminUsuarios = () => {
           <p className="text-muted-foreground">Registre directores, docentes, estudiantes y demás personal</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={downloadExcel} disabled={filteredUsers.length === 0}>
+            <Download className="h-4 w-4 mr-2" />Descargar Excel
+          </Button>
           <BulkUserUpload onComplete={fetchUsers} />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>

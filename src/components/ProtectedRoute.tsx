@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
-  const { user, roles, loading } = useAuth();
+  const { user, roles, loading, mustChangePassword } = useAuth();
 
   if (loading) {
     return (
@@ -20,6 +20,8 @@ const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
   }
 
   if (!user) return <Navigate to="/login" replace />;
+
+  if (mustChangePassword) return <Navigate to="/cambiar-contrasena" replace />;
 
   const hasAccess = roles.some(role => allowedRoles.includes(role));
   if (!hasAccess) return <Navigate to="/" replace />;

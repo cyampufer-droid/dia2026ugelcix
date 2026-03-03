@@ -15,13 +15,17 @@ const Login = () => {
   const [usuario, setUsuario] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, user, primaryRole, loading } = useAuth();
+  const { signIn, user, primaryRole, loading, mustChangePassword } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // Redirect authenticated users away from login
   useEffect(() => {
     if (!loading && user && primaryRole) {
+      if (mustChangePassword) {
+        navigate('/cambiar-contrasena', { replace: true });
+        return;
+      }
       const roleRoutes: Record<string, string> = {
         administrador: '/admin',
         director: '/director',
@@ -33,7 +37,7 @@ const Login = () => {
       };
       navigate(roleRoutes[primaryRole] || '/admin', { replace: true });
     }
-  }, [loading, user, primaryRole, navigate]);
+  }, [loading, user, primaryRole, navigate, mustChangePassword]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

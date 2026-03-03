@@ -19,9 +19,11 @@ interface AuthContextType {
   profile: Profile | null;
   roles: AppRole[];
   loading: boolean;
+  mustChangePassword: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, metadata: Record<string, string>) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
   primaryRole: AppRole | null;
 }
 
@@ -39,6 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
 
   const fetchProfileAndRoles = async (userId: string) => {
     try {
@@ -50,6 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (profileData) {
         setProfile(profileData as Profile);
+        setMustChangePassword(!!(profileData as any).must_change_password);
       }
 
       const { data: rolesData } = await supabase
@@ -129,13 +133,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setRoles([]);
   };
 
+  const refreshProfile = async () => {
+    if (user) await fetchProfileAndRoles(user.id);
+  };
+
   const roleHierarchy: AppRole[] = ['administrador', 'especialista', 'director', 'subdirector', 'docente', 'padre', 'estudiante'];
   const primaryRole = roles.length > 0
     ? roleHierarchy.find(r => roles.includes(r)) || roles[0]
     : null;
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, roles, loading, signIn, signUp, signOut, primaryRole }}>
+    <AuthContext.Provider value={{ user, session, profile, roles, loading, mustChangePassword, signIn, signUp, signOut, refreshProfile, primaryRole }}>
       {children}
     </AuthContext.Provider>
   );

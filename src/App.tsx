@@ -30,6 +30,7 @@ const EstudianteResultados = lazy(() => import("./pages/estudiante/EstudianteRes
 const EspecialistaDashboard = lazy(() => import("./pages/especialista/EspecialistaDashboard"));
 const MiPerfil = lazy(() => import("./pages/shared/MiPerfil"));
 const GuiaUsuario = lazy(() => import("./pages/shared/GuiaUsuario"));
+const CambiarContrasena = lazy(() => import("./pages/shared/CambiarContrasena"));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
@@ -58,6 +59,7 @@ const App = () => (
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/login" element={<Login />} />
+                <Route path="/cambiar-contrasena" element={<CambiarContrasena />} />
                 <Route path="/" element={<Index />} />
 
                 {/* Admin routes */}

@@ -128,6 +128,7 @@ export type Database = {
           grado_seccion_id: string | null
           id: string
           institucion_id: string | null
+          must_change_password: boolean
           nombre_completo: string
           updated_at: string
           user_id: string | null
@@ -138,6 +139,7 @@ export type Database = {
           grado_seccion_id?: string | null
           id?: string
           institucion_id?: string | null
+          must_change_password?: boolean
           nombre_completo: string
           updated_at?: string
           user_id?: string | null
@@ -148,6 +150,7 @@ export type Database = {
           grado_seccion_id?: string | null
           id?: string
           institucion_id?: string | null
+          must_change_password?: boolean
           nombre_completo?: string
           updated_at?: string
           user_id?: string | null

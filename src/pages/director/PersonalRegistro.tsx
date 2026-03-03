@@ -148,16 +148,29 @@ const PersonalRegistro = () => {
       toast({ title: 'Error', description: 'Seleccione un tipo de personal', variant: 'destructive' });
       return;
     }
-    if (!/^\d{8}$/.test(dni)) {
+    const trimmedDni = dni.trim();
+    if (!/^\d{8}$/.test(trimmedDni)) {
       toast({ title: 'Error', description: 'DNI debe ser exactamente 8 dígitos', variant: 'destructive' });
       return;
     }
+
+    // Pre-check: detect if DNI already exists in loaded personnel list
+    const existing = personal.find(p => p.dni === trimmedDni);
+    if (existing) {
+      toast({
+        title: 'DNI ya registrado',
+        description: `${existing.nombre_completo} ya está registrado con este DNI. Use el botón de editar para modificar sus datos.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const email = `${dni.trim()}@dia.ugel.local`;
-      const password = dni.trim();
+      const email = `${trimmedDni}@dia.ugel.local`;
+      const password = trimmedDni;
       await invokeEdgeFunction('create-user', {
-        email, password, dni, nombre_completo: nombre, role: rol,
+        email, password, dni: trimmedDni, nombre_completo: nombre, role: rol,
         institucion_id: profile?.institucion_id || undefined,
         grado_seccion_id: selectedGradoSeccion || undefined,
       });
@@ -167,7 +180,12 @@ const PersonalRegistro = () => {
       setRol(''); setDni(''); setNombre(''); setSelectedGradoSeccion('');
       fetchPersonal();
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message || 'Error al registrar personal', variant: 'destructive' });
+      const msg = err.message || 'Error al registrar personal';
+      // Translate common backend errors to actionable messages
+      const friendlyMsg = msg.includes('ya está registrado')
+        ? `${msg} Use el botón de editar si necesita modificar sus datos.`
+        : msg;
+      toast({ title: 'Error al registrar', description: friendlyMsg, variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }

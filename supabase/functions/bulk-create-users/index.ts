@@ -157,7 +157,9 @@ Deno.serve(async (req) => {
 
           // Update profile with institucion_id and grado_seccion_id
           const profileUpdate: Record<string, string> = {};
-          if (default_institucion_id) profileUpdate.institucion_id = default_institucion_id;
+          // Per-user institucion_id takes priority, then fallback to default
+          const instId = u.institucion_id || default_institucion_id;
+          if (instId) profileUpdate.institucion_id = instId;
           if (u.grado_seccion_id) profileUpdate.grado_seccion_id = u.grado_seccion_id;
           if (Object.keys(profileUpdate).length > 0) {
             await adminClient.from("profiles").update(profileUpdate).eq("user_id", newUser.user.id);

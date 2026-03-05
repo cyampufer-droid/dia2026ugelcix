@@ -1,74 +1,35 @@
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
 import { saveDigitacionOffline, getAllDigitaciones } from '@/lib/offlineDb';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Save, Wifi, WifiOff, CloudUpload, Loader2, CheckCircle2 } from 'lucide-react';
+import { Save, Wifi, WifiOff, CloudUpload, Loader2, BookOpen, Calculator, Heart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import DigitacionGrid, { type Student } from '@/components/docente/DigitacionGrid';
 
-const opciones = ['A', 'B', 'C', 'D'];
+const NUM_PREGUNTAS = 20;
 
-interface Student {
-  id: string;
-  nombre_completo: string;
-  dni: string;
-}
+const EVALUACIONES = [
+  { key: 'matematica', label: 'Matemática', icon: Calculator },
+  { key: 'comprension_lectora', label: 'Comprensión Lectora', icon: BookOpen },
+  { key: 'socioemocional', label: 'Habilidades Socioemocionales', icon: Heart },
+] as const;
 
-// Memoized cell to prevent re-renders across the entire grid
-const RespuestaCell = memo(({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
-  <td className="py-1 px-0.5 text-center">
-    <select
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      className="w-9 h-7 text-xs rounded border border-border bg-background text-center focus:ring-1 focus:ring-primary focus:border-primary"
-    >
-      <option value="">–</option>
-      {opciones.map(o => <option key={o} value={o}>{o}</option>)}
-    </select>
-  </td>
-));
-RespuestaCell.displayName = 'RespuestaCell';
-
-// Memoized row
-const StudentRow = memo(({ student, answers, numPreguntas, onRespuesta }: {
-  student: Student;
-  answers: string[];
-  numPreguntas: number;
-  onRespuesta: (studentId: string, idx: number, val: string) => void;
-}) => {
-  const answered = answers.filter(a => a !== '' && a !== undefined).length;
-  return (
-    <tr className="border-b border-border hover:bg-muted/30">
-      <td className="sticky left-0 bg-card py-1.5 px-3 z-10 border-r border-border">
-        <div className="text-xs font-medium text-foreground truncate max-w-[170px]">{student.nombre_completo}</div>
-        <div className="text-[10px] text-muted-foreground font-mono">{student.dni}</div>
-      </td>
-      {Array.from({ length: numPreguntas }, (_, idx) => (
-        <RespuestaCell
-          key={idx}
-          value={answers[idx] || ''}
-          onChange={(val) => onRespuesta(student.id, idx, val)}
-        />
-      ))}
-      <td className="py-1 px-2 text-center">
-        <span className={`text-xs font-bold ${answered === numPreguntas ? 'text-accent' : 'text-muted-foreground'}`}>
-          {answered}/{numPreguntas}
-        </span>
-        {answered === numPreguntas && <CheckCircle2 className="h-3 w-3 text-accent inline ml-0.5" />}
-      </td>
-    </tr>
-  );
-});
-StudentRow.displayName = 'StudentRow';
+type EvalKey = typeof EVALUACIONES[number]['key'];
 
 const Digitacion = () => {
-  const [numPreguntas] = useState(20);
-  const [respuestas, setRespuestas] = useState<Record<string, string[]>>({});
+  // respuestas keyed by evaluacion then by student
+  const [respuestas, setRespuestas] = useState<Record<EvalKey, Record<string, string[]>>>({
+    matematica: {},
+    comprension_lectora: {},
+    socioemocional: {},
+  });
   const [students, setStudents] = useState<Student[]>([]);
-  const [evaluacionId, setEvaluacionId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<EvalKey>('matematica');
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
   const { profile } = useAuth();
@@ -90,35 +51,50 @@ const Digitacion = () => {
   useEffect(() => {
     const loadOffline = async () => {
       const saved = await getAllDigitaciones();
-      const restored: Record<string, string[]> = {};
+      const restored: Record<EvalKey, Record<string, string[]>> = {
+        matematica: {},
+        comprension_lectora: {},
+        socioemocional: {},
+      };
       for (const record of saved) {
-        restored[record.estudiante_id] = record.respuestas;
+        // evaluacion_id format: "evalKey" or "evalKey_pending"
+        const evalKey = record.evaluacion_id.replace('_pending', '') as EvalKey;
+        if (evalKey in restored) {
+          restored[evalKey][record.estudiante_id] = record.respuestas;
+        }
       }
-      if (Object.keys(restored).length > 0) {
-        setRespuestas(prev => ({ ...restored, ...prev }));
-      }
+      setRespuestas(prev => ({
+        matematica: { ...restored.matematica, ...prev.matematica },
+        comprension_lectora: { ...restored.comprension_lectora, ...prev.comprension_lectora },
+        socioemocional: { ...restored.socioemocional, ...prev.socioemocional },
+      }));
     };
     loadOffline();
   }, []);
 
-  const handleRespuesta = useCallback((studentId: string, preguntaIdx: number, valor: string) => {
+  const handleRespuesta = useCallback((evalKey: EvalKey, studentId: string, preguntaIdx: number, valor: string) => {
     setRespuestas(prev => {
-      const current = prev[studentId] || Array(numPreguntas).fill('');
+      const evalData = prev[evalKey] || {};
+      const current = evalData[studentId] || Array(NUM_PREGUNTAS).fill('');
       const updated = [...current];
       updated[preguntaIdx] = valor;
-      return { ...prev, [studentId]: updated };
+      return { ...prev, [evalKey]: { ...evalData, [studentId]: updated } };
     });
-  }, [numPreguntas]);
+  }, []);
 
   const handleSaveLocal = async () => {
     setSaving(true);
     try {
-      const evalId = evaluacionId || 'pending';
-      for (const [studentId, answers] of Object.entries(respuestas)) {
-        await saveDigitacionOffline(studentId, evalId, answers);
+      let totalRecords = 0;
+      for (const evalDef of EVALUACIONES) {
+        const evalData = respuestas[evalDef.key];
+        for (const [studentId, answers] of Object.entries(evalData)) {
+          await saveDigitacionOffline(studentId, `${evalDef.key}_pending`, answers);
+          totalRecords++;
+        }
       }
       await refreshPendingCount();
-      toast({ title: '💾 Guardado localmente', description: `${Object.keys(respuestas).length} registros guardados en el dispositivo.` });
+      toast({ title: '💾 Guardado localmente', description: `${totalRecords} registros guardados en el dispositivo.` });
     } catch (err) {
       console.error(err);
       toast({ title: 'Error al guardar', variant: 'destructive' });
@@ -133,12 +109,25 @@ const Digitacion = () => {
     { id: 'demo-3', nombre_completo: 'Mendoza Ríos, Lucía', dni: '71234569' },
   ];
 
+  // Calculate progress per evaluation
+  const getProgress = (evalKey: EvalKey) => {
+    const evalData = respuestas[evalKey];
+    const total = displayStudents.length * NUM_PREGUNTAS;
+    if (total === 0) return 0;
+    let filled = 0;
+    for (const s of displayStudents) {
+      const answers = evalData[s.id] || [];
+      filled += answers.filter(a => a !== '' && a !== undefined).length;
+    }
+    return Math.round((filled / total) * 100);
+  };
+
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Grilla de Digitación</h1>
-          <p className="text-sm text-muted-foreground">Ingrese las respuestas de cada estudiante (A, B, C, D)</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Digitación de Respuestas</h1>
+          <p className="text-sm text-muted-foreground">Registre las respuestas de cada evaluación de entrada (A, B, C, D)</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant={isOnline ? 'default' : 'destructive'} className="gap-1">
@@ -157,36 +146,41 @@ const Digitacion = () => {
         </div>
       </div>
 
-      <Card className="shadow-card">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead className="bg-muted sticky top-0 z-20">
-                <tr>
-                  <th className="sticky left-0 bg-muted py-2 px-3 text-left font-medium text-muted-foreground min-w-[180px] z-30 border-r border-border">
-                    Estudiante
-                  </th>
-                  {Array.from({ length: numPreguntas }, (_, i) => (
-                    <th key={i} className="py-2 px-1 text-center font-medium text-muted-foreground min-w-[40px]">P{i + 1}</th>
-                  ))}
-                  <th className="py-2 px-2 text-center font-medium text-muted-foreground min-w-[50px]">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayStudents.map((student) => (
-                  <StudentRow
-                    key={student.id}
-                    student={student}
-                    answers={respuestas[student.id] || []}
-                    numPreguntas={numPreguntas}
-                    onRespuesta={handleRespuesta}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as EvalKey)}>
+        <TabsList className="w-full grid grid-cols-3 h-auto">
+          {EVALUACIONES.map(ev => {
+            const Icon = ev.icon;
+            const progress = getProgress(ev.key);
+            return (
+              <TabsTrigger key={ev.key} value={ev.key} className="flex flex-col sm:flex-row items-center gap-1 py-2 text-xs sm:text-sm">
+                <Icon className="h-4 w-4" />
+                <span className="hidden sm:inline">{ev.label}</span>
+                <span className="sm:hidden">{ev.label.split(' ')[0]}</span>
+                {progress > 0 && (
+                  <Badge variant={progress === 100 ? 'default' : 'secondary'} className="text-[10px] px-1.5 py-0 ml-1">
+                    {progress}%
+                  </Badge>
+                )}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+
+        {EVALUACIONES.map(ev => (
+          <TabsContent key={ev.key} value={ev.key} className="mt-3">
+            <Card className="shadow-card">
+              <CardContent className="p-0">
+                <DigitacionGrid
+                  students={displayStudents}
+                  respuestas={respuestas[ev.key]}
+                  numPreguntas={NUM_PREGUNTAS}
+                  onRespuesta={(studentId, idx, val) => handleRespuesta(ev.key, studentId, idx, val)}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ))}
+      </Tabs>
 
       {!isOnline && (
         <div className="rounded-lg bg-secondary/10 border border-secondary/30 p-3 text-sm text-foreground flex items-center gap-2">

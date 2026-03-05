@@ -11,6 +11,7 @@ interface Profile {
   nombre_completo: string;
   institucion_id: string | null;
   grado_seccion_id: string | null;
+  especialidad: string | null;
 }
 
 interface AuthContextType {

@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { email, password, dni, nombre_completo, role, institucion_id, grado_seccion_id } = body;
+    const { email, password, dni, nombre_completo, role, institucion_id, grado_seccion_id, especialidad } = body;
 
     if (!email || !password || !dni || !nombre_completo) {
       return jsonResponse({ error: "Faltan campos obligatorios" }, 400);
@@ -121,11 +121,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update profile with institucion_id and grado_seccion_id if provided
-    if (newUser.user && (institucion_id || grado_seccion_id)) {
+    // Update profile with institucion_id, grado_seccion_id and especialidad if provided
+    if (newUser.user && (institucion_id || grado_seccion_id || especialidad)) {
       const updateData: Record<string, string> = {};
       if (institucion_id) updateData.institucion_id = institucion_id;
       if (grado_seccion_id) updateData.grado_seccion_id = grado_seccion_id;
+      if (especialidad) updateData.especialidad = especialidad;
 
       const { error: profileError } = await adminClient
         .from("profiles")

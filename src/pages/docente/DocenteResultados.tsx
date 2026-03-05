@@ -6,11 +6,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Calculator, BookOpen, Heart } from 'lucide-react';
 
-const AREAS = [
+const ALL_AREAS = [
   { key: 'Matemática', label: 'Matemática', icon: Calculator },
   { key: 'Comprensión Lectora', label: 'Comprensión Lectora', icon: BookOpen },
   { key: 'Habilidades Socioemocionales', label: 'Socioemocional', icon: Heart },
 ] as const;
+
+const ESPECIALIDAD_AREA_MAP: Record<string, string> = {
+  'Matemática': 'Matemática',
+  'Comunicación': 'Comprensión Lectora',
+  'DPCC': 'Habilidades Socioemocionales',
+};
 
 const nivelColor: Record<string, string> = {
   'En Inicio': 'bg-nivel-inicio text-destructive-foreground',
@@ -30,11 +36,29 @@ const DocenteResultados = () => {
   const { profile } = useAuth();
   const [resultsByArea, setResultsByArea] = useState<Record<string, ResultRow[]>>({});
   const [loading, setLoading] = useState(true);
+  const [areas, setAreas] = useState(ALL_AREAS as unknown as typeof ALL_AREAS[number][]);
 
   useEffect(() => {
     if (!profile?.grado_seccion_id) return;
     const fetchResults = async () => {
       setLoading(true);
+
+      // Determine if secondary + especialidad
+      const { data: ng } = await supabase
+        .from('niveles_grados')
+        .select('nivel')
+        .eq('id', profile.grado_seccion_id!)
+        .single();
+
+      let filteredAreas = [...ALL_AREAS] as typeof ALL_AREAS[number][];
+      if (ng?.nivel === 'Secundaria' && profile.especialidad) {
+        const allowedArea = ESPECIALIDAD_AREA_MAP[profile.especialidad];
+        if (allowedArea) {
+          filteredAreas = ALL_AREAS.filter(a => a.key === allowedArea) as any;
+        }
+      }
+      setAreas(filteredAreas);
+
       // Get students in this classroom
       const { data: students } = await supabase
         .from('profiles')
@@ -61,7 +85,7 @@ const DocenteResultados = () => {
       const studentMap = Object.fromEntries(students.map(s => [s.id, s]));
 
       const grouped: Record<string, ResultRow[]> = {};
-      for (const area of AREAS) {
+      for (const area of filteredAreas) {
         const areaEvalIds = evaluaciones.filter(e => e.area === area.key).map(e => e.id);
         const areaResults = (resultados || []).filter(r => areaEvalIds.includes(r.evaluacion_id));
         
@@ -88,9 +112,9 @@ const DocenteResultados = () => {
         <p className="text-muted-foreground">Niveles de logro por área de evaluación</p>
       </div>
 
-      <Tabs defaultValue="Matemática" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          {AREAS.map(a => (
+      <Tabs defaultValue={areas[0]?.key || 'Matemática'} className="w-full">
+        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${areas.length}, 1fr)` }}>
+          {areas.map(a => (
             <TabsTrigger key={a.key} value={a.key} className="flex items-center gap-1 text-xs sm:text-sm">
               <a.icon className="h-4 w-4" />
               <span className="hidden sm:inline">{a.label}</span>
@@ -99,7 +123,7 @@ const DocenteResultados = () => {
           ))}
         </TabsList>
 
-        {AREAS.map(area => (
+        {areas.map(area => (
           <TabsContent key={area.key} value={area.key}>
             <Card className="shadow-card">
               <CardHeader><CardTitle>Resultados – {area.label}</CardTitle></CardHeader>

@@ -44,12 +44,19 @@ const roleLabelMap: Record<string, string> = {
   director: 'Director(a)',
 };
 
+const ESPECIALIDADES = [
+  { value: 'Matemática', label: 'Matemática' },
+  { value: 'Comunicación', label: 'Comunicación' },
+  { value: 'DPCC', label: 'Desarrollo Personal, Ciudadanía y Cívica' },
+];
+
 const PersonalRegistro = () => {
   const [open, setOpen] = useState(false);
   const [rol, setRol] = useState('');
   const [dni, setDni] = useState('');
   const [nombre, setNombre] = useState('');
   const [selectedGradoSeccion, setSelectedGradoSeccion] = useState('');
+  const [especialidad, setEspecialidad] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [personal, setPersonal] = useState<PersonalItem[]>([]);
   const [loadingList, setLoadingList] = useState(true);
@@ -169,15 +176,18 @@ const PersonalRegistro = () => {
     try {
       const email = `${trimmedDni}@dia.ugel.local`;
       const password = trimmedDni;
+      const selectedNg = nivelesGrados.find(ng => ng.id === selectedGradoSeccion);
+      const isSecundaria = selectedNg?.nivel === 'Secundaria';
       await invokeEdgeFunction('create-user', {
         email, password, dni: trimmedDni, nombre_completo: nombre, role: rol,
         institucion_id: profile?.institucion_id || undefined,
         grado_seccion_id: selectedGradoSeccion || undefined,
+        especialidad: (rol === 'docente' && isSecundaria && especialidad) ? especialidad : undefined,
       });
 
       toast({ title: 'Personal registrado', description: `${nombre} como ${rol}. Credenciales: DNI como usuario y contraseña.` });
       setOpen(false);
-      setRol(''); setDni(''); setNombre(''); setSelectedGradoSeccion('');
+      setRol(''); setDni(''); setNombre(''); setSelectedGradoSeccion(''); setEspecialidad('');
       fetchPersonal();
     } catch (err: any) {
       const msg = err.message || 'Error al registrar personal';
@@ -334,6 +344,23 @@ const PersonalRegistro = () => {
                   🔑 Contraseña inicial: <strong>DNI</strong>. El usuario deberá cambiarla al ingresar por primera vez.
                 </p>
                 <AulaSelector value={selectedGradoSeccion} onChange={setSelectedGradoSeccion} />
+                {rol === 'docente' && (() => {
+                  const selectedNg = nivelesGrados.find(ng => ng.id === selectedGradoSeccion);
+                  return selectedNg?.nivel === 'Secundaria';
+                })() && (
+                  <div>
+                    <Label>Especialidad (Secundaria)</Label>
+                    <select
+                      value={especialidad}
+                      onChange={e => setEspecialidad(e.target.value)}
+                      required
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="" disabled>Seleccione especialidad</option>
+                      {ESPECIALIDADES.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
+                    </select>
+                  </div>
+                )}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Registrando…' : 'Registrar'}
                 </Button>

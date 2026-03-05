@@ -125,6 +125,7 @@ export type Database = {
         Row: {
           created_at: string
           dni: string
+          especialidad: string | null
           grado_seccion_id: string | null
           id: string
           institucion_id: string | null
@@ -136,6 +137,7 @@ export type Database = {
         Insert: {
           created_at?: string
           dni: string
+          especialidad?: string | null
           grado_seccion_id?: string | null
           id?: string
           institucion_id?: string | null
@@ -147,6 +149,7 @@ export type Database = {
         Update: {
           created_at?: string
           dni?: string
+          especialidad?: string | null
           grado_seccion_id?: string | null
           id?: string
           institucion_id?: string | null

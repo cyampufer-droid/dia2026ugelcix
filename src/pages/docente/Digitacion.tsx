@@ -13,13 +13,19 @@ import DigitacionGrid, { type Student } from '@/components/docente/DigitacionGri
 
 const NUM_PREGUNTAS = 20;
 
-const EVALUACIONES = [
+const ALL_EVALUACIONES = [
   { key: 'matematica', label: 'Matemática', icon: Calculator },
   { key: 'comprension_lectora', label: 'Comprensión Lectora', icon: BookOpen },
   { key: 'socioemocional', label: 'Habilidades Socioemocionales', icon: Heart },
 ] as const;
 
-type EvalKey = typeof EVALUACIONES[number]['key'];
+type EvalKey = typeof ALL_EVALUACIONES[number]['key'];
+
+const ESPECIALIDAD_EVAL_MAP: Record<string, EvalKey> = {
+  'Matemática': 'matematica',
+  'Comunicación': 'comprension_lectora',
+  'DPCC': 'socioemocional',
+};
 
 const Digitacion = () => {
   // respuestas keyed by evaluacion then by student
@@ -29,11 +35,34 @@ const Digitacion = () => {
     socioemocional: {},
   });
   const [students, setStudents] = useState<Student[]>([]);
+  const [evaluaciones, setEvaluaciones] = useState(ALL_EVALUACIONES as unknown as typeof ALL_EVALUACIONES[number][]);
   const [activeTab, setActiveTab] = useState<EvalKey>('matematica');
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
   const { profile } = useAuth();
   const { isOnline, pendingCount, isSyncing, syncToCloud, refreshPendingCount } = useOfflineSync();
+
+  // Determine filtered evaluaciones based on nivel + especialidad
+  useEffect(() => {
+    const determineEvals = async () => {
+      if (!profile?.grado_seccion_id) return;
+      const { data: ng } = await supabase
+        .from('niveles_grados')
+        .select('nivel')
+        .eq('id', profile.grado_seccion_id)
+        .single();
+      
+      if (ng?.nivel === 'Secundaria' && profile.especialidad) {
+        const allowedKey = ESPECIALIDAD_EVAL_MAP[profile.especialidad];
+        if (allowedKey) {
+          const filtered = ALL_EVALUACIONES.filter(e => e.key === allowedKey);
+          setEvaluaciones(filtered as any);
+          setActiveTab(allowedKey);
+        }
+      }
+    };
+    determineEvals();
+  }, [profile?.grado_seccion_id, profile?.especialidad]);
 
   useEffect(() => {
     const loadStudents = async () => {
@@ -86,8 +115,8 @@ const Digitacion = () => {
     setSaving(true);
     try {
       let totalRecords = 0;
-      for (const evalDef of EVALUACIONES) {
-        const evalData = respuestas[evalDef.key];
+      for (const evalDef of evaluaciones) {
+        const evalData = respuestas[evalDef.key as EvalKey];
         for (const [studentId, answers] of Object.entries(evalData)) {
           await saveDigitacionOffline(studentId, `${evalDef.key}_pending`, answers);
           totalRecords++;
@@ -147,8 +176,8 @@ const Digitacion = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as EvalKey)}>
-        <TabsList className="w-full grid grid-cols-3 h-auto">
-          {EVALUACIONES.map(ev => {
+        <TabsList className={`w-full grid h-auto`} style={{ gridTemplateColumns: `repeat(${evaluaciones.length}, 1fr)` }}>
+          {evaluaciones.map(ev => {
             const Icon = ev.icon;
             const progress = getProgress(ev.key);
             return (
@@ -166,7 +195,7 @@ const Digitacion = () => {
           })}
         </TabsList>
 
-        {EVALUACIONES.map(ev => (
+        {evaluaciones.map(ev => (
           <TabsContent key={ev.key} value={ev.key} className="mt-3">
             <Card className="shadow-card">
               <CardContent className="p-0">

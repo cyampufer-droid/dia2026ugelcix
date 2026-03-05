@@ -1,643 +1,922 @@
 import { Button } from '@/components/ui/button';
-import { Printer, ArrowLeft, BookOpen, Shield, Users, School, GraduationCap, UserCog, FileSpreadsheet, BarChart3, ClipboardList } from 'lucide-react';
+import { Printer, ArrowLeft, BookOpen, Shield, Users, School, GraduationCap, UserCog, FileSpreadsheet, BarChart3, ClipboardList, Monitor, Smartphone, Globe, KeyRound, ChevronRight, CheckCircle2, AlertTriangle, XCircle, Download, Eye, HelpCircle, Phone, Mail, MapPin, Clock, Star, Layers, Settings, UserPlus, FileText, PenTool, Award, BookOpenCheck, Headphones, Lock, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import diaLogo from '@/assets/dia_ugel_cix_2026.png';
 import dgpLogo from '@/assets/logo_dgp_ugel_cix.jpg';
+
+/* ──────────── Reusable sub-components ──────────── */
+
+const SectionTitle = ({ id, icon: Icon, number, title }: { id: string; icon: any; number: string; title: string }) => (
+  <h2 id={id} className="text-xl sm:text-2xl font-extrabold flex items-center gap-3 mt-12 mb-6 pb-3 border-b-4 border-secondary print:mt-8">
+    <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-primary-foreground text-sm font-black print:bg-transparent print:border print:border-primary print:text-primary shrink-0">{number}</span>
+    <Icon className="h-6 w-6 text-secondary print:hidden shrink-0" />
+    <span>{title}</span>
+  </h2>
+);
+
+const Tip = ({ emoji = '💡', title, children }: { emoji?: string; title: string; children: React.ReactNode }) => (
+  <div className="bg-accent/10 border-l-4 border-accent rounded-r-xl p-4 my-4">
+    <p className="font-bold text-sm flex items-center gap-2">{emoji} {title}</p>
+    <div className="text-sm mt-1">{children}</div>
+  </div>
+);
+
+const Warning = ({ children }: { children: React.ReactNode }) => (
+  <div className="bg-destructive/10 border-l-4 border-destructive rounded-r-xl p-4 my-4">
+    <p className="font-bold text-sm flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> ¡Importante!</p>
+    <div className="text-sm mt-1">{children}</div>
+  </div>
+);
+
+const StepCard = ({ step, title, description }: { step: number; title: string; description: string }) => (
+  <div className="flex gap-4 items-start">
+    <span className="flex items-center justify-center w-9 h-9 rounded-full bg-secondary text-secondary-foreground font-black text-sm shrink-0 shadow">{step}</span>
+    <div>
+      <p className="font-bold text-sm">{title}</p>
+      <p className="text-sm text-muted-foreground">{description}</p>
+    </div>
+  </div>
+);
+
+const FeatureBox = ({ icon: Icon, title, items, color = 'primary' }: { icon: any; title: string; items: string[]; color?: string }) => (
+  <div className={`rounded-xl border-2 border-${color}/20 bg-${color}/5 p-5`}>
+    <div className="flex items-center gap-2 mb-3">
+      <Icon className={`h-5 w-5 text-${color}`} />
+      <h4 className="font-bold text-sm">{title}</h4>
+    </div>
+    <ul className="text-sm space-y-1.5">
+      {items.map((item, i) => (
+        <li key={i} className="flex items-start gap-2">
+          <CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
+const RoleCard = ({ role, description, functions, color, icon: Icon }: { role: string; description: string; functions: string[]; color: string; icon: any }) => (
+  <div className={`rounded-xl border-2 p-5 ${color}`}>
+    <div className="flex items-center gap-3 mb-3">
+      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+        <Icon className="h-5 w-5 text-primary" />
+      </div>
+      <div>
+        <h4 className="font-bold">{role}</h4>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+    </div>
+    <ul className="text-sm space-y-1">
+      {functions.map((fn, i) => (
+        <li key={i} className="flex items-start gap-2">
+          <ChevronRight className="h-3.5 w-3.5 text-secondary shrink-0 mt-0.5" />
+          <span>{fn}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
+const TroubleshootCard = ({ problem, solutions }: { problem: string; solutions: string[] }) => (
+  <div className="rounded-xl border-2 border-destructive/20 bg-destructive/5 p-5">
+    <h4 className="font-bold text-sm flex items-center gap-2 text-destructive">
+      <XCircle className="h-4 w-4" /> {problem}
+    </h4>
+    <ul className="text-sm mt-3 space-y-1.5">
+      {solutions.map((s, i) => (
+        <li key={i} className="flex items-start gap-2">
+          <CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+          <span>{s}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
+/* ──────────── Main Component ──────────── */
 
 const GuiaUsuario = () => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Toolbar - hidden on print */}
+      {/* Toolbar */}
       <div className="print:hidden sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center justify-between">
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Volver
         </Button>
-        <Button size="sm" onClick={() => window.print()}>
+        <Button size="sm" className="gradient-primary text-primary-foreground" onClick={() => window.print()}>
           <Printer className="h-4 w-4 mr-2" /> Imprimir / Guardar PDF
         </Button>
       </div>
 
-      {/* Document content */}
-      <article className="max-w-4xl mx-auto px-6 py-10 print:px-0 print:py-0 print:max-w-none text-foreground text-sm sm:text-base leading-relaxed [&_p]:mb-3 [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-3 [&_li]:mb-1 [&_h3]:text-base [&_h3]:mt-5 [&_h3]:mb-2 [&_h4]:mt-3 [&_h4]:mb-1 [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs">
-        
-        {/* PORTADA */}
-        <div className="text-center mb-12 print:mb-8 border-b-4 border-primary pb-8">
-          <div className="flex items-center justify-center gap-6 mb-6">
-            <img src={diaLogo} alt="DIA 2026" className="h-24 w-24 object-contain print:h-20 print:w-20" />
-            <img src={dgpLogo} alt="DGP UGEL Chiclayo" className="h-24 w-24 object-contain rounded-full print:h-20 print:w-20" />
+      <article className="max-w-4xl mx-auto px-6 py-10 print:px-0 print:py-0 print:max-w-none text-foreground text-sm sm:text-base leading-relaxed">
+
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  CARÁTULA IMPACTANTE                                       */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <div className="relative min-h-[90vh] flex flex-col items-center justify-center text-center rounded-3xl overflow-hidden mb-8 print:min-h-0 print:rounded-none print:mb-4 gradient-primary text-primary-foreground p-8 sm:p-12">
+          {/* Decorative elements */}
+          <div className="absolute top-0 left-0 w-full h-full opacity-10 print:hidden" style={{
+            backgroundImage: `radial-gradient(circle at 20% 30%, hsl(38 92% 55% / 0.3) 0%, transparent 50%),
+              radial-gradient(circle at 80% 70%, hsl(160 50% 40% / 0.3) 0%, transparent 50%),
+              radial-gradient(circle at 50% 50%, hsl(220 65% 50% / 0.2) 0%, transparent 70%)`
+          }} />
+          <div className="absolute inset-0 print:hidden" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+          }} />
+
+          <div className="relative z-10 space-y-6">
+            {/* Logos */}
+            <div className="flex items-center justify-center gap-6 sm:gap-10 mb-4">
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 shadow-lg">
+                <img src={diaLogo} alt="DIA 2026" className="h-24 sm:h-32 w-24 sm:w-32 object-contain" />
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 shadow-lg">
+                <img src={dgpLogo} alt="DGP UGEL Chiclayo" className="h-24 sm:h-32 w-24 sm:w-32 object-contain rounded-xl" />
+              </div>
+            </div>
+
+            {/* Subtitle */}
+            <div className="inline-block px-6 py-2 rounded-full bg-secondary/90 text-secondary-foreground text-xs sm:text-sm font-bold tracking-wider uppercase shadow-lg">
+              UGEL Chiclayo – Dirección de Gestión Pedagógica
+            </div>
+
+            {/* Main title */}
+            <h1 className="text-3xl sm:text-5xl font-black leading-tight max-w-3xl mx-auto drop-shadow-lg">
+              MANUAL DE USO DE LA HERRAMIENTA TECNOLÓGICA
+            </h1>
+
+            <div className="space-y-2">
+              <p className="text-xl sm:text-3xl font-extrabold text-secondary drop-shadow">
+                Diagnóstico Integral de Aprendizajes
+              </p>
+              <p className="text-5xl sm:text-7xl font-black tracking-tight text-secondary drop-shadow-lg">
+                DIA 2026
+              </p>
+            </div>
+
+            {/* Version badge */}
+            <div className="flex items-center justify-center gap-4 mt-8">
+              <div className="px-4 py-2 rounded-lg bg-white/10 backdrop-blur-sm text-sm">
+                📅 Versión 1.0 – Marzo 2026
+              </div>
+              <div className="px-4 py-2 rounded-lg bg-white/10 backdrop-blur-sm text-sm">
+                🔒 Uso interno institucional
+              </div>
+            </div>
+
+            {/* Decorative bottom */}
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <div className="h-1 w-12 rounded-full bg-secondary" />
+              <Star className="h-4 w-4 text-secondary" />
+              <div className="h-1 w-12 rounded-full bg-secondary" />
+            </div>
           </div>
-          <p className="text-sm font-semibold text-muted-foreground mb-2">UGEL CHICLAYO – DIRECCIÓN DE GESTIÓN PEDAGÓGICA</p>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground leading-tight mb-4 not-prose">
-            GUÍA PARA EL USO CORRECTO DE LA APLICACIÓN TECNOLÓGICA DE DIAGNÓSTICO INTEGRAL DE APRENDIZAJES
-          </h1>
-          <h2 className="text-xl font-bold text-primary not-prose">DIA 2026</h2>
-          <p className="text-sm text-muted-foreground mt-4">Versión 1.0 – Marzo 2026</p>
-          <p className="text-xs text-muted-foreground mt-1">Documento de uso interno – Protección de datos según Ley N.° 29733</p>
         </div>
 
-        {/* ÍNDICE */}
-        <section className="mb-10 print:mb-6 bg-muted/50 rounded-lg p-6 print:bg-transparent print:border print:border-border">
-          <h2 className="text-lg font-bold flex items-center gap-2"><BookOpen className="h-5 w-5 print:hidden" /> ÍNDICE DE CONTENIDOS</h2>
-          <ol className="list-decimal ml-6 space-y-1 text-sm">
-            <li><a href="#introduccion" className="text-primary hover:underline">Introducción y Objetivos</a></li>
-            <li><a href="#requisitos" className="text-primary hover:underline">Requisitos Técnicos</a></li>
-            <li><a href="#acceso" className="text-primary hover:underline">Acceso a la Plataforma</a></li>
-            <li><a href="#roles" className="text-primary hover:underline">Roles y Permisos del Sistema</a></li>
-            <li><a href="#admin" className="text-primary hover:underline">Módulo del Administrador</a></li>
-            <li><a href="#director" className="text-primary hover:underline">Módulo del Director / Subdirector</a></li>
-            <li><a href="#docente" className="text-primary hover:underline">Módulo del Docente</a></li>
-            <li><a href="#estudiante" className="text-primary hover:underline">Módulo del Estudiante</a></li>
-            <li><a href="#especialista" className="text-primary hover:underline">Módulo del Especialista UGEL</a></li>
-            <li><a href="#padre" className="text-primary hover:underline">Módulo del Padre de Familia</a></li>
-            <li><a href="#perfil" className="text-primary hover:underline">Mi Perfil</a></li>
-            <li><a href="#seguridad" className="text-primary hover:underline">Seguridad y Protección de Datos</a></li>
-            <li><a href="#problemas" className="text-primary hover:underline">Solución de Problemas Frecuentes</a></li>
-            <li><a href="#soporte" className="text-primary hover:underline">Soporte Técnico y Contacto</a></li>
-          </ol>
-        </section>
-
-        {/* 1. INTRODUCCIÓN */}
-        <section id="introduccion" className="mb-10">
-          <h2 className="text-xl font-bold border-b-2 border-primary pb-2">1. INTRODUCCIÓN Y OBJETIVOS</h2>
-          <p>
-            La plataforma <strong>Diagnóstico Integral de Aprendizajes (DIA) 2026</strong> es una herramienta tecnológica desarrollada por la <strong>Dirección de Gestión Pedagógica (DGP)</strong> de la <strong>UGEL Chiclayo</strong> para medir, registrar y analizar los niveles de aprendizaje de los estudiantes de la provincia de Chiclayo en las áreas de <strong>Matemática, Lectura y Socioemocional</strong>.
-          </p>
-          <h3 className="font-semibold mt-4">Objetivos de la plataforma:</h3>
-          <ul>
-            <li>Aplicar evaluaciones diagnósticas estandarizadas a todos los niveles educativos (Inicial, Primaria y Secundaria).</li>
-            <li>Registrar y digitalizar las respuestas de los estudiantes de manera eficiente.</li>
-            <li>Generar reportes automáticos de niveles de logro por estudiante, aula, grado e institución.</li>
-            <li>Facilitar la toma de decisiones pedagógicas basadas en evidencia.</li>
-            <li>Garantizar la confidencialidad de los datos conforme a la Ley N.° 29733.</li>
-          </ul>
-
-          <h3 className="font-semibold mt-4">Áreas evaluadas:</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse not-prose">
-              <thead>
-                <tr className="bg-primary/10">
-                  <th className="border border-border px-3 py-2 text-left">Área</th>
-                  <th className="border border-border px-3 py-2 text-left">Descripción</th>
-                  <th className="border border-border px-3 py-2 text-left">Niveles aplicados</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td className="border border-border px-3 py-2 font-medium">Matemática</td><td className="border border-border px-3 py-2">Resolución de problemas, operaciones, razonamiento lógico</td><td className="border border-border px-3 py-2">Inicial, Primaria, Secundaria</td></tr>
-                <tr className="bg-muted/30"><td className="border border-border px-3 py-2 font-medium">Lectura</td><td className="border border-border px-3 py-2">Comprensión lectora, inferencia, vocabulario</td><td className="border border-border px-3 py-2">Inicial, Primaria, Secundaria</td></tr>
-                <tr><td className="border border-border px-3 py-2 font-medium">Socioemocional</td><td className="border border-border px-3 py-2">Autoconocimiento, empatía, regulación emocional</td><td className="border border-border px-3 py-2">Inicial, Primaria, Secundaria</td></tr>
-              </tbody>
-            </table>
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  CONTRACARÁTULA con logo                                   */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <div className="flex flex-col items-center justify-center text-center py-16 mb-8 print:py-8 print:mb-4 border-b-4 border-secondary/30">
+          <div className="rounded-full bg-primary/5 p-6 mb-6 shadow-lg border-4 border-secondary/30">
+            <img src={dgpLogo} alt="DGP UGEL Chiclayo" className="h-36 sm:h-44 w-36 sm:w-44 object-contain rounded-full" />
           </div>
-
-          <h3 className="font-semibold mt-4">Niveles de logro:</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse not-prose">
-              <thead>
-                <tr className="bg-primary/10">
-                  <th className="border border-border px-3 py-2 text-left">Nivel</th>
-                  <th className="border border-border px-3 py-2 text-left">Descripción</th>
-                  <th className="border border-border px-3 py-2 text-center">Rango referencial</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td className="border border-border px-3 py-2 font-medium text-destructive">En Inicio</td><td className="border border-border px-3 py-2">El estudiante muestra un progreso mínimo en los aprendizajes evaluados</td><td className="border border-border px-3 py-2 text-center">0 – 10</td></tr>
-                <tr className="bg-muted/30"><td className="border border-border px-3 py-2 font-medium text-yellow-600">En Proceso</td><td className="border border-border px-3 py-2">El estudiante está próximo a lograr los aprendizajes esperados</td><td className="border border-border px-3 py-2 text-center">11 – 13</td></tr>
-                <tr><td className="border border-border px-3 py-2 font-medium text-green-600">Logro Esperado</td><td className="border border-border px-3 py-2">El estudiante evidencia el nivel esperado de competencias</td><td className="border border-border px-3 py-2 text-center">14 – 17</td></tr>
-                <tr className="bg-muted/30"><td className="border border-border px-3 py-2 font-medium text-primary">Logro Destacado</td><td className="border border-border px-3 py-2">El estudiante supera el nivel esperado con habilidades sobresalientes</td><td className="border border-border px-3 py-2 text-center">18 – 20</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        {/* 2. REQUISITOS */}
-        <section id="requisitos" className="mb-10">
-          <h2 className="text-xl font-bold border-b-2 border-primary pb-2">2. REQUISITOS TÉCNICOS</h2>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-primary mb-2">Dirección de Gestión Pedagógica</h2>
+          <p className="text-lg font-semibold text-muted-foreground mb-1">UGEL Chiclayo</p>
+          <p className="text-sm text-muted-foreground mb-6">Unidad de Gestión Educativa Local – Provincia de Chiclayo</p>
           
-          <h3 className="font-semibold mt-4">Dispositivos compatibles:</h3>
-          <ul>
-            <li>✅ Computadora de escritorio o laptop (Windows, Mac, Linux)</li>
-            <li>✅ Tablet (Android, iPad)</li>
-            <li>✅ Teléfono celular (Android, iPhone)</li>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-lg text-center mt-4">
+            <div className="bg-primary/5 rounded-xl p-4">
+              <Award className="h-8 w-8 text-secondary mx-auto mb-2" />
+              <p className="text-xs font-bold text-primary">Calidad Educativa</p>
+            </div>
+            <div className="bg-primary/5 rounded-xl p-4">
+              <BarChart3 className="h-8 w-8 text-secondary mx-auto mb-2" />
+              <p className="text-xs font-bold text-primary">Gestión por Resultados</p>
+            </div>
+            <div className="bg-primary/5 rounded-xl p-4">
+              <GraduationCap className="h-8 w-8 text-secondary mx-auto mb-2" />
+              <p className="text-xs font-bold text-primary">Aprendizajes para Todos</p>
+            </div>
+          </div>
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  PRESENTACIÓN (3/4 de página)                              */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <div className="mb-12 print:mb-6">
+          <div className="bg-card rounded-3xl border-2 border-primary/10 p-8 sm:p-12 shadow-card min-h-[70vh] flex flex-col justify-between print:min-h-0 print:shadow-none">
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-1 w-8 rounded-full bg-secondary" />
+                <span className="text-sm font-bold text-secondary uppercase tracking-widest">Presentación</span>
+              </div>
+              
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-primary mb-6 leading-tight">
+                Estimados Directores, Docentes y Comunidad Educativa de la Provincia de Chiclayo
+              </h2>
+
+              <div className="space-y-4 text-base text-muted-foreground leading-relaxed">
+                <p>
+                  La <strong className="text-foreground">Dirección de Gestión Pedagógica (DGP)</strong> de la UGEL Chiclayo tiene el agrado de poner a disposición de toda la comunidad educativa el presente <strong className="text-foreground">Manual de Uso de la Herramienta Tecnológica DIA 2026</strong>, diseñado con el propósito de facilitar la comprensión y el correcto uso de esta plataforma digital que servirá como instrumento fundamental para el diagnóstico integral de los aprendizajes de nuestros estudiantes.
+                </p>
+                <p>
+                  El <strong className="text-foreground">Diagnóstico Integral de Aprendizajes (DIA)</strong> es una estrategia que nos permite recoger información valiosa sobre el nivel de desarrollo de las competencias de los estudiantes en las áreas de <strong className="text-foreground">Matemática, Comunicación (Lectura) y el aspecto Socioemocional</strong>, abarcando los tres niveles educativos: <strong className="text-foreground">Inicial, Primaria y Secundaria</strong>.
+                </p>
+                <p>
+                  Esta herramienta tecnológica ha sido desarrollada pensando en las necesidades reales de nuestras instituciones educativas, considerando la diversidad de contextos —urbanos y rurales— de la provincia de Chiclayo. Su diseño es intuitivo, accesible desde cualquier dispositivo con conexión a Internet, y permite a cada actor educativo cumplir su función de manera eficiente y organizada.
+                </p>
+                <p>
+                  El presente manual describe paso a paso todas las funcionalidades disponibles según cada rol de usuario: <strong className="text-foreground">Administrador, Director, Subdirector, Docente, Docente PIP, Estudiante, Especialista y Padre de Familia</strong>. Incluye instrucciones detalladas, consejos prácticos, ejemplos visuales y una sección de solución de problemas frecuentes.
+                </p>
+                <p>
+                  Confiamos en que esta herramienta contribuirá significativamente a la mejora de la gestión pedagógica en nuestra jurisdicción, permitiendo una toma de decisiones informada y oportuna, basada en evidencia, en beneficio del aprendizaje de los estudiantes.
+                </p>
+              </div>
+            </div>
+
+            {/* Firma del Director */}
+            <div className="mt-10 pt-8 border-t-2 border-secondary/30">
+              <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between gap-6">
+                <div className="text-center sm:text-left">
+                  <p className="text-xs text-muted-foreground mb-1">Atentamente,</p>
+                  <p className="text-xl sm:text-2xl font-black text-primary tracking-tight">Carlos Alberto Yampufé Requejo</p>
+                  <div className="mt-2 inline-block px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider">
+                    Director de Gestión Pedagógica
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2 font-semibold">UGEL Chiclayo – Lambayeque</p>
+                  <p className="text-xs text-muted-foreground">Marzo 2026</p>
+                </div>
+                <img src={dgpLogo} alt="DGP" className="h-20 w-20 object-contain rounded-full border-2 border-secondary/30 shadow" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  ÍNDICE DE CONTENIDOS                                      */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <div className="mb-12 print:mb-6 rounded-2xl border-2 border-primary/10 bg-card overflow-hidden shadow-card">
+          <div className="gradient-primary text-primary-foreground p-6">
+            <h2 className="text-xl font-extrabold flex items-center gap-3">
+              <BookOpen className="h-6 w-6" /> ÍNDICE DE CONTENIDOS
+            </h2>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                { n: '01', title: 'Introducción y Objetivos', id: 'introduccion', icon: Star },
+                { n: '02', title: 'Requisitos Técnicos', id: 'requisitos', icon: Monitor },
+                { n: '03', title: 'Acceso a la Plataforma', id: 'acceso', icon: KeyRound },
+                { n: '04', title: 'Roles y Permisos', id: 'roles', icon: Shield },
+                { n: '05', title: 'Módulo del Administrador', id: 'admin', icon: Settings },
+                { n: '06', title: 'Módulo del Director / Subdirector', id: 'director', icon: School },
+                { n: '07', title: 'Módulo del Docente', id: 'docente', icon: GraduationCap },
+                { n: '08', title: 'Docente PIP', id: 'pip', icon: Star },
+                { n: '09', title: 'Módulo del Estudiante', id: 'estudiante', icon: ClipboardList },
+                { n: '10', title: 'Módulo del Especialista UGEL', id: 'especialista', icon: BarChart3 },
+                { n: '11', title: 'Módulo del Padre de Familia', id: 'padre', icon: Users },
+                { n: '12', title: 'Mi Perfil', id: 'perfil', icon: UserCog },
+                { n: '13', title: 'Seguridad y Protección de Datos', id: 'seguridad', icon: Lock },
+                { n: '14', title: 'Solución de Problemas', id: 'problemas', icon: HelpCircle },
+                { n: '15', title: 'Soporte Técnico', id: 'soporte', icon: Phone },
+              ].map(({ n, title, id, icon: Ic }) => (
+                <a key={id} href={`#${id}`} className="flex items-center gap-3 p-3 rounded-xl hover:bg-primary/5 transition-colors group">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/10 text-secondary font-black text-xs group-hover:bg-secondary group-hover:text-secondary-foreground transition-colors">{n}</span>
+                  <Ic className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <span className="text-sm font-semibold group-hover:text-primary transition-colors">{title}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  1. INTRODUCCIÓN Y OBJETIVOS                               */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <SectionTitle id="introduccion" icon={Star} number="01" title="INTRODUCCIÓN Y OBJETIVOS" />
+
+        <p>
+          La plataforma <strong>Diagnóstico Integral de Aprendizajes (DIA) 2026</strong> es una herramienta tecnológica desarrollada por la <strong>Dirección de Gestión Pedagógica (DGP)</strong> de la <strong>UGEL Chiclayo</strong> para medir, registrar y analizar los niveles de aprendizaje de los estudiantes de la provincia de Chiclayo.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
+          <FeatureBox icon={ClipboardList} title="¿Qué hace la plataforma?" items={[
+            'Aplica evaluaciones diagnósticas estandarizadas',
+            'Registra y digitaliza respuestas de estudiantes',
+            'Genera reportes automáticos de niveles de logro',
+            'Facilita decisiones pedagógicas basadas en evidencia',
+          ]} />
+          <FeatureBox icon={Award} title="Áreas Evaluadas" color="secondary" items={[
+            'Matemática: resolución de problemas, razonamiento lógico',
+            'Comunicación (Lectura): comprensión lectora, inferencia',
+            'Socioemocional: autoconocimiento, empatía, regulación',
+          ]} />
+        </div>
+
+        <h3 className="font-bold text-lg mb-3 mt-6 flex items-center gap-2">
+          <Layers className="h-5 w-5 text-secondary" /> Niveles de Logro
+        </h3>
+        <p className="mb-3">Los resultados se clasifican en 4 niveles, cada uno con un color identificador:</p>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
+          <div className="rounded-xl p-4 text-center border-2 border-destructive/30 bg-destructive/5">
+            <div className="w-10 h-10 rounded-full bg-destructive/20 mx-auto mb-2 flex items-center justify-center text-lg font-black text-destructive">I</div>
+            <p className="font-bold text-sm text-destructive">En Inicio</p>
+            <p className="text-xs text-muted-foreground mt-1">0 – 10 pts</p>
+            <p className="text-xs text-muted-foreground">Progreso mínimo</p>
+          </div>
+          <div className="rounded-xl p-4 text-center border-2 border-warning/30 bg-warning/5">
+            <div className="w-10 h-10 rounded-full bg-warning/20 mx-auto mb-2 flex items-center justify-center text-lg font-black text-warning">P</div>
+            <p className="font-bold text-sm text-warning">En Proceso</p>
+            <p className="text-xs text-muted-foreground mt-1">11 – 13 pts</p>
+            <p className="text-xs text-muted-foreground">Próximo al logro</p>
+          </div>
+          <div className="rounded-xl p-4 text-center border-2 border-accent/30 bg-accent/5">
+            <div className="w-10 h-10 rounded-full bg-accent/20 mx-auto mb-2 flex items-center justify-center text-lg font-black text-accent">L</div>
+            <p className="font-bold text-sm text-accent">Logro Esperado</p>
+            <p className="text-xs text-muted-foreground mt-1">14 – 17 pts</p>
+            <p className="text-xs text-muted-foreground">Nivel esperado</p>
+          </div>
+          <div className="rounded-xl p-4 text-center border-2 border-primary/30 bg-primary/5">
+            <div className="w-10 h-10 rounded-full bg-primary/20 mx-auto mb-2 flex items-center justify-center text-lg font-black text-primary">D</div>
+            <p className="font-bold text-sm text-primary">Destacado</p>
+            <p className="text-xs text-muted-foreground mt-1">18 – 20 pts</p>
+            <p className="text-xs text-muted-foreground">Sobresaliente</p>
+          </div>
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  2. REQUISITOS TÉCNICOS                                    */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <SectionTitle id="requisitos" icon={Monitor} number="02" title="REQUISITOS TÉCNICOS" />
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6">
+          <div className="rounded-xl border-2 border-primary/10 bg-card p-5 text-center">
+            <Monitor className="h-10 w-10 text-primary mx-auto mb-3" />
+            <h4 className="font-bold text-sm mb-2">Computadora / Laptop</h4>
+            <p className="text-xs text-muted-foreground">Windows, Mac o Linux con navegador web actualizado</p>
+          </div>
+          <div className="rounded-xl border-2 border-primary/10 bg-card p-5 text-center">
+            <Smartphone className="h-10 w-10 text-secondary mx-auto mb-3" />
+            <h4 className="font-bold text-sm mb-2">Tablet / Celular</h4>
+            <p className="text-xs text-muted-foreground">Android o iOS. Diseño adaptable a cualquier tamaño de pantalla</p>
+          </div>
+          <div className="rounded-xl border-2 border-primary/10 bg-card p-5 text-center">
+            <Globe className="h-10 w-10 text-accent mx-auto mb-3" />
+            <h4 className="font-bold text-sm mb-2">Conexión a Internet</h4>
+            <p className="text-xs text-muted-foreground">Mínimo 1 Mbps. Optimizada para zonas con señal limitada</p>
+          </div>
+        </div>
+
+        <h3 className="font-bold text-sm mb-3">🌐 Navegadores recomendados:</h3>
+        <div className="flex flex-wrap gap-3 mb-4">
+          {['Google Chrome (v90+) ⭐ Recomendado', 'Mozilla Firefox (v88+)', 'Microsoft Edge (v90+)', 'Safari (v14+)'].map(b => (
+            <span key={b} className="px-3 py-1.5 rounded-lg bg-primary/5 border border-primary/10 text-xs font-semibold">{b}</span>
+          ))}
+        </div>
+
+        <Tip title="Instalación como App (PWA)">
+          <p>La plataforma se puede instalar en su dispositivo como una aplicación. En Chrome, busque el ícono <strong>"Instalar"</strong> en la barra de direcciones. ¡Así tendrá acceso directo desde su pantalla de inicio!</p>
+        </Tip>
+
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  3. ACCESO A LA PLATAFORMA                                 */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <SectionTitle id="acceso" icon={KeyRound} number="03" title="ACCESO A LA PLATAFORMA" />
+
+        <h3 className="font-bold text-sm mb-3">🔗 URL de acceso:</h3>
+        <div className="bg-primary/5 rounded-xl p-5 text-center border-2 border-primary/10 mb-6">
+          <code className="text-lg sm:text-xl font-black text-primary">https://dia2026ugelcix.lovable.app</code>
+        </div>
+
+        <h3 className="font-bold text-sm mb-3">🔐 Credenciales de acceso:</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div className="rounded-xl bg-accent/5 border-2 border-accent/20 p-5 text-center">
+            <UserCog className="h-8 w-8 text-accent mx-auto mb-2" />
+            <p className="font-bold text-sm">Usuario</p>
+            <p className="text-2xl font-black text-accent mt-1">Su DNI</p>
+            <p className="text-xs text-muted-foreground mt-1">8 dígitos</p>
+          </div>
+          <div className="rounded-xl bg-secondary/5 border-2 border-secondary/20 p-5 text-center">
+            <Lock className="h-8 w-8 text-secondary mx-auto mb-2" />
+            <p className="font-bold text-sm">Contraseña</p>
+            <p className="text-2xl font-black text-secondary mt-1">Su DNI</p>
+            <p className="text-xs text-muted-foreground mt-1">8 dígitos (primera vez)</p>
+          </div>
+        </div>
+
+        <h3 className="font-bold text-sm mb-4">📋 Pasos para ingresar:</h3>
+        <div className="space-y-4 pl-2">
+          <StepCard step={1} title="Abra su navegador" description="Ingrese a la URL: dia2026ugelcix.lovable.app" />
+          <StepCard step={2} title="Ingrese su DNI como usuario" description='Escriba los 8 dígitos de su DNI en el campo "DNI o Correo electrónico"' />
+          <StepCard step={3} title="Ingrese su DNI como contraseña" description='Escriba nuevamente su DNI en el campo "Contraseña"' />
+          <StepCard step={4} title='Presione "Ingresar"' description="El sistema le redirigirá automáticamente al panel que corresponde a su rol" />
+          <StepCard step={5} title="Cambie su contraseña" description="En su primera sesión, se recomienda cambiar la contraseña desde Mi Perfil" />
+        </div>
+
+        <Warning>
+          <ul className="space-y-1.5">
+            <li>Las cuentas son creadas por el <strong>Administrador de UGEL</strong> o el <strong>Director de su IE</strong>. No existe autoregistro.</li>
+            <li>No comparta sus credenciales con otras personas.</li>
+            <li>Si no puede ingresar, contacte al administrador para verificar su cuenta.</li>
           </ul>
+        </Warning>
 
-          <h3 className="font-semibold mt-4">Navegadores recomendados:</h3>
-          <ul>
-            <li>Google Chrome (versión 90 o superior) – <strong>Recomendado</strong></li>
-            <li>Mozilla Firefox (versión 88 o superior)</li>
-            <li>Microsoft Edge (versión 90 o superior)</li>
-            <li>Safari (versión 14 o superior, para dispositivos Apple)</li>
-          </ul>
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  4. ROLES Y PERMISOS                                       */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <SectionTitle id="roles" icon={Shield} number="04" title="ROLES Y PERMISOS DEL SISTEMA" />
 
-          <h3 className="font-semibold mt-4">Conexión a Internet:</h3>
-          <ul>
-            <li>Se requiere conexión a Internet para acceder a la plataforma.</li>
-            <li>Velocidad mínima recomendada: 1 Mbps.</li>
-            <li>La plataforma está optimizada para funcionar con conexiones lentas (zonas rurales).</li>
-          </ul>
+        <p className="mb-6">La plataforma tiene un sistema de roles jerárquico. Cada usuario accede solo a las funciones correspondientes a su rol:</p>
 
-          <div className="bg-accent/10 border-l-4 border-accent p-4 rounded-r-lg mt-4">
-            <p className="font-semibold text-sm">💡 Consejo:</p>
-            <p className="text-sm">La plataforma es una <strong>Aplicación Web Progresiva (PWA)</strong>. Puede instalarse en el dispositivo desde el navegador para un acceso más rápido, similar a una aplicación nativa.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <RoleCard icon={Settings} role="Administrador" description="Personal de DGP – UGEL Chiclayo" color="border-primary/20 bg-primary/5"
+            functions={['Gestión total del sistema', 'Crear/editar usuarios y roles', 'Registrar instituciones educativas', 'Acceso a reportes globales']} />
+          <RoleCard icon={School} role="Director / Subdirector" description="Directivo de la institución educativa" color="border-secondary/20 bg-secondary/5"
+            functions={['Configurar niveles, grados y secciones', 'Registrar personal docente', 'Ver resultados de toda la IE', 'Descargar evaluaciones de entrada']} />
+          <RoleCard icon={GraduationCap} role="Docente" description="Profesor de aula" color="border-accent/20 bg-accent/5"
+            functions={['Registrar estudiantes de su aula', 'Digitar respuestas de evaluaciones', 'Ver resultados de su aula', 'Descargar evaluaciones de su grado']} />
+          <RoleCard icon={Star} role="Docente PIP" description="Profesor de Innovación Pedagógica" color="border-info/20 bg-info/5"
+            functions={['Mismas funciones que un Director', 'Gestionar toda la institución', 'Registrar personal y estudiantes', 'Ver y analizar todos los resultados']} />
+          <RoleCard icon={ClipboardList} role="Estudiante" description="Alumno evaluado" color="border-destructive/20 bg-destructive/5"
+            functions={['Rendir evaluaciones en línea', 'Ver su boleta de resultados', 'Escuchar preguntas con audio']} />
+          <RoleCard icon={BarChart3} role="Especialista UGEL" description="Especialista pedagógico" color="border-primary/20 bg-primary/5"
+            functions={['Consultar reportes consolidados', 'Filtrar por IE, nivel, grado', 'Análisis comparativo entre IIEE']} />
+          <RoleCard icon={Users} role="Padre de Familia" description="Padre/madre/apoderado" color="border-secondary/20 bg-secondary/5"
+            functions={['Ver resultados de sus hijos', 'Consultar recomendaciones pedagógicas']} />
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  5. MÓDULO DEL ADMINISTRADOR                               */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <SectionTitle id="admin" icon={Settings} number="05" title="MÓDULO DEL ADMINISTRADOR" />
+
+        <p>El administrador tiene el mayor nivel de acceso. Es responsable de la configuración inicial y la gestión global del sistema.</p>
+
+        <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
+          <BarChart3 className="h-5 w-5 text-secondary" /> 5.1 Dashboard del Administrador
+        </h3>
+        <p>Al ingresar, se muestra un panel con estadísticas generales de toda la jurisdicción:</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
+          {['Instituciones registradas', 'Usuarios en el sistema', 'Evaluaciones aplicadas', 'Porcentaje de avance'].map((stat, i) => (
+            <div key={i} className="rounded-xl bg-primary/5 border border-primary/10 p-4 text-center">
+              <p className="text-xs font-bold text-primary">{stat}</p>
+            </div>
+          ))}
+        </div>
+
+        <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
+          <UserPlus className="h-5 w-5 text-secondary" /> 5.2 Gestión de Usuarios
+        </h3>
+        <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Usuarios</code></p>
+
+        <div className="rounded-xl border-2 border-primary/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
+            <UserPlus className="h-4 w-4 text-accent" /> a) Crear usuario individual
+          </h4>
+          <div className="space-y-3 pl-2">
+            <StepCard step={1} title='Presione "+ Nuevo Usuario"' description="Se abrirá un formulario de registro" />
+            <StepCard step={2} title="Complete los datos" description="DNI (8 dígitos), Nombre Completo y Rol" />
+            <StepCard step={3} title="Seleccione institución" description="Si el rol es Director o Docente, seleccione la Institución Educativa" />
+            <StepCard step={4} title='Presione "Crear Usuario"' description="El sistema creará la cuenta con DNI como usuario y contraseña" />
           </div>
-        </section>
+        </div>
 
-        {/* 3. ACCESO */}
-        <section id="acceso" className="mb-10">
-          <h2 className="text-xl font-bold border-b-2 border-primary pb-2">3. ACCESO A LA PLATAFORMA</h2>
-          
-          <h3 className="font-semibold mt-4">URL de acceso:</h3>
-          <div className="bg-muted p-4 rounded-lg text-center">
-            <code className="text-lg font-bold text-primary">https://dia2026-dgpugelchiclayo.lovable.app</code>
+        <div className="rounded-xl border-2 border-primary/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
+            <FileSpreadsheet className="h-4 w-4 text-accent" /> b) Carga masiva de usuarios (CSV)
+          </h4>
+          <div className="space-y-3 pl-2">
+            <StepCard step={1} title='Presione "📤 Carga Masiva"' description="Se abrirá el módulo de importación" />
+            <StepCard step={2} title="Descargue la plantilla" description="Obtenga el archivo CSV modelo con las columnas correctas" />
+            <StepCard step={3} title="Complete la plantilla" description="Llene: dni, nombre_completo, rol, codigo_modular" />
+            <StepCard step={4} title="Suba el archivo" description="Cargue el CSV, revise la vista previa y confirme" />
           </div>
-
-          <h3 className="font-semibold mt-4">Credenciales de acceso:</h3>
-          <div className="bg-accent/10 border-l-4 border-accent p-4 rounded-r-lg">
-            <p className="text-sm"><strong>Usuario:</strong> Su número de DNI (8 dígitos)</p>
-            <p className="text-sm"><strong>Contraseña:</strong> Su número de DNI (8 dígitos)</p>
-          </div>
-          <p className="text-sm text-muted-foreground mt-2">
-            Las cuentas son creadas únicamente por el <strong>administrador de la UGEL</strong> o por el <strong>director de cada institución</strong>. No existe opción de autoregistro.
-          </p>
-
-          <h3 className="font-semibold mt-4">Pasos para ingresar:</h3>
-          <ol>
-            <li>Abra su navegador web e ingrese a la URL indicada.</li>
-            <li>En la pantalla de inicio de sesión, escriba su <strong>DNI de 8 dígitos</strong> en el campo "DNI o Correo electrónico".</li>
-            <li>Escriba su <strong>DNI</strong> nuevamente en el campo "Contraseña".</li>
-            <li>Presione el botón <strong>"Ingresar"</strong>.</li>
-            <li>El sistema lo redirigirá automáticamente al panel correspondiente según su rol asignado.</li>
-          </ol>
-
-          <div className="bg-destructive/10 border-l-4 border-destructive p-4 rounded-r-lg mt-4">
-            <p className="font-semibold text-sm">⚠️ Importante:</p>
-            <ul className="text-sm mt-1 space-y-1">
-              <li>Si no puede ingresar, contacte al administrador de la plataforma para verificar que su cuenta haya sido creada.</li>
-              <li>No comparta sus credenciales con otras personas.</li>
-              <li>Se recomienda cambiar la contraseña en la primera sesión (función disponible en "Mi Perfil").</li>
-            </ul>
-          </div>
-        </section>
-
-        {/* 4. ROLES */}
-        <section id="roles" className="mb-10">
-          <h2 className="text-xl font-bold border-b-2 border-primary pb-2 flex items-center gap-2">
-            <Shield className="h-5 w-5 print:hidden" /> 4. ROLES Y PERMISOS DEL SISTEMA
-          </h2>
-          <p>La plataforma maneja un sistema de roles jerárquico. Cada usuario tiene un rol que determina las funciones y módulos a los que puede acceder:</p>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse not-prose mt-4">
-              <thead>
-                <tr className="bg-primary/10">
-                  <th className="border border-border px-3 py-2 text-left">Rol</th>
-                  <th className="border border-border px-3 py-2 text-left">Descripción</th>
-                  <th className="border border-border px-3 py-2 text-left">Funciones principales</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="border border-border px-3 py-2 font-medium">Administrador</td>
-                  <td className="border border-border px-3 py-2">Personal de la UGEL Chiclayo (DGP)</td>
-                  <td className="border border-border px-3 py-2">Gestión total: usuarios, instituciones, reportes globales</td>
-                </tr>
-                <tr className="bg-muted/30">
-                  <td className="border border-border px-3 py-2 font-medium">Director</td>
-                  <td className="border border-border px-3 py-2">Director de la institución educativa</td>
-                  <td className="border border-border px-3 py-2">Configurar IE, registrar niveles/grados, personal, ver resultados</td>
-                </tr>
-                <tr>
-                  <td className="border border-border px-3 py-2 font-medium">Subdirector</td>
-                  <td className="border border-border px-3 py-2">Subdirector de la institución educativa</td>
-                  <td className="border border-border px-3 py-2">Mismas funciones que el Director</td>
-                </tr>
-                <tr className="bg-muted/30">
-                  <td className="border border-border px-3 py-2 font-medium">Docente</td>
-                  <td className="border border-border px-3 py-2">Profesor de aula</td>
-                  <td className="border border-border px-3 py-2">Registrar estudiantes, digitar respuestas, ver resultados de aula</td>
-                </tr>
-                <tr>
-                  <td className="border border-border px-3 py-2 font-medium">Estudiante</td>
-                  <td className="border border-border px-3 py-2">Alumno evaluado</td>
-                  <td className="border border-border px-3 py-2">Rendir evaluaciones en línea, ver sus resultados</td>
-                </tr>
-                <tr className="bg-muted/30">
-                  <td className="border border-border px-3 py-2 font-medium">Especialista</td>
-                  <td className="border border-border px-3 py-2">Especialista pedagógico de la UGEL</td>
-                  <td className="border border-border px-3 py-2">Consultar reportes y estadísticas generales</td>
-                </tr>
-                <tr>
-                  <td className="border border-border px-3 py-2 font-medium">Padre</td>
-                  <td className="border border-border px-3 py-2">Padre/madre de familia</td>
-                  <td className="border border-border px-3 py-2">Ver resultados de sus hijos</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        {/* 5. MÓDULO ADMINISTRADOR */}
-        <section id="admin" className="mb-10">
-          <h2 className="text-xl font-bold border-b-2 border-primary pb-2 flex items-center gap-2">
-            <Users className="h-5 w-5 print:hidden" /> 5. MÓDULO DEL ADMINISTRADOR
-          </h2>
-          <p>El administrador es el usuario con el mayor nivel de acceso en la plataforma. Es responsable de la configuración inicial y la gestión global del sistema.</p>
-
-          <h3 className="font-semibold mt-4">5.1. Dashboard del Administrador</h3>
-          <p>Al ingresar, el administrador visualiza un panel con estadísticas generales:</p>
-          <ul>
-            <li>Total de instituciones registradas</li>
-            <li>Total de usuarios en el sistema</li>
-            <li>Total de evaluaciones aplicadas</li>
-            <li>Porcentaje de avance general</li>
-          </ul>
-
-          <h3 className="font-semibold mt-4">5.2. Gestión de Usuarios</h3>
-          <p>Ruta: <code>Panel lateral → Usuarios</code></p>
-          <p>Desde este módulo se pueden realizar las siguientes acciones:</p>
-
-          <h4 className="font-semibold mt-3">a) Crear usuario individual:</h4>
-          <ol>
-            <li>Presione el botón <strong>"+ Nuevo Usuario"</strong>.</li>
-            <li>Complete los campos: <strong>DNI</strong> (8 dígitos), <strong>Nombre Completo</strong> y seleccione el <strong>Rol</strong>.</li>
-            <li>Si el rol es Director o Docente, seleccione la <strong>Institución Educativa</strong>.</li>
-            <li>Presione <strong>"Crear Usuario"</strong>.</li>
-            <li>El sistema creará la cuenta automáticamente con DNI como usuario y contraseña.</li>
-          </ol>
-
-          <h4 className="font-semibold mt-3">b) Carga masiva de usuarios (CSV):</h4>
-          <ol>
-            <li>Presione el botón <strong>"📤 Carga Masiva"</strong>.</li>
-            <li>Descargue la plantilla CSV proporcionada.</li>
-            <li>Complete la plantilla con los datos: <code>dni, nombre_completo, rol, codigo_modular</code>.</li>
-            <li>Suba el archivo CSV completado.</li>
-            <li>Revise la vista previa y confirme la importación.</li>
-          </ol>
-
-          <div className="bg-accent/10 border-l-4 border-accent p-4 rounded-r-lg mt-3">
-            <p className="font-semibold text-sm">📋 Formato del archivo CSV:</p>
-            <code className="text-xs block mt-1 bg-muted p-2 rounded">
+          <Tip title="Formato del archivo CSV">
+            <code className="text-xs block mt-1 bg-muted p-3 rounded-lg">
               dni,nombre_completo,rol,codigo_modular<br/>
               12345678,GARCÍA LÓPEZ JUAN CARLOS,director,0123456<br/>
               87654321,PÉREZ MENDOZA ANA MARÍA,docente,0123456
             </code>
-          </div>
+          </Tip>
+        </div>
 
-          <h4 className="font-semibold mt-3">c) Gestionar usuarios existentes:</h4>
-          <ul>
-            <li><strong>Buscar:</strong> Use el campo de búsqueda para filtrar por nombre o DNI.</li>
-            <li><strong>Filtrar por rol:</strong> Seleccione un rol del menú desplegable.</li>
-            <li><strong>Resetear contraseña:</strong> Presione el botón de opciones (⋮) y seleccione "Resetear contraseña". La contraseña se restablecerá al DNI del usuario.</li>
-            <li><strong>Cambiar rol:</strong> Presione editar y seleccione el nuevo rol.</li>
+        <div className="rounded-xl border-2 border-primary/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
+            <UserCog className="h-4 w-4 text-accent" /> c) Gestionar usuarios existentes
+          </h4>
+          <ul className="text-sm space-y-2">
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Buscar:</strong> Use el campo de búsqueda para filtrar por nombre o DNI</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Filtrar por rol:</strong> Seleccione un rol del menú desplegable</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Resetear contraseña:</strong> Botón de opciones (⋮) → "Resetear contraseña" (se restablece al DNI)</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Cambiar rol:</strong> Presione editar y seleccione el nuevo rol</span></li>
           </ul>
+        </div>
 
-          <h3 className="font-semibold mt-4">5.3. Gestión de Instituciones Educativas</h3>
-          <p>Ruta: <code>Panel lateral → Instituciones</code></p>
-          <ol>
-            <li>Visualice el listado completo de instituciones registradas.</li>
-            <li>Use el buscador para filtrar por nombre, código modular o distrito.</li>
-            <li>Las instituciones pueden ser cargadas masivamente mediante archivo CSV.</li>
-          </ol>
+        <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
+          <School className="h-5 w-5 text-secondary" /> 5.3 Gestión de Instituciones Educativas
+        </h3>
+        <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Instituciones</code></p>
+        <ul className="space-y-2 text-sm">
+          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />Visualice el listado completo de IIEE registradas</li>
+          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />Busque por nombre, código modular o distrito</li>
+          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />Carga masiva mediante archivo CSV</li>
+        </ul>
 
-          <div className="bg-accent/10 border-l-4 border-accent p-4 rounded-r-lg mt-3">
-            <p className="font-semibold text-sm">📋 Formato del CSV de instituciones:</p>
-            <code className="text-xs block mt-1 bg-muted p-2 rounded">
-              nombre,codigo_modular,codigo_local,provincia,distrito,centro_poblado,direccion,tipo_gestion<br/>
-              I.E. SAN JOSÉ,0123456,012345,CHICLAYO,CHICLAYO,,AV. BALTA 123,Pública
-            </code>
-          </div>
-        </section>
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  6. MÓDULO DEL DIRECTOR / SUBDIRECTOR                      */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <SectionTitle id="director" icon={School} number="06" title="MÓDULO DEL DIRECTOR / SUBDIRECTOR" />
 
-        {/* 6. MÓDULO DIRECTOR */}
-        <section id="director" className="mb-10">
-          <h2 className="text-xl font-bold border-b-2 border-primary pb-2 flex items-center gap-2">
-            <School className="h-5 w-5 print:hidden" /> 6. MÓDULO DEL DIRECTOR / SUBDIRECTOR
-          </h2>
-          <p>El director gestiona su institución educativa: configura niveles, grados, secciones, registra personal y supervisa resultados.</p>
+        <p>El director gestiona su institución educativa: configura niveles, grados, secciones, registra personal y supervisa resultados.</p>
 
-          <h3 className="font-semibold mt-4">6.1. Dashboard del Director</h3>
-          <p>Panel de inicio con estadísticas de la institución:</p>
-          <ul>
-            <li>Total de docentes registrados</li>
-            <li>Total de estudiantes</li>
-            <li>Evaluaciones completadas</li>
-            <li>Porcentaje de avance por área</li>
-          </ul>
-
-          <h3 className="font-semibold mt-4">6.2. Configuración de la Institución</h3>
-          <p>Ruta: <code>Panel lateral → Institución</code></p>
-          <p>Permite verificar y actualizar los datos de la institución educativa:</p>
-          <ul>
-            <li>Nombre de la institución</li>
-            <li>Código de Local</li>
-            <li>Provincia, Distrito, Centro Poblado</li>
-            <li>Dirección</li>
-            <li>Tipo de Gestión (Pública / Privada)</li>
-          </ul>
-
-          <h3 className="font-semibold mt-4">6.3. Niveles y Grados</h3>
-          <p>Ruta: <code>Panel lateral → Niveles y Grados</code></p>
-          <ol>
-            <li>Seleccione el <strong>Nivel</strong> educativo (Inicial, Primaria, Secundaria).</li>
-            <li>Seleccione el <strong>Grado</strong> correspondiente.</li>
-            <li>Agregue las <strong>Secciones</strong>:
-              <ul>
-                <li><strong>Inicial:</strong> Las secciones son de texto libre (ej: "Ositos", "Estrellitas").</li>
-                <li><strong>Primaria y Secundaria:</strong> Seleccione secciones estandarizadas (A, B, C, D, etc.).</li>
-              </ul>
-            </li>
-            <li>Presione <strong>"Guardar"</strong> para registrar.</li>
-          </ol>
-          <p>La estructura queda organizada jerárquicamente: <strong>Nivel → Grado → Secciones</strong>.</p>
-
-          <h3 className="font-semibold mt-4">6.4. Registro de Personal</h3>
-          <p>Ruta: <code>Panel lateral → Personal</code></p>
-          <p>Desde aquí el director registra a los docentes y subdirectores de su institución.</p>
-          
-          <h4 className="font-semibold mt-3">a) Registro individual:</h4>
-          <ol>
-            <li>Presione <strong>"+ Agregar Personal"</strong>.</li>
-            <li>Ingrese el <strong>DNI</strong>, <strong>Nombre Completo</strong> y seleccione el <strong>Cargo</strong> (Docente o Subdirector).</li>
-            <li>Para Docentes, asigne el <strong>Grado y Sección</strong> donde enseña.</li>
-            <li>Presione <strong>"Registrar"</strong>.</li>
-          </ol>
-
-          <h4 className="font-semibold mt-3">b) Carga masiva de personal (CSV):</h4>
-          <ol>
-            <li>Presione <strong>"📤 Carga Masiva"</strong>.</li>
-            <li>Descargue y complete la plantilla CSV con: <code>dni, nombre_completo, cargo</code>.</li>
-            <li>Suba el archivo y confirme la importación.</li>
-          </ol>
-
-          <h3 className="font-semibold mt-4">6.5. Resultados de la Institución</h3>
-          <p>Ruta: <code>Panel lateral → Resultados</code></p>
-          <ul>
-            <li>Visualice los resultados consolidados de toda la institución.</li>
-            <li>Filtre por nivel, grado, sección o área evaluada.</li>
-            <li>Consulte gráficos de distribución de niveles de logro.</li>
-          </ul>
-        </section>
-
-        {/* 7. MÓDULO DOCENTE */}
-        <section id="docente" className="mb-10">
-          <h2 className="text-xl font-bold border-b-2 border-primary pb-2 flex items-center gap-2">
-            <GraduationCap className="h-5 w-5 print:hidden" /> 7. MÓDULO DEL DOCENTE
-          </h2>
-          <p>El docente es responsable del registro de estudiantes, la digitación de respuestas y la consulta de resultados de su aula.</p>
-
-          <h3 className="font-semibold mt-4">7.1. Dashboard del Docente</h3>
-          <p>Panel con estadísticas del aula asignada: total de estudiantes, evaluaciones pendientes y completadas.</p>
-
-          <h3 className="font-semibold mt-4">7.2. Registro de Estudiantes</h3>
-          <p>Ruta: <code>Panel lateral → Estudiantes</code></p>
-          <ol>
-            <li>Presione <strong>"+ Agregar Estudiante"</strong>.</li>
-            <li>Ingrese el <strong>DNI</strong> y <strong>Nombre Completo</strong> del estudiante.</li>
-            <li>El estudiante queda automáticamente vinculado al grado y sección del docente.</li>
-            <li>Presione <strong>"Registrar"</strong>.</li>
-          </ol>
-
-          <div className="bg-accent/10 border-l-4 border-accent p-4 rounded-r-lg mt-3">
-            <p className="font-semibold text-sm">💡 Nota:</p>
-            <p className="text-sm">Al registrar un estudiante, el sistema crea automáticamente su cuenta de acceso con su DNI como usuario y contraseña, permitiéndole rendir evaluaciones en línea si fuera necesario.</p>
-          </div>
-
-          <h3 className="font-semibold mt-4">7.3. Digitación de Respuestas</h3>
-          <p>Ruta: <code>Panel lateral → Digitación</code></p>
-          <p>Este módulo permite al docente ingresar las respuestas de los estudiantes cuando las evaluaciones se aplican en formato impreso:</p>
-          <ol>
-            <li>Seleccione el <strong>Área</strong> de evaluación (Matemática, Lectura, Socioemocional).</li>
-            <li>Se mostrará la lista de estudiantes del aula.</li>
-            <li>Para cada estudiante, ingrese la <strong>alternativa seleccionada</strong> (A, B, C o D) para cada pregunta.</li>
-            <li>El sistema calcula automáticamente el <strong>puntaje total</strong> y el <strong>nivel de logro</strong>.</li>
-            <li>Presione <strong>"Guardar"</strong> para registrar las respuestas.</li>
-          </ol>
-
-          <div className="bg-destructive/10 border-l-4 border-destructive p-4 rounded-r-lg mt-3">
-            <p className="font-semibold text-sm">⚠️ Importante:</p>
-            <ul className="text-sm mt-1 space-y-1">
-              <li>Verifique cuidadosamente las respuestas antes de guardar.</li>
-              <li>Una vez guardadas, las respuestas pueden ser editadas pero queda registro del cambio.</li>
-              <li>Complete la digitación de TODOS los estudiantes antes de la fecha límite establecida.</li>
-            </ul>
-          </div>
-
-          <h3 className="font-semibold mt-4">7.4. Resultados del Aula</h3>
-          <p>Ruta: <code>Panel lateral → Resultados</code></p>
-          <ul>
-            <li>Consulte los resultados individuales de cada estudiante.</li>
-            <li>Visualice la tabla con nombre, puntaje y nivel de logro.</li>
-            <li>Los niveles se muestran con colores indicativos:
-              <ul>
-                <li><span className="text-destructive font-semibold">Rojo:</span> En Inicio</li>
-                <li><span className="text-yellow-600 font-semibold">Amarillo:</span> En Proceso</li>
-                <li><span className="text-green-600 font-semibold">Verde:</span> Logro Esperado</li>
-                <li><span className="text-primary font-semibold">Azul:</span> Logro Destacado</li>
-              </ul>
-            </li>
-          </ul>
-        </section>
-
-        {/* 8. MÓDULO ESTUDIANTE */}
-        <section id="estudiante" className="mb-10">
-          <h2 className="text-xl font-bold border-b-2 border-primary pb-2 flex items-center gap-2">
-            <ClipboardList className="h-5 w-5 print:hidden" /> 8. MÓDULO DEL ESTUDIANTE
-          </h2>
-          <p>Los estudiantes pueden rendir evaluaciones directamente en la plataforma (cuando así lo indique el docente) y consultar sus resultados.</p>
-
-          <h3 className="font-semibold mt-4">8.1. Rendir Evaluación en Línea</h3>
-          <p>Ruta: <code>Panel lateral → Mis Pruebas</code></p>
-          <ol>
-            <li>Al ingresar, se muestra la evaluación disponible con una <strong>barra de progreso</strong>.</li>
-            <li>Lea cuidadosamente cada pregunta.</li>
-            <li>Presione el <strong>botón de audio 🔊</strong> si desea escuchar la pregunta en voz alta (útil para estudiantes de Inicial y 1.er Grado).</li>
-            <li>Seleccione la respuesta tocando/haciendo clic en la <strong>opción deseada</strong> (A, B, C o D).</li>
-            <li>La opción seleccionada se resaltará en <strong>azul</strong>.</li>
-            <li>Use los botones <strong>"Anterior"</strong> y <strong>"Siguiente"</strong> para navegar entre preguntas.</li>
-            <li>Puede cambiar sus respuestas en cualquier momento antes de finalizar.</li>
-            <li>Al llegar a la última pregunta, presione <strong>"✅ Finalizar"</strong> para enviar sus respuestas.</li>
-          </ol>
-
-          <div className="bg-accent/10 border-l-4 border-accent p-4 rounded-r-lg mt-3">
-            <p className="font-semibold text-sm">💡 Para estudiantes pequeños (Inicial / 1.er Grado):</p>
-            <ul className="text-sm mt-1 space-y-1">
-              <li>Los botones son grandes y fáciles de tocar en tablets.</li>
-              <li>El botón de audio 🔊 lee la pregunta en español peruano.</li>
-              <li>Se recomienda que un adulto acompañe al estudiante durante la evaluación.</li>
-            </ul>
-          </div>
-
-          <h3 className="font-semibold mt-4">8.2. Mis Resultados</h3>
-          <p>Ruta: <code>Panel lateral → Resultados</code></p>
-          <ul>
-            <li>El estudiante visualiza su <strong>Boleta de Resultados</strong> con el puntaje y nivel de logro en cada área.</li>
-            <li>Cada área incluye una <strong>recomendación pedagógica personalizada</strong> según el nivel alcanzado.</li>
-          </ul>
-        </section>
-
-        {/* 9. MÓDULO ESPECIALISTA */}
-        <section id="especialista" className="mb-10">
-          <h2 className="text-xl font-bold border-b-2 border-primary pb-2 flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 print:hidden" /> 9. MÓDULO DEL ESPECIALISTA UGEL
-          </h2>
-          <p>Los especialistas de la UGEL pueden acceder a reportes consolidados para el análisis pedagógico a nivel de la provincia.</p>
-
-          <h3 className="font-semibold mt-4">Funciones disponibles:</h3>
-          <ul>
-            <li><strong>Dashboard:</strong> Estadísticas globales de la evaluación diagnóstica.</li>
-            <li><strong>Reportes:</strong> Filtros por institución, nivel, grado, área y distrito.</li>
-            <li>Gráficos de distribución de niveles de logro.</li>
-            <li>Comparativas entre instituciones y distritos.</li>
-          </ul>
-        </section>
-
-        {/* 10. MÓDULO PADRE */}
-        <section id="padre" className="mb-10">
-          <h2 className="text-xl font-bold border-b-2 border-primary pb-2">10. MÓDULO DEL PADRE DE FAMILIA</h2>
-          <p>Los padres de familia pueden consultar los resultados de sus hijos accediendo con las credenciales proporcionadas por la institución educativa.</p>
-
-          <h3 className="font-semibold mt-4">Funciones disponibles:</h3>
-          <ul>
-            <li>Ver la boleta de resultados del estudiante.</li>
-            <li>Consultar las recomendaciones pedagógicas para apoyar el aprendizaje en casa.</li>
-          </ul>
-        </section>
-
-        {/* 11. MI PERFIL */}
-        <section id="perfil" className="mb-10">
-          <h2 className="text-xl font-bold border-b-2 border-primary pb-2 flex items-center gap-2">
-            <UserCog className="h-5 w-5 print:hidden" /> 11. MI PERFIL
-          </h2>
-          <p>Todos los usuarios pueden acceder a la sección "Mi Perfil" desde el panel lateral para:</p>
-          <ul>
-            <li>Ver sus datos personales (nombre, DNI, rol).</li>
-            <li>Ver la institución educativa a la que están vinculados.</li>
-            <li>Consultar el grado y sección asignado (para docentes y estudiantes).</li>
-          </ul>
-        </section>
-
-        {/* 12. SEGURIDAD */}
-        <section id="seguridad" className="mb-10">
-          <h2 className="text-xl font-bold border-b-2 border-primary pb-2 flex items-center gap-2">
-            <Shield className="h-5 w-5 print:hidden" /> 12. SEGURIDAD Y PROTECCIÓN DE DATOS
-          </h2>
-          <p>La plataforma DIA 2026 cumple con los estándares de protección de datos personales establecidos en la <strong>Ley N.° 29733 – Ley de Protección de Datos Personales</strong> del Perú.</p>
-
-          <h3 className="font-semibold mt-4">Medidas implementadas:</h3>
-          <ul>
-            <li><strong>Autenticación segura:</strong> Cada usuario accede con credenciales únicas.</li>
-            <li><strong>Control de acceso por roles:</strong> Cada usuario solo ve la información que le corresponde.</li>
-            <li><strong>Encriptación:</strong> Las contraseñas se almacenan de forma encriptada.</li>
-            <li><strong>Sesiones seguras:</strong> Las sesiones expiran automáticamente tras un periodo de inactividad.</li>
-            <li><strong>Registro de actividad:</strong> Se mantiene un log de las acciones realizadas en el sistema.</li>
-          </ul>
-
-          <h3 className="font-semibold mt-4">Responsabilidades del usuario:</h3>
-          <ul>
-            <li>No compartir sus credenciales con terceros.</li>
-            <li>Cerrar sesión al terminar de usar la plataforma, especialmente en dispositivos compartidos.</li>
-            <li>No capturar pantallas con datos personales de estudiantes para compartir en redes sociales.</li>
-            <li>Reportar inmediatamente cualquier acceso no autorizado.</li>
-          </ul>
-        </section>
-
-        {/* 13. PROBLEMAS FRECUENTES */}
-        <section id="problemas" className="mb-10">
-          <h2 className="text-xl font-bold border-b-2 border-primary pb-2">13. SOLUCIÓN DE PROBLEMAS FRECUENTES</h2>
-          
-          <div className="space-y-4 mt-4">
-            <div className="border border-border rounded-lg p-4">
-              <h4 className="font-semibold">❌ "Credenciales incorrectas"</h4>
-              <ul className="text-sm mt-2 space-y-1">
-                <li>Verifique que está ingresando su DNI completo (8 dígitos) tanto como usuario y contraseña.</li>
-                <li>Asegúrese de no tener espacios en blanco antes o después del DNI.</li>
-                <li>Si el problema persiste, solicite al administrador que resetee su contraseña.</li>
-              </ul>
+        <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
+          <BarChart3 className="h-5 w-5 text-secondary" /> 6.1 Dashboard del Director
+        </h3>
+        <p>Panel con estadísticas de la institución y acceso rápido a las funciones principales:</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
+          {['Total docentes', 'Total estudiantes', 'Evaluaciones completadas', 'Avance por área'].map((stat, i) => (
+            <div key={i} className="rounded-xl bg-secondary/5 border border-secondary/10 p-4 text-center">
+              <p className="text-xs font-bold text-secondary">{stat}</p>
             </div>
+          ))}
+        </div>
 
-            <div className="border border-border rounded-lg p-4">
-              <h4 className="font-semibold">❌ "Sesión expirada"</h4>
-              <ul className="text-sm mt-2 space-y-1">
-                <li>Su sesión ha expirado por inactividad.</li>
-                <li>Presione "Cerrar Sesión" y vuelva a ingresar con sus credenciales.</li>
-              </ul>
-            </div>
+        <Tip emoji="📥" title="Descarga de Evaluaciones de Entrada (Primaria)">
+          <p>Si su IE tiene nivel Primaria, en el Dashboard encontrará los <strong>cuadernillos de evaluación de entrada</strong> de Matemática y Comunicación para todos los grados (1° a 6°). Presione <strong>"Ver"</strong> para previsualizar o <strong>"Descargar"</strong> para guardar el PDF.</p>
+        </Tip>
 
-            <div className="border border-border rounded-lg p-4">
-              <h4 className="font-semibold">❌ No veo mi institución / No puedo registrar personal</h4>
-              <ul className="text-sm mt-2 space-y-1">
-                <li>Verifique que el administrador haya vinculado su cuenta a una institución educativa.</li>
-                <li>Contacte al administrador de la UGEL para que revise su asignación.</li>
-              </ul>
-            </div>
+        <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
+          <Settings className="h-5 w-5 text-secondary" /> 6.2 Configuración de la Institución
+        </h3>
+        <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Institución</code></p>
+        <p>Permite verificar y actualizar: nombre, código local, provincia, distrito, centro poblado, dirección y tipo de gestión.</p>
 
-            <div className="border border-border rounded-lg p-4">
-              <h4 className="font-semibold">❌ La página carga lentamente</h4>
-              <ul className="text-sm mt-2 space-y-1">
-                <li>Verifique su conexión a Internet.</li>
-                <li>Intente con el navegador Google Chrome actualizado.</li>
-                <li>Cierre otras pestañas o aplicaciones que consuman ancho de banda.</li>
-                <li>Si usa un teléfono, instale la app PWA para mejor rendimiento.</li>
-              </ul>
-            </div>
+        <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
+          <Layers className="h-5 w-5 text-secondary" /> 6.3 Niveles y Grados
+        </h3>
+        <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Niveles y Grados</code></p>
+        <div className="space-y-3 pl-2 mb-4">
+          <StepCard step={1} title="Seleccione el Nivel" description="Inicial, Primaria o Secundaria" />
+          <StepCard step={2} title="Seleccione el Grado" description="Los grados disponibles dependen del nivel seleccionado" />
+          <StepCard step={3} title="Agregue las Secciones" description="Inicial: texto libre (ej: 'Ositos'). Primaria/Secundaria: opciones estandarizadas (PIP, A, B, C...)" />
+          <StepCard step={4} title='Presione "Guardar"' description="La estructura queda: Nivel → Grado → Secciones" />
+        </div>
 
-            <div className="border border-border rounded-lg p-4">
-              <h4 className="font-semibold">❌ No se guardan los datos / Error al guardar</h4>
-              <ul className="text-sm mt-2 space-y-1">
-                <li>Verifique su conexión a Internet.</li>
-                <li>No cierre la ventana mientras el sistema esté guardando (indicador de carga visible).</li>
-                <li>Si el error persiste, recargue la página (F5) e intente nuevamente.</li>
-              </ul>
-            </div>
+        <Tip title="Sección PIP">
+          <p>En Primaria y Secundaria, la primera opción de sección es <strong>"PIP"</strong> (Profesor de Innovación Pedagógica). Al asignar un docente a esta sección, automáticamente tendrá los mismos privilegios y funciones que un Director.</p>
+        </Tip>
 
-            <div className="border border-border rounded-lg p-4">
-              <h4 className="font-semibold">❌ El audio no funciona en la evaluación del estudiante</h4>
-              <ul className="text-sm mt-2 space-y-1">
-                <li>Verifique que el volumen del dispositivo esté activado.</li>
-                <li>La función de audio requiere un navegador moderno (Chrome, Firefox, Edge).</li>
-                <li>En algunos dispositivos, es necesario interactuar con la página antes de que el audio funcione.</li>
-              </ul>
-            </div>
-          </div>
-        </section>
+        <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
+          <UserPlus className="h-5 w-5 text-secondary" /> 6.4 Registro de Personal
+        </h3>
+        <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Personal</code></p>
 
-        {/* 14. SOPORTE */}
-        <section id="soporte" className="mb-10">
-          <h2 className="text-xl font-bold border-b-2 border-primary pb-2">14. SOPORTE TÉCNICO Y CONTACTO</h2>
-          
-          <div className="bg-muted/50 rounded-lg p-6 mt-4">
-            <h3 className="font-semibold">Dirección de Gestión Pedagógica – UGEL Chiclayo</h3>
-            <div className="mt-3 space-y-2 text-sm">
-              <p><strong>Equipo de Soporte Técnico DIA 2026</strong></p>
-              <p>📧 Correo: dgp@ugelchiclayo.gob.pe</p>
-              <p>📞 Teléfono: (074) 123456</p>
-              <p>🏢 Dirección: UGEL Chiclayo, Av. José Leonardo Ortiz, Chiclayo – Lambayeque</p>
-              <p>🕐 Horario de atención: Lunes a viernes, 8:00 a.m. – 5:00 p.m.</p>
-            </div>
-          </div>
-
-          <div className="bg-primary/5 rounded-lg p-6 mt-4">
-            <h3 className="font-semibold">Protocolo de soporte:</h3>
-            <ol className="text-sm mt-2">
-              <li><strong>Nivel 1:</strong> Docente o Director consulta con el responsable de TI de su institución.</li>
-              <li><strong>Nivel 2:</strong> Director o responsable TI contacta al equipo DGP de la UGEL.</li>
-              <li><strong>Nivel 3:</strong> El equipo DGP escala al equipo de desarrollo si el problema es técnico.</li>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div className="rounded-xl border-2 border-primary/10 bg-card p-5">
+            <h4 className="font-bold text-sm mb-3">👤 Registro individual</h4>
+            <ol className="text-sm space-y-1.5 list-decimal list-inside">
+              <li>Presione <strong>"+ Agregar Personal"</strong></li>
+              <li>Ingrese <strong>DNI</strong> y <strong>Nombre Completo</strong></li>
+              <li>Seleccione <strong>Cargo</strong> (Docente o Subdirector)</li>
+              <li>Para Docentes: asigne <strong>Grado y Sección</strong></li>
+              <li>Presione <strong>"Registrar"</strong></li>
             </ol>
           </div>
-        </section>
-
-        {/* PIE DE PÁGINA */}
-        <footer className="border-t-4 border-primary pt-6 mt-12 text-center text-sm text-muted-foreground">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <img src={diaLogo} alt="DIA 2026" className="h-12 w-12 object-contain" />
-            <img src={dgpLogo} alt="DGP UGEL Chiclayo" className="h-12 w-12 object-contain rounded-full" />
+          <div className="rounded-xl border-2 border-primary/10 bg-card p-5">
+            <h4 className="font-bold text-sm mb-3">📤 Carga masiva (CSV)</h4>
+            <ol className="text-sm space-y-1.5 list-decimal list-inside">
+              <li>Presione <strong>"📤 Carga Masiva"</strong></li>
+              <li>Descargue la plantilla CSV</li>
+              <li>Complete: <code className="bg-muted px-1 rounded text-xs">dni, nombre_completo, cargo</code></li>
+              <li>Suba el archivo y confirme</li>
+            </ol>
           </div>
-          <p className="font-semibold text-foreground">UGEL CHICLAYO – DIRECCIÓN DE GESTIÓN PEDAGÓGICA</p>
-          <p>Diagnóstico Integral de Aprendizajes – DIA 2026</p>
-          <p className="mt-2">Documento elaborado para uso interno institucional.</p>
-          <p>© 2026 – Todos los derechos reservados.</p>
+        </div>
+
+        <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
+          <BarChart3 className="h-5 w-5 text-secondary" /> 6.5 Resultados de la Institución
+        </h3>
+        <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Resultados</code></p>
+        <ul className="space-y-2 text-sm">
+          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />Resultados consolidados de toda la institución</li>
+          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />Filtros por nivel, grado, sección o área</li>
+          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />Gráficos de distribución de niveles de logro</li>
+        </ul>
+
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  7. MÓDULO DEL DOCENTE                                     */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <SectionTitle id="docente" icon={GraduationCap} number="07" title="MÓDULO DEL DOCENTE" />
+
+        <p>El docente es responsable del registro de estudiantes, la digitación de respuestas y la consulta de resultados de su aula.</p>
+
+        <h3 className="font-bold text-lg mt-6 mb-3">📊 7.1 Dashboard del Docente</h3>
+        <p>Panel con estadísticas de su aula: total de estudiantes, evaluaciones pendientes y completadas.</p>
+
+        <Tip emoji="📥" title="Evaluaciones de Entrada">
+          <p>Si es docente de <strong>Primaria</strong>, en su Dashboard encontrará los cuadernillos de evaluación de entrada de <strong>Matemática y Comunicación de su grado específico</strong>. Puede verlos o descargarlos directamente.</p>
+        </Tip>
+
+        <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
+          <UserPlus className="h-5 w-5 text-secondary" /> 7.2 Registro de Estudiantes
+        </h3>
+        <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Estudiantes</code></p>
+        <div className="space-y-3 pl-2 mb-4">
+          <StepCard step={1} title='Presione "+ Agregar Estudiante"' description="Se abrirá el formulario de registro" />
+          <StepCard step={2} title="Ingrese los datos" description="DNI (8 dígitos) y Nombre Completo del estudiante" />
+          <StepCard step={3} title="Vinculación automática" description="El estudiante queda asignado al grado y sección del docente" />
+          <StepCard step={4} title='Presione "Registrar"' description="Se crea automáticamente su cuenta (DNI como usuario y contraseña)" />
+        </div>
+
+        <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
+          <PenTool className="h-5 w-5 text-secondary" /> 7.3 Digitación de Respuestas
+        </h3>
+        <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Digitación</code></p>
+        <p className="mb-3">Este módulo permite ingresar las respuestas cuando las evaluaciones se aplican en formato <strong>impreso (papel)</strong>:</p>
+
+        <div className="space-y-3 pl-2 mb-4">
+          <StepCard step={1} title="Seleccione el Área" description="Matemática, Lectura o Socioemocional" />
+          <StepCard step={2} title="Lista de estudiantes" description="Se muestran todos los estudiantes de su aula" />
+          <StepCard step={3} title="Ingrese las respuestas" description="Para cada estudiante, marque la alternativa seleccionada (A, B, C o D) en cada pregunta" />
+          <StepCard step={4} title="Cálculo automático" description="El sistema calcula automáticamente el puntaje total y nivel de logro" />
+          <StepCard step={5} title='Presione "Guardar"' description="Las respuestas quedan registradas en el sistema" />
+        </div>
+
+        <Warning>
+          <ul className="space-y-1.5">
+            <li>Verifique cuidadosamente las respuestas <strong>antes de guardar</strong>.</li>
+            <li>Complete la digitación de <strong>TODOS</strong> los estudiantes antes de la fecha límite.</li>
+            <li>Las respuestas pueden editarse posteriormente si es necesario.</li>
+          </ul>
+        </Warning>
+
+        <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
+          <BarChart3 className="h-5 w-5 text-secondary" /> 7.4 Resultados del Aula
+        </h3>
+        <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Resultados</code></p>
+        <ul className="space-y-2 text-sm">
+          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />Resultados individuales de cada estudiante</li>
+          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />Tabla con nombre, puntaje y nivel de logro con colores indicativos</li>
+          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+            <span>Colores: <span className="text-destructive font-bold">Rojo</span> = Inicio, <span className="text-warning font-bold">Amarillo</span> = Proceso, <span className="text-accent font-bold">Verde</span> = Logro, <span className="text-primary font-bold">Azul</span> = Destacado</span>
+          </li>
+        </ul>
+
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  8. DOCENTE PIP                                            */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <SectionTitle id="pip" icon={Star} number="08" title="DOCENTE PIP (PROFESOR DE INNOVACIÓN PEDAGÓGICA)" />
+
+        <div className="rounded-xl border-2 border-info/20 bg-info/5 p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-full bg-info/20 flex items-center justify-center">
+              <Star className="h-6 w-6 text-info" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg">¿Qué es el Docente PIP?</h3>
+              <p className="text-sm text-muted-foreground">Profesor de Innovación Pedagógica / Tecnológica</p>
+            </div>
+          </div>
+          <p className="text-sm mb-4">
+            El <strong>Docente PIP</strong> es un profesor de aula asignado a la sección especial <strong>"PIP"</strong> en Primaria o Secundaria. Este docente tiene <strong>los mismos privilegios y funciones que un Director</strong>, lo que le permite gestionar integralmente la institución educativa.
+          </p>
+          <h4 className="font-bold text-sm mb-2">Funciones del Docente PIP:</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {[
+              'Acceder al panel del Director',
+              'Configurar niveles, grados y secciones',
+              'Registrar personal (docentes, subdirectores)',
+              'Ver resultados de toda la institución',
+              'Descargar evaluaciones de entrada',
+              'Gestionar usuarios de su IE',
+            ].map((f, i) => (
+              <div key={i} className="flex items-center gap-2 text-sm">
+                <CheckCircle2 className="h-4 w-4 text-info shrink-0" />
+                <span>{f}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <Tip title="¿Cómo se asigna un Docente PIP?">
+          <p>El Director registra al docente en la sección <strong>"PIP"</strong> (primera opción disponible en Primaria y Secundaria). Automáticamente, el sistema le otorga privilegios de Director y le muestra el menú completo de gestión institucional.</p>
+        </Tip>
+
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  9. MÓDULO DEL ESTUDIANTE                                  */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <SectionTitle id="estudiante" icon={ClipboardList} number="09" title="MÓDULO DEL ESTUDIANTE" />
+
+        <p>Los estudiantes pueden rendir evaluaciones directamente en la plataforma y consultar sus resultados.</p>
+
+        <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
+          <BookOpenCheck className="h-5 w-5 text-secondary" /> 9.1 Rendir Evaluación en Línea
+        </h3>
+        <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Mis Pruebas</code></p>
+
+        <div className="space-y-3 pl-2 mb-4">
+          <StepCard step={1} title="Inicie la evaluación" description="Se mostrará la evaluación disponible con una barra de progreso" />
+          <StepCard step={2} title="Lea cada pregunta" description="Lea cuidadosamente. Puede usar el botón 🔊 para escuchar en voz alta" />
+          <StepCard step={3} title="Seleccione su respuesta" description="Toque/haga clic en la opción deseada (A, B, C o D). Se resaltará en azul" />
+          <StepCard step={4} title="Navegue entre preguntas" description='Use los botones "Anterior" y "Siguiente" para moverse' />
+          <StepCard step={5} title="Finalice la evaluación" description='Al terminar, presione "✅ Finalizar" para enviar sus respuestas' />
+        </div>
+
+        <Tip emoji="👶" title="Para estudiantes pequeños (Inicial / 1.er Grado)">
+          <ul className="space-y-1">
+            <li>Los botones son <strong>grandes</strong> y fáciles de tocar en tablets</li>
+            <li>El botón de audio <strong>🔊</strong> lee la pregunta en español peruano</li>
+            <li>Se recomienda que un <strong>adulto acompañe</strong> al estudiante</li>
+          </ul>
+        </Tip>
+
+        <h3 className="font-bold text-lg mt-6 mb-3">📋 9.2 Mis Resultados</h3>
+        <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Resultados</code></p>
+        <ul className="space-y-2 text-sm">
+          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><strong>Boleta de Resultados:</strong> puntaje y nivel de logro en cada área</li>
+          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><strong>Recomendaciones pedagógicas</strong> personalizadas según el nivel alcanzado</li>
+        </ul>
+
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  10. MÓDULO DEL ESPECIALISTA                               */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <SectionTitle id="especialista" icon={BarChart3} number="10" title="MÓDULO DEL ESPECIALISTA UGEL" />
+
+        <p>Los especialistas pedagógicos de la UGEL acceden a reportes consolidados para el análisis a nivel de la provincia.</p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
+          <FeatureBox icon={BarChart3} title="Dashboard" items={[
+            'Estadísticas globales de la evaluación diagnóstica',
+            'Indicadores de avance por institución',
+          ]} />
+          <FeatureBox icon={FileText} title="Reportes" color="secondary" items={[
+            'Filtros por IE, nivel, grado, área y distrito',
+            'Gráficos de distribución de niveles de logro',
+            'Comparativas entre instituciones y distritos',
+          ]} />
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  11. MÓDULO DEL PADRE                                      */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <SectionTitle id="padre" icon={Users} number="11" title="MÓDULO DEL PADRE DE FAMILIA" />
+
+        <p>Los padres de familia pueden consultar los resultados de sus hijos accediendo con las credenciales proporcionadas por la IE.</p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
+          <FeatureBox icon={Eye} title="Funciones disponibles" items={[
+            'Ver la boleta de resultados del estudiante',
+            'Consultar recomendaciones pedagógicas',
+            'Apoyar el aprendizaje desde el hogar',
+          ]} />
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  12. MI PERFIL                                             */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <SectionTitle id="perfil" icon={UserCog} number="12" title="MI PERFIL" />
+
+        <p className="mb-4">Todos los usuarios pueden acceder a "Mi Perfil" desde el panel lateral para:</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="rounded-xl bg-primary/5 border border-primary/10 p-4 text-center">
+            <UserCog className="h-8 w-8 text-primary mx-auto mb-2" />
+            <p className="text-xs font-bold">Datos personales</p>
+            <p className="text-xs text-muted-foreground mt-1">Nombre, DNI, rol</p>
+          </div>
+          <div className="rounded-xl bg-secondary/5 border border-secondary/10 p-4 text-center">
+            <School className="h-8 w-8 text-secondary mx-auto mb-2" />
+            <p className="text-xs font-bold">Institución</p>
+            <p className="text-xs text-muted-foreground mt-1">IE asignada</p>
+          </div>
+          <div className="rounded-xl bg-accent/5 border border-accent/10 p-4 text-center">
+            <GraduationCap className="h-8 w-8 text-accent mx-auto mb-2" />
+            <p className="text-xs font-bold">Grado y Sección</p>
+            <p className="text-xs text-muted-foreground mt-1">Para docentes y estudiantes</p>
+          </div>
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  13. SEGURIDAD                                             */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <SectionTitle id="seguridad" icon={Lock} number="13" title="SEGURIDAD Y PROTECCIÓN DE DATOS" />
+
+        <p className="mb-4">La plataforma DIA 2026 cumple con la <strong>Ley N.° 29733 – Ley de Protección de Datos Personales</strong> del Perú.</p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
+          <FeatureBox icon={Shield} title="Medidas del sistema" items={[
+            'Autenticación segura con credenciales únicas',
+            'Control de acceso por roles',
+            'Contraseñas almacenadas de forma encriptada',
+            'Sesiones con expiración automática',
+            'Registro de actividad en el sistema',
+          ]} />
+          <FeatureBox icon={Users} title="Responsabilidades del usuario" color="destructive" items={[
+            'No compartir credenciales con terceros',
+            'Cerrar sesión en dispositivos compartidos',
+            'No capturar pantallas con datos de estudiantes',
+            'Reportar accesos no autorizados inmediatamente',
+          ]} />
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  14. SOLUCIÓN DE PROBLEMAS                                 */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <SectionTitle id="problemas" icon={HelpCircle} number="14" title="SOLUCIÓN DE PROBLEMAS FRECUENTES" />
+
+        <div className="space-y-4">
+          <TroubleshootCard problem='"Credenciales incorrectas"' solutions={[
+            'Verifique que ingresa su DNI completo (8 dígitos) tanto como usuario y contraseña',
+            'Asegúrese de no tener espacios en blanco antes o después del DNI',
+            'Solicite al administrador que resetee su contraseña si el problema persiste',
+          ]} />
+          <TroubleshootCard problem='"Sesión expirada"' solutions={[
+            'Su sesión ha expirado por inactividad',
+            'Presione "Cerrar Sesión" y vuelva a ingresar con sus credenciales',
+          ]} />
+          <TroubleshootCard problem="No veo mi institución / No puedo registrar personal" solutions={[
+            'Verifique que el administrador haya vinculado su cuenta a una institución educativa',
+            'Contacte al administrador de la UGEL para que revise su asignación',
+          ]} />
+          <TroubleshootCard problem="La página carga lentamente" solutions={[
+            'Verifique su conexión a Internet',
+            'Use Google Chrome actualizado para mejor rendimiento',
+            'Cierre pestañas o apps que consuman ancho de banda',
+            'Instale la app PWA desde el navegador para acceso más rápido',
+          ]} />
+          <TroubleshootCard problem="No se guardan los datos / Error al guardar" solutions={[
+            'Verifique su conexión a Internet',
+            'No cierre la ventana mientras el sistema esté guardando',
+            'Recargue la página (F5) e intente nuevamente',
+          ]} />
+          <TroubleshootCard problem="El audio no funciona en la evaluación" solutions={[
+            'Verifique que el volumen del dispositivo esté activado',
+            'Use un navegador moderno (Chrome, Firefox, Edge)',
+            'Interactúe con la página antes (toque cualquier parte de la pantalla)',
+          ]} />
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  15. SOPORTE TÉCNICO                                       */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <SectionTitle id="soporte" icon={Phone} number="15" title="SOPORTE TÉCNICO Y CONTACTO" />
+
+        <div className="rounded-2xl gradient-primary text-primary-foreground p-8 mb-6">
+          <h3 className="text-xl font-extrabold mb-4">Dirección de Gestión Pedagógica</h3>
+          <p className="font-semibold mb-4">UGEL Chiclayo</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div className="flex items-center gap-3">
+              <Mail className="h-5 w-5 text-secondary shrink-0" />
+              <span>dgp@ugelchiclayo.gob.pe</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Phone className="h-5 w-5 text-secondary shrink-0" />
+              <span>(074) 123456</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <MapPin className="h-5 w-5 text-secondary shrink-0" />
+              <span>Av. José Leonardo Ortiz, Chiclayo</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Clock className="h-5 w-5 text-secondary shrink-0" />
+              <span>Lunes a viernes, 8:00 a.m. – 5:00 p.m.</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border-2 border-primary/10 bg-card p-6">
+          <h3 className="font-bold text-sm mb-4">📞 Protocolo de Soporte</h3>
+          <div className="space-y-3">
+            <StepCard step={1} title="Nivel 1 – IE" description="El docente o director consulta con el responsable de TI de su institución" />
+            <StepCard step={2} title="Nivel 2 – UGEL" description="El director o responsable TI contacta al equipo DGP de la UGEL" />
+            <StepCard step={3} title="Nivel 3 – Desarrollo" description="El equipo DGP escala al equipo de desarrollo si el problema es técnico" />
+          </div>
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════ */}
+        {/*  PIE DE PÁGINA                                             */}
+        {/* ════════════════════════════════════════════════════════════ */}
+        <footer className="mt-16 pt-8 border-t-4 border-secondary">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-6 mb-6">
+              <img src={diaLogo} alt="DIA 2026" className="h-16 w-16 object-contain" />
+              <img src={dgpLogo} alt="DGP UGEL Chiclayo" className="h-16 w-16 object-contain rounded-full" />
+            </div>
+            <p className="text-lg font-extrabold text-primary">UGEL CHICLAYO</p>
+            <p className="font-semibold text-muted-foreground">Dirección de Gestión Pedagógica</p>
+            <p className="text-sm text-muted-foreground mt-1">Diagnóstico Integral de Aprendizajes – DIA 2026</p>
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <div className="h-0.5 w-16 bg-secondary rounded-full" />
+              <Star className="h-4 w-4 text-secondary" />
+              <div className="h-0.5 w-16 bg-secondary rounded-full" />
+            </div>
+            <p className="text-xs text-muted-foreground mt-4">Documento elaborado para uso interno institucional</p>
+            <p className="text-xs text-muted-foreground">© 2026 – Todos los derechos reservados</p>
+          </div>
         </footer>
+
       </article>
     </div>
   );

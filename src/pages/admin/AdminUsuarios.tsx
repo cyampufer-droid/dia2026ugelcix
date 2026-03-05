@@ -236,15 +236,18 @@ const AdminUsuarios = () => {
                 📧 El correo se generará automáticamente como <strong>{dni ? `${dni}@dia.ugel.local` : '{DNI}@dia.ugel.local'}</strong><br/>
                 🔑 La contraseña inicial será el <strong>DNI</strong>. El usuario deberá cambiarla en su primer inicio de sesión.
               </p>
-              <div>
-                <Label>Rol</Label>
-                <Select value={rol} onValueChange={setRol}>
-                  <SelectTrigger><SelectValue placeholder="Seleccione rol" /></SelectTrigger>
-                  <SelectContent>
-                    {roles.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+               <div>
+                 <Label>Rol</Label>
+                 <select
+                   value={rol}
+                   onChange={e => setRol(e.target.value)}
+                   required
+                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                 >
+                   <option value="" disabled>Seleccione rol</option>
+                   {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                 </select>
+               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? 'Creando…' : 'Crear Usuario'}
               </Button>
@@ -359,15 +362,17 @@ const AdminUsuarios = () => {
               <Label>Nueva Contraseña (dejar vacío para no cambiar)</Label>
               <Input type="password" value={editPassword} onChange={e => setEditPassword(e.target.value)} minLength={6} placeholder="••••••" />
             </div>
-            <div>
-              <Label>Rol</Label>
-              <Select value={editRol} onValueChange={setEditRol}>
-                <SelectTrigger><SelectValue placeholder="Seleccione rol" /></SelectTrigger>
-                <SelectContent>
-                  {roles.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+             <div>
+               <Label>Rol</Label>
+               <select
+                 value={editRol}
+                 onChange={e => setEditRol(e.target.value)}
+                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+               >
+                 <option value="" disabled>Seleccione rol</option>
+                 {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+               </select>
+             </div>
             <Button type="submit" className="w-full" disabled={editLoading}>
               {editLoading ? 'Guardando…' : 'Guardar Cambios'}
             </Button>

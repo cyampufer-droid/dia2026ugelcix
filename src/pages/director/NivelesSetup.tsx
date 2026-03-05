@@ -16,10 +16,12 @@ const nivelesConfig = {
   Primaria: {
     grados: ['Primero', 'Segundo', 'Tercero', 'Cuarto', 'Quinto', 'Sexto'],
     secciones: 'A-J',
+    seccionesPrefix: ['PIP'],
   },
   Secundaria: {
     grados: ['Primero', 'Segundo', 'Tercero', 'Cuarto', 'Quinto'],
     secciones: 'A-T',
+    seccionesPrefix: ['PIP'],
   },
 };
 
@@ -75,8 +77,13 @@ const NivelesSetup = () => {
   }, [institucionId]);
 
   const gradosDisponibles = nivel ? nivelesConfig[nivel as keyof typeof nivelesConfig]?.grados || [] : [];
-  const seccionesRaw = nivel ? nivelesConfig[nivel as keyof typeof nivelesConfig]?.secciones : [];
-  const seccionesDisponibles = typeof seccionesRaw === 'string' ? generateSections(seccionesRaw) : (seccionesRaw || []);
+  const config = nivel ? nivelesConfig[nivel as keyof typeof nivelesConfig] : null;
+  const seccionesRaw = config?.secciones;
+  const prefix = (config && 'seccionesPrefix' in config) ? (config as any).seccionesPrefix as string[] : [];
+  const seccionesDisponibles = [
+    ...prefix,
+    ...(typeof seccionesRaw === 'string' ? generateSections(seccionesRaw) : (seccionesRaw || [])),
+  ];
 
   const handleAdd = () => {
     if (!nivel || !grado || !seccion) return;

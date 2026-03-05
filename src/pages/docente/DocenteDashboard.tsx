@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Users, FileSpreadsheet, ClipboardList, BookOpen, School, Building2, RefreshCw } from 'lucide-react';
+import EvaluacionesDownloadCard from '@/components/EvaluacionesDownloadCard';
 import StatCard from '@/components/StatCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -230,6 +231,13 @@ const DocenteDashboard = () => {
             <p className="text-sm text-muted-foreground">No hay estudiantes registrados en esta aula aún.</p>
           )}
         </div>
+      )}
+
+      {aulaActual?.nivel === 'Primaria' && (
+        <EvaluacionesDownloadCard
+          gradoFilter={aulaActual.grado}
+          title={`Cuadernillos de Evaluación – ${aulaActual.grado} Grado`}
+        />
       )}
 
       <div className="bg-card rounded-xl border p-6 shadow-card">

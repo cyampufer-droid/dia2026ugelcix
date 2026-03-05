@@ -322,25 +322,25 @@ const GuiaUsuario = () => {
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
           <div className="rounded-xl p-4 text-center border-2 border-destructive/30 bg-destructive/5">
-            <div className="w-10 h-10 rounded-full bg-destructive/20 mx-auto mb-2 flex items-center justify-center text-lg font-black text-destructive">I</div>
+            <div className="w-10 h-10 rounded-full bg-destructive/20 mx-auto mb-2 flex items-center justify-center text-lg font-black text-destructive">C</div>
             <p className="font-bold text-sm text-destructive">En Inicio</p>
             <p className="text-xs text-muted-foreground mt-1">0 – 10 pts</p>
             <p className="text-xs text-muted-foreground">Progreso mínimo</p>
           </div>
           <div className="rounded-xl p-4 text-center border-2 border-warning/30 bg-warning/5">
-            <div className="w-10 h-10 rounded-full bg-warning/20 mx-auto mb-2 flex items-center justify-center text-lg font-black text-warning">P</div>
+            <div className="w-10 h-10 rounded-full bg-warning/20 mx-auto mb-2 flex items-center justify-center text-lg font-black text-warning">B</div>
             <p className="font-bold text-sm text-warning">En Proceso</p>
             <p className="text-xs text-muted-foreground mt-1">11 – 13 pts</p>
             <p className="text-xs text-muted-foreground">Próximo al logro</p>
           </div>
           <div className="rounded-xl p-4 text-center border-2 border-accent/30 bg-accent/5">
-            <div className="w-10 h-10 rounded-full bg-accent/20 mx-auto mb-2 flex items-center justify-center text-lg font-black text-accent">L</div>
+            <div className="w-10 h-10 rounded-full bg-accent/20 mx-auto mb-2 flex items-center justify-center text-lg font-black text-accent">A</div>
             <p className="font-bold text-sm text-accent">Logro Esperado</p>
             <p className="text-xs text-muted-foreground mt-1">14 – 17 pts</p>
             <p className="text-xs text-muted-foreground">Nivel esperado</p>
           </div>
           <div className="rounded-xl p-4 text-center border-2 border-primary/30 bg-primary/5">
-            <div className="w-10 h-10 rounded-full bg-primary/20 mx-auto mb-2 flex items-center justify-center text-lg font-black text-primary">D</div>
+            <div className="w-10 h-10 rounded-full bg-primary/20 mx-auto mb-2 flex items-center justify-center text-sm font-black text-primary">AD</div>
             <p className="font-bold text-sm text-primary">Destacado</p>
             <p className="text-xs text-muted-foreground mt-1">18 – 20 pts</p>
             <p className="text-xs text-muted-foreground">Sobresaliente</p>

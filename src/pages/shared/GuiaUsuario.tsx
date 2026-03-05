@@ -309,8 +309,8 @@ const GuiaUsuario = () => {
             'Facilita decisiones pedagógicas basadas en evidencia',
           ]} />
           <FeatureBox icon={Award} title="Áreas Evaluadas" color="secondary" items={[
-            'Matemática: resolución de problemas, razonamiento lógico',
-            'Comunicación (Lectura): comprensión lectora, inferencia',
+            'Matemática: resolución de problemas',
+            'Comunicación (Lectura): comprensión lectora',
             'Socioemocional: autoconocimiento, empatía, regulación',
           ]} />
         </div>
@@ -869,11 +869,11 @@ const GuiaUsuario = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-3">
               <Mail className="h-5 w-5 text-secondary shrink-0" />
-              <span>dgp@ugelchiclayo.gob.pe</span>
+              <span>cyampufer@ugelchiclayo.edu.pe</span>
             </div>
             <div className="flex items-center gap-3">
               <Phone className="h-5 w-5 text-secondary shrink-0" />
-              <span>(074) 123456</span>
+              <span>979 915 310</span>
             </div>
             <div className="flex items-center gap-3">
               <MapPin className="h-5 w-5 text-secondary shrink-0" />

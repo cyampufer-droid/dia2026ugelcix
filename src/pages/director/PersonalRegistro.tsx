@@ -278,16 +278,18 @@ const PersonalRegistro = () => {
   const AulaSelector = ({ value, onChange, label = 'Nivel / Grado / Sección' }: { value: string; onChange: (v: string) => void; label?: string }) => (
     <div>
       <Label>{label}</Label>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger><SelectValue placeholder="Seleccione aula (opcional)" /></SelectTrigger>
-        <SelectContent>
-          {nivelesGrados.map(ng => (
-            <SelectItem key={ng.id} value={ng.id}>
-              {ng.nivel} - {ng.grado} "{ng.seccion}"
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <option value="">Seleccione aula (opcional)</option>
+        {nivelesGrados.map(ng => (
+          <option key={ng.id} value={ng.id}>
+            {ng.nivel} - {ng.grado} "{ng.seccion}"
+          </option>
+        ))}
+      </select>
     </div>
   );
 
@@ -309,12 +311,15 @@ const PersonalRegistro = () => {
               <form onSubmit={handleCreate} className="space-y-4 mt-4">
                 <div>
                   <Label>Tipo de Personal</Label>
-                  <Select value={rol} onValueChange={setRol}>
-                    <SelectTrigger><SelectValue placeholder="Seleccione tipo" /></SelectTrigger>
-                    <SelectContent>
-                      {personalRoles.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <select
+                    value={rol}
+                    onChange={e => setRol(e.target.value)}
+                    required
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="" disabled>Seleccione tipo</option>
+                    {personalRoles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                  </select>
                 </div>
                 <div>
                   <Label>DNI</Label>
@@ -415,14 +420,16 @@ const PersonalRegistro = () => {
             <DialogDescription>Modifique los datos del personal seleccionado</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEdit} className="space-y-4 mt-2">
-            <div>
+             <div>
               <Label>Tipo de Personal</Label>
-              <Select value={editRol} onValueChange={setEditRol}>
-                <SelectTrigger><SelectValue placeholder="Seleccione tipo" /></SelectTrigger>
-                <SelectContent>
-                  {personalRoles.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <select
+                value={editRol}
+                onChange={e => setEditRol(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="" disabled>Seleccione tipo</option>
+                {personalRoles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+              </select>
             </div>
             <div>
               <Label>DNI</Label>

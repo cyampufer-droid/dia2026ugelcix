@@ -21,6 +21,7 @@ interface AuthContextType {
   roles: AppRole[];
   loading: boolean;
   mustChangePassword: boolean;
+  isPIP: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, metadata: Record<string, string>) => Promise<void>;
   signOut: () => Promise<void>;
@@ -41,9 +42,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
-  // Single loading flag: true until auth + profile/roles are fully resolved
   const [loading, setLoading] = useState(true);
   const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [isPIP, setIsPIP] = useState(false);
   const loadingRef = React.useRef(true);
 
   const fetchProfileAndRoles = useCallback(async (userId: string) => {
@@ -54,8 +55,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ]);
 
       if (profileRes.data) {
-        setProfile(profileRes.data as Profile);
-        setMustChangePassword(!!(profileRes.data as any).must_change_password);
+        const p = profileRes.data as any;
+        setProfile(p as Profile);
+        setMustChangePassword(!!p.must_change_password);
+
+        // Check if docente is PIP
+        if (p.grado_seccion_id) {
+          const { data: ng } = await supabase
+            .from('niveles_grados')
+            .select('seccion')
+            .eq('id', p.grado_seccion_id)
+            .single();
+          setIsPIP(ng?.seccion === 'PIP');
+        } else {
+          setIsPIP(false);
+        }
       }
 
       if (rolesRes.data) {
@@ -157,7 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     : null;
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, roles, loading, mustChangePassword, signIn, signUp, signOut, refreshProfile, primaryRole }}>
+    <AuthContext.Provider value={{ user, session, profile, roles, loading, mustChangePassword, isPIP, signIn, signUp, signOut, refreshProfile, primaryRole }}>
       {children}
     </AuthContext.Provider>
   );

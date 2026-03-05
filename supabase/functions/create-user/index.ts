@@ -50,8 +50,31 @@ Deno.serve(async (req) => {
       .eq("user_id", caller.id);
 
     const callerRoleList = (callerRoles || []).map((r: { role: string }) => r.role);
+
+    // Check if caller is a PIP docente (equivalent to director)
+    let isPIPDocente = false;
+    if (callerRoleList.includes("docente")) {
+      const { data: callerProfile } = await adminClient
+        .from("profiles")
+        .select("grado_seccion_id")
+        .eq("user_id", caller.id)
+        .single();
+      if (callerProfile?.grado_seccion_id) {
+        const { data: ng } = await adminClient
+          .from("niveles_grados")
+          .select("seccion")
+          .eq("id", callerProfile.grado_seccion_id)
+          .single();
+        isPIPDocente = ng?.seccion === "PIP";
+      }
+    }
+
     const roleHierarchy = ["administrador", "director", "subdirector", "docente"];
-    const callerBestRole = roleHierarchy.find((r) => callerRoleList.includes(r));
+    let callerBestRole = roleHierarchy.find((r) => callerRoleList.includes(r));
+    // PIP docentes act as directors
+    if (isPIPDocente && callerBestRole === "docente") {
+      callerBestRole = "director";
+    }
     if (!callerBestRole) {
       return jsonResponse({ error: "No tiene permisos para crear usuarios" }, 403);
     }

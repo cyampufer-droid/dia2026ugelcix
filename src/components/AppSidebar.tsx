@@ -55,10 +55,13 @@ const roleNavItems: Record<string, NavItem[]> = {
 };
 
 const AppSidebar = () => {
-  const { primaryRole, profile, signOut } = useAuth();
+  const { primaryRole, profile, signOut, isPIP } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const items = primaryRole ? (roleNavItems[primaryRole] || []) : [];
+
+  // PIP docentes see director navigation
+  const effectiveRole = (isPIP && primaryRole === 'docente') ? 'director' : primaryRole;
+  const items = effectiveRole ? (roleNavItems[effectiveRole] || []) : [];
 
   const roleLabels: Record<string, string> = {
     administrador: 'Administrador',
@@ -80,7 +83,7 @@ const AppSidebar = () => {
       <div className="p-4 border-b border-sidebar-border">
         <p className="text-sm font-medium truncate">{profile?.nombre_completo || 'Usuario'}</p>
         <span className="inline-block mt-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-sidebar-accent text-sidebar-accent-foreground">
-          {primaryRole ? roleLabels[primaryRole] : 'Sin rol'}
+          {isPIP ? 'Docente PIP' : (primaryRole ? roleLabels[primaryRole] : 'Sin rol')}
         </span>
       </div>
 

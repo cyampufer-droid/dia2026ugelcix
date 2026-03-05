@@ -12,7 +12,7 @@ const roleRoutes: Record<string, string> = {
 };
 
 const Index = () => {
-  const { user, primaryRole, loading } = useAuth();
+  const { user, primaryRole, loading, isPIP } = useAuth();
 
   if (loading) {
     return (
@@ -23,6 +23,9 @@ const Index = () => {
   }
 
   if (!user) return <Navigate to="/login" replace />;
+
+  // PIP docentes go to director dashboard
+  if (isPIP && primaryRole === 'docente') return <Navigate to="/director" replace />;
 
   const destination = primaryRole ? (roleRoutes[primaryRole] || '/login') : '/login';
   return <Navigate to={destination} replace />;

@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
-  const { user, roles, loading, mustChangePassword } = useAuth();
+  const { user, roles, loading, mustChangePassword, isPIP } = useAuth();
 
   if (loading) {
     return (
@@ -23,7 +23,9 @@ const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
 
   if (mustChangePassword) return <Navigate to="/cambiar-contrasena" replace />;
 
-  const hasAccess = roles.some(role => allowedRoles.includes(role));
+  // PIP docentes get director-level access
+  const hasAccess = roles.some(role => allowedRoles.includes(role))
+    || (isPIP && roles.includes('docente') && (allowedRoles.includes('director') || allowedRoles.includes('subdirector')));
   if (!hasAccess) return <Navigate to="/" replace />;
 
   return <>{children}</>;

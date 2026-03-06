@@ -230,7 +230,7 @@ const ChatbotWidget = () => {
             <div className="flex gap-1">
               {messages.length > 0 && (
                 <button
-                  onClick={() => setMessages([])}
+233:                   onClick={handleClear}
                   className="p-1.5 rounded-lg hover:bg-primary-foreground/20 transition-colors"
                   aria-label="Limpiar chat"
                   title="Limpiar chat"
@@ -239,7 +239,7 @@ const ChatbotWidget = () => {
                 </button>
               )}
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 className="p-1.5 rounded-lg hover:bg-primary-foreground/20 transition-colors"
                 aria-label="Cerrar chat"
               >
@@ -289,8 +289,20 @@ const ChatbotWidget = () => {
                       : 'bg-muted rounded-tl-sm'
                   }`}>
                     {msg.role === 'assistant' ? (
-                      <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5">
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      <div>
+                        <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5">
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
+                        {!isLoading && (
+                          <button
+                            onClick={() => toggleSpeak(msg.content, i)}
+                            className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+                            aria-label={speakingIdx === i ? 'Detener voz' : 'Escuchar respuesta'}
+                          >
+                            {speakingIdx === i ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+                            {speakingIdx === i ? 'Detener' : 'Escuchar'}
+                          </button>
+                        )}
                       </div>
                     ) : (
                       <p className="whitespace-pre-wrap">{msg.content}</p>

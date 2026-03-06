@@ -7,13 +7,37 @@ import diaRobotImg from '@/assets/dia-robot.png';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
-const getSpanishMaleVoice = (): SpeechSynthesisVoice | null => {
+const getSpanishLatamMaleVoice = (): SpeechSynthesisVoice | null => {
   const voices = speechSynthesis.getVoices();
-  // Prefer a Spanish male voice
-  const spanishMale = voices.find(v => v.lang.startsWith('es') && v.name.toLowerCase().includes('male'));
-  const spanishGoogle = voices.find(v => v.lang.startsWith('es') && v.name.toLowerCase().includes('google'));
-  const anySpanish = voices.find(v => v.lang.startsWith('es'));
-  return spanishMale || spanishGoogle || anySpanish || null;
+  
+  // Priority order for Peruvian/Latin American Spanish male voice:
+  // 1. es-PE (Peruvian Spanish)
+  const peruVoice = voices.find(v => v.lang === 'es-PE');
+  if (peruVoice) return peruVoice;
+
+  // 2. es-419 (Latin American Spanish) - male preferred
+  const latam419Male = voices.find(v => v.lang === 'es-419' && /male|hombre|jorge|carlos|andrés|diego|pedro/i.test(v.name));
+  const latam419 = voices.find(v => v.lang === 'es-419');
+  if (latam419Male) return latam419Male;
+  if (latam419) return latam419;
+
+  // 3. es-MX, es-CO, es-CL (nearby LatAm accents) - male preferred
+  const latamCodes = ['es-MX', 'es-CO', 'es-CL', 'es-AR', 'es-EC', 'es-VE'];
+  const latamMale = voices.find(v => latamCodes.includes(v.lang) && /male|hombre|jorge|carlos|andrés|diego|pedro/i.test(v.name));
+  const latamAny = voices.find(v => latamCodes.includes(v.lang));
+  if (latamMale) return latamMale;
+  if (latamAny) return latamAny;
+
+  // 4. Any es-* voice with male keywords
+  const anySpanishMale = voices.find(v => v.lang.startsWith('es') && /male|hombre|jorge|carlos|andrés|diego|pedro/i.test(v.name));
+  if (anySpanishMale) return anySpanishMale;
+
+  // 5. Google Spanish (Latin America)
+  const googleLatam = voices.find(v => v.lang.startsWith('es') && /google|latin/i.test(v.name));
+  if (googleLatam) return googleLatam;
+
+  // 6. Any Spanish voice as fallback
+  return voices.find(v => v.lang.startsWith('es')) || null;
 };
 
 const speakText = (text: string, onEnd?: () => void): SpeechSynthesisUtterance => {
@@ -25,11 +49,14 @@ const speakText = (text: string, onEnd?: () => void): SpeechSynthesisUtterance =
     .trim();
 
   const utterance = new SpeechSynthesisUtterance(clean);
-  utterance.lang = 'es-ES';
-  utterance.rate = 1.05;
-  utterance.pitch = 1.1;
-  const voice = getSpanishMaleVoice();
-  if (voice) utterance.voice = voice;
+  utterance.lang = 'es-PE'; // Peruvian Spanish
+  utterance.rate = 1.05;    // Slightly faster for youthful feel
+  utterance.pitch = 1.05;   // Slightly higher for youthful tone
+  const voice = getSpanishLatamMaleVoice();
+  if (voice) {
+    utterance.voice = voice;
+    utterance.lang = voice.lang; // Match the voice's lang
+  }
   if (onEnd) utterance.onend = onEnd;
   utterance.onerror = () => onEnd?.();
   speechSynthesis.speak(utterance);

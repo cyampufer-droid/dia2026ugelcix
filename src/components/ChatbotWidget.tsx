@@ -1,11 +1,40 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Send, User, Trash2 } from 'lucide-react';
+import { X, Send, User, Trash2, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ReactMarkdown from 'react-markdown';
 import diaRobotImg from '@/assets/dia-robot.png';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
+
+const getSpanishMaleVoice = (): SpeechSynthesisVoice | null => {
+  const voices = speechSynthesis.getVoices();
+  // Prefer a Spanish male voice
+  const spanishMale = voices.find(v => v.lang.startsWith('es') && v.name.toLowerCase().includes('male'));
+  const spanishGoogle = voices.find(v => v.lang.startsWith('es') && v.name.toLowerCase().includes('google'));
+  const anySpanish = voices.find(v => v.lang.startsWith('es'));
+  return spanishMale || spanishGoogle || anySpanish || null;
+};
+
+const speakText = (text: string, onEnd?: () => void): SpeechSynthesisUtterance => {
+  // Strip markdown
+  const clean = text
+    .replace(/[#*_~`>\[\]()!|-]/g, '')
+    .replace(/\n{2,}/g, '. ')
+    .replace(/\n/g, ' ')
+    .trim();
+
+  const utterance = new SpeechSynthesisUtterance(clean);
+  utterance.lang = 'es-ES';
+  utterance.rate = 1.05;
+  utterance.pitch = 1.1;
+  const voice = getSpanishMaleVoice();
+  if (voice) utterance.voice = voice;
+  if (onEnd) utterance.onend = onEnd;
+  utterance.onerror = () => onEnd?.();
+  speechSynthesis.speak(utterance);
+  return utterance;
+};
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chatbot`;
 
@@ -24,11 +53,39 @@ const ChatbotWidget = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
+
+  // Preload voices
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    speechSynthesis.getVoices();
+    const handler = () => speechSynthesis.getVoices();
+    speechSynthesis.addEventListener('voiceschanged', handler);
+    return () => speechSynthesis.removeEventListener('voiceschanged', handler);
+  }, []);
+
+  const toggleSpeak = useCallback((text: string, idx: number) => {
+    if (speakingIdx === idx) {
+      speechSynthesis.cancel();
+      setSpeakingIdx(null);
+      return;
     }
-  }, [messages]);
+    speechSynthesis.cancel();
+    setSpeakingIdx(idx);
+    speakText(text, () => setSpeakingIdx(null));
+  }, [speakingIdx]);
+
+  // Stop speech when closing
+  const handleClose = useCallback(() => {
+    speechSynthesis.cancel();
+    setSpeakingIdx(null);
+    setIsOpen(false);
+  }, []);
+
+  const handleClear = useCallback(() => {
+    speechSynthesis.cancel();
+    setSpeakingIdx(null);
+    setMessages([]);
+  }, []);
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -173,7 +230,7 @@ const ChatbotWidget = () => {
             <div className="flex gap-1">
               {messages.length > 0 && (
                 <button
-                  onClick={() => setMessages([])}
+onClick={handleClear}
                   className="p-1.5 rounded-lg hover:bg-primary-foreground/20 transition-colors"
                   aria-label="Limpiar chat"
                   title="Limpiar chat"
@@ -182,7 +239,7 @@ const ChatbotWidget = () => {
                 </button>
               )}
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 className="p-1.5 rounded-lg hover:bg-primary-foreground/20 transition-colors"
                 aria-label="Cerrar chat"
               >
@@ -232,8 +289,20 @@ const ChatbotWidget = () => {
                       : 'bg-muted rounded-tl-sm'
                   }`}>
                     {msg.role === 'assistant' ? (
-                      <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5">
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      <div>
+                        <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5">
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
+                        {!isLoading && (
+                          <button
+                            onClick={() => toggleSpeak(msg.content, i)}
+                            className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+                            aria-label={speakingIdx === i ? 'Detener voz' : 'Escuchar respuesta'}
+                          >
+                            {speakingIdx === i ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+                            {speakingIdx === i ? 'Detener' : 'Escuchar'}
+                          </button>
+                        )}
                       </div>
                     ) : (
                       <p className="whitespace-pre-wrap">{msg.content}</p>

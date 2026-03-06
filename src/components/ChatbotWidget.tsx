@@ -224,7 +224,7 @@ const ChatbotWidget = () => {
                   <div className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                     msg.role === 'user' ? 'bg-secondary/20' : 'bg-primary/10'
                   }`}>
-                    {msg.role === 'user' ? <User className="h-4 w-4 text-secondary" /> : <Bot className="h-4 w-4 text-primary" />}
+                    {msg.role === 'user' ? <User className="h-4 w-4 text-secondary" /> : <img src={diaRobotImg} alt="DIA" className="h-6 w-6 object-contain" />}
                   </div>
                   <div className={`max-w-[80%] rounded-2xl px-3 py-2.5 text-sm ${
                     msg.role === 'user'
@@ -245,7 +245,7 @@ const ChatbotWidget = () => {
               {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
                 <div className="flex gap-2 items-start">
                   <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <Bot className="h-4 w-4 text-primary" />
+                    <img src={diaRobotImg} alt="DIA" className="h-6 w-6 object-contain" />
                   </div>
                   <div className="bg-muted rounded-2xl rounded-tl-sm px-3 py-2.5">
                     <div className="flex gap-1">

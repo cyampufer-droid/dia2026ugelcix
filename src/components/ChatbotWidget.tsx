@@ -1,11 +1,40 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Send, User, Trash2 } from 'lucide-react';
+import { X, Send, User, Trash2, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ReactMarkdown from 'react-markdown';
 import diaRobotImg from '@/assets/dia-robot.png';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
+
+const getSpanishMaleVoice = (): SpeechSynthesisVoice | null => {
+  const voices = speechSynthesis.getVoices();
+  // Prefer a Spanish male voice
+  const spanishMale = voices.find(v => v.lang.startsWith('es') && v.name.toLowerCase().includes('male'));
+  const spanishGoogle = voices.find(v => v.lang.startsWith('es') && v.name.toLowerCase().includes('google'));
+  const anySpanish = voices.find(v => v.lang.startsWith('es'));
+  return spanishMale || spanishGoogle || anySpanish || null;
+};
+
+const speakText = (text: string, onEnd?: () => void): SpeechSynthesisUtterance => {
+  // Strip markdown
+  const clean = text
+    .replace(/[#*_~`>\[\]()!|-]/g, '')
+    .replace(/\n{2,}/g, '. ')
+    .replace(/\n/g, ' ')
+    .trim();
+
+  const utterance = new SpeechSynthesisUtterance(clean);
+  utterance.lang = 'es-ES';
+  utterance.rate = 1.05;
+  utterance.pitch = 1.1;
+  const voice = getSpanishMaleVoice();
+  if (voice) utterance.voice = voice;
+  if (onEnd) utterance.onend = onEnd;
+  utterance.onerror = () => onEnd?.();
+  speechSynthesis.speak(utterance);
+  return utterance;
+};
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chatbot`;
 

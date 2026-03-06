@@ -44,12 +44,35 @@ export function useOfflineSync() {
         return;
       }
 
+      // Load answer keys for all evaluaciones referenced
+      const evalIds = [...new Set(pending.map(r => r.evaluacion_id))];
+      const { data: evaluaciones } = await supabase
+        .from('evaluaciones')
+        .select('id, config_preguntas')
+        .in('id', evalIds);
+
+      const answerKeyMap: Record<string, string[]> = {};
+      for (const ev of evaluaciones || []) {
+        const config = ev.config_preguntas as { respuestas_correctas?: string[] } | null;
+        if (config?.respuestas_correctas) {
+          answerKeyMap[ev.id] = config.respuestas_correctas;
+        }
+      }
+
       let successCount = 0;
       let errorCount = 0;
 
       for (const record of pending) {
-        // Calculate score
-        const puntaje = record.respuestas.filter(r => r !== '').length; // Simplified; real logic compares against key
+        // Calculate score by comparing against answer key
+        const answerKey = answerKeyMap[record.evaluacion_id];
+        let puntaje = 0;
+        if (answerKey) {
+          for (let i = 0; i < record.respuestas.length; i++) {
+            if (record.respuestas[i] && record.respuestas[i] === answerKey[i]) {
+              puntaje++;
+            }
+          }
+        }
 
         const { error } = await supabase
           .from('resultados')
@@ -76,7 +99,7 @@ export function useOfflineSync() {
 
       toast({
         title: `Sincronización completada`,
-        description: `${successCount} registros sincronizados${errorCount > 0 ? `, ${errorCount} errores` : ''}.`,
+        description: `${successCount} registros sincronizados${errorCount > 0 ? `, ${errorCount} errores` : ''}. Puntajes calculados automáticamente.`,
         variant: errorCount > 0 ? 'destructive' : 'default',
       });
     } catch (err) {

@@ -52,6 +52,10 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: 'Resultados', icon: ClipboardList, path: '/estudiante/resultados' },
     { label: 'Mi Perfil', icon: UserCircle, path: '/perfil' },
   ],
+  padre: [
+    { label: 'Resultados', icon: ClipboardList, path: '/estudiante/resultados' },
+    { label: 'Mi Perfil', icon: UserCircle, path: '/perfil' },
+  ],
 };
 
 const AppSidebar = () => {

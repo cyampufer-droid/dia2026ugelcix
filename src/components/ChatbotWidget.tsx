@@ -230,7 +230,7 @@ const ChatbotWidget = () => {
             <div className="flex gap-1">
               {messages.length > 0 && (
                 <button
-233:                   onClick={handleClear}
+onClick={handleClear}
                   className="p-1.5 rounded-lg hover:bg-primary-foreground/20 transition-colors"
                   aria-label="Limpiar chat"
                   title="Limpiar chat"

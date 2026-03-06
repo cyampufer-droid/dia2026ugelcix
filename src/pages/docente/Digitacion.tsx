@@ -11,59 +11,78 @@ import { Save, Wifi, WifiOff, CloudUpload, Loader2, BookOpen, Calculator, Heart 
 import { Badge } from '@/components/ui/badge';
 import DigitacionGrid, { type Student } from '@/components/docente/DigitacionGrid';
 
-const NUM_PREGUNTAS = 20;
-
-const ALL_EVALUACIONES = [
-  { key: 'matematica', label: 'Matemática', icon: Calculator },
-  { key: 'comprension_lectora', label: 'Comprensión Lectora', icon: BookOpen },
-  { key: 'socioemocional', label: 'Habilidades Socioemocionales', icon: Heart },
-] as const;
-
-type EvalKey = typeof ALL_EVALUACIONES[number]['key'];
-
-const ESPECIALIDAD_EVAL_MAP: Record<string, EvalKey> = {
-  'Matemática': 'matematica',
-  'Comunicación': 'comprension_lectora',
-  'DPCC': 'socioemocional',
+const AREA_ICONS: Record<string, typeof Calculator> = {
+  'Matemática': Calculator,
+  'Comprensión Lectora': BookOpen,
+  'Habilidades Socioemocionales': Heart,
 };
 
+const ESPECIALIDAD_AREA_MAP: Record<string, string> = {
+  'Matemática': 'Matemática',
+  'Comunicación': 'Comprensión Lectora',
+  'DPCC': 'Habilidades Socioemocionales',
+};
+
+interface EvalInfo {
+  id: string;
+  area: string;
+  nivel: string;
+  grado: string;
+  numero_preguntas: number;
+  config_preguntas: { respuestas_correctas?: string[] };
+}
+
 const Digitacion = () => {
-  // respuestas keyed by evaluacion then by student
-  const [respuestas, setRespuestas] = useState<Record<EvalKey, Record<string, string[]>>>({
-    matematica: {},
-    comprension_lectora: {},
-    socioemocional: {},
-  });
+  const [respuestas, setRespuestas] = useState<Record<string, Record<string, string[]>>>({});
   const [students, setStudents] = useState<Student[]>([]);
-  const [evaluaciones, setEvaluaciones] = useState(ALL_EVALUACIONES as unknown as typeof ALL_EVALUACIONES[number][]);
-  const [activeTab, setActiveTab] = useState<EvalKey>('matematica');
+  const [evaluaciones, setEvaluaciones] = useState<EvalInfo[]>([]);
+  const [activeTab, setActiveTab] = useState('');
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
   const { profile } = useAuth();
   const { isOnline, pendingCount, isSyncing, syncToCloud, refreshPendingCount } = useOfflineSync();
 
-  // Determine filtered evaluaciones based on nivel + especialidad
+  // Load evaluaciones matching docente's grado
   useEffect(() => {
-    const determineEvals = async () => {
+    const loadEvaluaciones = async () => {
       if (!profile?.grado_seccion_id) return;
       const { data: ng } = await supabase
         .from('niveles_grados')
-        .select('nivel')
+        .select('nivel, grado')
         .eq('id', profile.grado_seccion_id)
         .single();
-      
-      if (ng?.nivel === 'Secundaria' && profile.especialidad) {
-        const allowedKey = ESPECIALIDAD_EVAL_MAP[profile.especialidad];
-        if (allowedKey) {
-          const filtered = ALL_EVALUACIONES.filter(e => e.key === allowedKey);
-          setEvaluaciones(filtered as any);
-          setActiveTab(allowedKey);
+      if (!ng) return;
+
+      const { data: evals } = await supabase
+        .from('evaluaciones')
+        .select('id, area, nivel, grado, numero_preguntas, config_preguntas')
+        .eq('nivel', ng.nivel)
+        .eq('grado', ng.grado);
+
+      if (!evals?.length) return;
+
+      let filtered = evals as EvalInfo[];
+
+      // Secundaria: filter by especialidad
+      if (ng.nivel === 'Secundaria' && profile.especialidad) {
+        const allowedArea = ESPECIALIDAD_AREA_MAP[profile.especialidad];
+        if (allowedArea) {
+          filtered = filtered.filter(e => e.area === allowedArea);
         }
       }
+
+      setEvaluaciones(filtered);
+      if (filtered.length > 0) setActiveTab(filtered[0].id);
+
+      // Init respuestas state
+      const init: Record<string, Record<string, string[]>> = {};
+      for (const ev of filtered) init[ev.id] = {};
+      setRespuestas(prev => ({ ...init, ...prev }));
     };
-    determineEvals();
+    loadEvaluaciones();
   }, [profile?.grado_seccion_id, profile?.especialidad]);
 
+  // Load students
   useEffect(() => {
     const loadStudents = async () => {
       if (!profile?.grado_seccion_id) return;
@@ -72,42 +91,67 @@ const Digitacion = () => {
         .select('id, nombre_completo, dni')
         .eq('grado_seccion_id', profile.grado_seccion_id)
         .order('nombre_completo');
-      if (data && data.length > 0) setStudents(data);
+      if (data?.length) setStudents(data);
     };
     loadStudents();
   }, [profile?.grado_seccion_id]);
 
+  // Load saved offline data
   useEffect(() => {
     const loadOffline = async () => {
       const saved = await getAllDigitaciones();
-      const restored: Record<EvalKey, Record<string, string[]>> = {
-        matematica: {},
-        comprension_lectora: {},
-        socioemocional: {},
-      };
-      for (const record of saved) {
-        // evaluacion_id format: "evalKey" or "evalKey_pending"
-        const evalKey = record.evaluacion_id.replace('_pending', '') as EvalKey;
-        if (evalKey in restored) {
-          restored[evalKey][record.estudiante_id] = record.respuestas;
+      if (!saved.length) return;
+      setRespuestas(prev => {
+        const updated = { ...prev };
+        for (const record of saved) {
+          const evalId = record.evaluacion_id;
+          if (!updated[evalId]) updated[evalId] = {};
+          updated[evalId][record.estudiante_id] = record.respuestas;
         }
-      }
-      setRespuestas(prev => ({
-        matematica: { ...restored.matematica, ...prev.matematica },
-        comprension_lectora: { ...restored.comprension_lectora, ...prev.comprension_lectora },
-        socioemocional: { ...restored.socioemocional, ...prev.socioemocional },
-      }));
+        return updated;
+      });
     };
     loadOffline();
   }, []);
 
-  const handleRespuesta = useCallback((evalKey: EvalKey, studentId: string, preguntaIdx: number, valor: string) => {
+  // Also load existing results from cloud
+  useEffect(() => {
+    const loadCloudResults = async () => {
+      if (!students.length || !evaluaciones.length) return;
+      const studentIds = students.map(s => s.id);
+      const evalIds = evaluaciones.map(e => e.id);
+      const { data: resultados } = await supabase
+        .from('resultados')
+        .select('estudiante_id, evaluacion_id, respuestas_dadas')
+        .in('estudiante_id', studentIds)
+        .in('evaluacion_id', evalIds);
+
+      if (!resultados?.length) return;
+      setRespuestas(prev => {
+        const updated = { ...prev };
+        for (const r of resultados) {
+          if (r.respuestas_dadas?.length) {
+            if (!updated[r.evaluacion_id]) updated[r.evaluacion_id] = {};
+            // Only set if not already locally modified
+            if (!updated[r.evaluacion_id][r.estudiante_id]?.some(a => a !== '')) {
+              updated[r.evaluacion_id][r.estudiante_id] = r.respuestas_dadas;
+            }
+          }
+        }
+        return updated;
+      });
+    };
+    loadCloudResults();
+  }, [students, evaluaciones]);
+
+  const handleRespuesta = useCallback((evalId: string, studentId: string, preguntaIdx: number, valor: string) => {
     setRespuestas(prev => {
-      const evalData = prev[evalKey] || {};
-      const current = evalData[studentId] || Array(NUM_PREGUNTAS).fill('');
+      const evalData = prev[evalId] || {};
+      const numPreguntas = 20;
+      const current = evalData[studentId] || Array(numPreguntas).fill('');
       const updated = [...current];
       updated[preguntaIdx] = valor;
-      return { ...prev, [evalKey]: { ...evalData, [studentId]: updated } };
+      return { ...prev, [evalId]: { ...evalData, [studentId]: updated } };
     });
   }, []);
 
@@ -115,11 +159,13 @@ const Digitacion = () => {
     setSaving(true);
     try {
       let totalRecords = 0;
-      for (const evalDef of evaluaciones) {
-        const evalData = respuestas[evalDef.key as EvalKey];
+      for (const ev of evaluaciones) {
+        const evalData = respuestas[ev.id] || {};
         for (const [studentId, answers] of Object.entries(evalData)) {
-          await saveDigitacionOffline(studentId, `${evalDef.key}_pending`, answers);
-          totalRecords++;
+          if (answers.some(a => a !== '')) {
+            await saveDigitacionOffline(studentId, ev.id, answers);
+            totalRecords++;
+          }
         }
       }
       await refreshPendingCount();
@@ -138,10 +184,11 @@ const Digitacion = () => {
     { id: 'demo-3', nombre_completo: 'Mendoza Ríos, Lucía', dni: '71234569' },
   ];
 
-  // Calculate progress per evaluation
-  const getProgress = (evalKey: EvalKey) => {
-    const evalData = respuestas[evalKey];
-    const total = displayStudents.length * NUM_PREGUNTAS;
+  const getProgress = (evalId: string) => {
+    const ev = evaluaciones.find(e => e.id === evalId);
+    const numPreguntas = ev?.numero_preguntas || 20;
+    const evalData = respuestas[evalId] || {};
+    const total = displayStudents.length * numPreguntas;
     if (total === 0) return 0;
     let filled = 0;
     for (const s of displayStudents) {
@@ -150,6 +197,17 @@ const Digitacion = () => {
     }
     return Math.round((filled / total) * 100);
   };
+
+  if (!evaluaciones.length) {
+    return (
+      <div className="space-y-4 animate-fade-in">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Digitación de Respuestas</h1>
+        <p className="text-muted-foreground text-sm">
+          No se encontraron evaluaciones para su nivel y grado. Asegúrese de tener un aula asignada.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -175,16 +233,17 @@ const Digitacion = () => {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as EvalKey)}>
-        <TabsList className={`w-full grid h-auto`} style={{ gridTemplateColumns: `repeat(${evaluaciones.length}, 1fr)` }}>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="w-full grid h-auto" style={{ gridTemplateColumns: `repeat(${evaluaciones.length}, 1fr)` }}>
           {evaluaciones.map(ev => {
-            const Icon = ev.icon;
-            const progress = getProgress(ev.key);
+            const Icon = AREA_ICONS[ev.area] || BookOpen;
+            const progress = getProgress(ev.id);
+            const shortLabel = ev.area.split(' ')[0];
             return (
-              <TabsTrigger key={ev.key} value={ev.key} className="flex flex-col sm:flex-row items-center gap-1 py-2 text-xs sm:text-sm">
+              <TabsTrigger key={ev.id} value={ev.id} className="flex flex-col sm:flex-row items-center gap-1 py-2 text-xs sm:text-sm">
                 <Icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{ev.label}</span>
-                <span className="sm:hidden">{ev.label.split(' ')[0]}</span>
+                <span className="hidden sm:inline">{ev.area}</span>
+                <span className="sm:hidden">{shortLabel}</span>
                 {progress > 0 && (
                   <Badge variant={progress === 100 ? 'default' : 'secondary'} className="text-[10px] px-1.5 py-0 ml-1">
                     {progress}%
@@ -196,14 +255,14 @@ const Digitacion = () => {
         </TabsList>
 
         {evaluaciones.map(ev => (
-          <TabsContent key={ev.key} value={ev.key} className="mt-3">
+          <TabsContent key={ev.id} value={ev.id} className="mt-3">
             <Card className="shadow-card">
               <CardContent className="p-0">
                 <DigitacionGrid
                   students={displayStudents}
-                  respuestas={respuestas[ev.key]}
-                  numPreguntas={NUM_PREGUNTAS}
-                  onRespuesta={(studentId, idx, val) => handleRespuesta(ev.key, studentId, idx, val)}
+                  respuestas={respuestas[ev.id] || {}}
+                  numPreguntas={ev.numero_preguntas}
+                  onRespuesta={(studentId, idx, val) => handleRespuesta(ev.id, studentId, idx, val)}
                 />
               </CardContent>
             </Card>

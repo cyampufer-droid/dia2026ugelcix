@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppLayout from "./components/AppLayout";
 import ErrorBoundary from "./components/ErrorBoundary";
+import ChatbotWidget from "./components/ChatbotWidget";
 
 // Lazy-loaded pages for code splitting (optimized for low-end devices)
 const Index = lazy(() => import("./pages/Index"));
@@ -106,6 +107,7 @@ const App = () => (
                 <Route path="/guia" element={<GuiaUsuario />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <ChatbotWidget />
             </Suspense>
           </AuthProvider>
         </BrowserRouter>

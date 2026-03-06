@@ -53,11 +53,39 @@ const ChatbotWidget = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
+
+  // Preload voices
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    speechSynthesis.getVoices();
+    const handler = () => speechSynthesis.getVoices();
+    speechSynthesis.addEventListener('voiceschanged', handler);
+    return () => speechSynthesis.removeEventListener('voiceschanged', handler);
+  }, []);
+
+  const toggleSpeak = useCallback((text: string, idx: number) => {
+    if (speakingIdx === idx) {
+      speechSynthesis.cancel();
+      setSpeakingIdx(null);
+      return;
     }
-  }, [messages]);
+    speechSynthesis.cancel();
+    setSpeakingIdx(idx);
+    speakText(text, () => setSpeakingIdx(null));
+  }, [speakingIdx]);
+
+  // Stop speech when closing
+  const handleClose = useCallback(() => {
+    speechSynthesis.cancel();
+    setSpeakingIdx(null);
+    setIsOpen(false);
+  }, []);
+
+  const handleClear = useCallback(() => {
+    speechSynthesis.cancel();
+    setSpeakingIdx(null);
+    setMessages([]);
+  }, []);
 
   useEffect(() => {
     if (isOpen && inputRef.current) {

@@ -107,6 +107,7 @@ const App = () => (
                 <Route path="/guia" element={<GuiaUsuario />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <ChatbotWidget />
             </Suspense>
           </AuthProvider>
         </BrowserRouter>

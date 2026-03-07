@@ -453,10 +453,14 @@ const PersonalRegistro = () => {
                       <TableCell>{p.nombre_completo}</TableCell>
                       <TableCell>
                         <div className="flex gap-1 flex-wrap">
-                          {p.roles.map(r => (
-                            <Badge key={r} variant="secondary">{roleLabelMap[r] || r}</Badge>
-                          ))}
-                          {p.roles.length === 0 && <span className="text-muted-foreground text-xs">Sin rol</span>}
+                          {p.is_pip ? (
+                            <Badge variant="secondary">Docente PIP</Badge>
+                          ) : (
+                            p.roles.map(r => (
+                              <Badge key={r} variant="secondary">{roleLabelMap[r] || r}</Badge>
+                            ))
+                          )}
+                          {p.roles.length === 0 && !p.is_pip && <span className="text-muted-foreground text-xs">Sin rol</span>}
                         </div>
                       </TableCell>
                       <TableCell>

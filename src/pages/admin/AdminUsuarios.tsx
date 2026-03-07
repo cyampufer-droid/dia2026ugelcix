@@ -343,7 +343,7 @@ const AdminUsuarios = () => {
                 </TableBody>
               </Table>
               <p className="text-xs text-muted-foreground mt-2">
-                {filteredUsers.length} de {users.length} usuarios
+                {sortedUsers.length} de {users.length} usuarios
               </p>
             </div>
           )}

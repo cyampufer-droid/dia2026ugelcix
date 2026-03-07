@@ -486,7 +486,7 @@ const EstudianteResultados = () => {
                       );
                     })()}
 
-                    {/* Conclusiones Descriptivas - visible por defecto */}
+                    {/* Conclusiones Descriptivas Estáticas */}
                     {area.nivel && competencias.length > 0 && (
                       <Collapsible open={isOpen ?? true} onOpenChange={() => toggleArea(area.area)}>
                         <CollapsibleTrigger className="w-full flex items-center justify-between bg-primary/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-primary/20 transition-colors">
@@ -500,6 +500,30 @@ const EstudianteResultados = () => {
                         </CollapsibleContent>
                       </Collapsible>
                     )}
+
+                    {/* Análisis Personalizado con IA */}
+                    {area.respuestas && area.respuestas.length > 0 && (() => {
+                      const preguntas = getPreguntas(area.configPreguntas);
+                      if (preguntas.length === 0) return null;
+                      return (
+                        <Collapsible>
+                          <CollapsibleTrigger className="w-full flex items-center justify-between bg-accent/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-accent/20 transition-colors">
+                            <span>🤖 Análisis Personalizado con IA</span>
+                            <ChevronDown className="h-4 w-4" />
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-3">
+                            <AIConclusiones
+                              area={area.area}
+                              respuestas_dadas={area.respuestas!}
+                              respuestas_correctas={preguntas.map(p => p.correcta)}
+                              puntaje={area.puntaje}
+                              nivel_logro={area.nivel}
+                              nombre_estudiante={profile?.nombre_completo || ''}
+                            />
+                          </CollapsibleContent>
+                        </Collapsible>
+                      );
+                    })()}
                   </>
                 ) : (
                   <p className="text-sm text-muted-foreground">Sin evaluar aún.</p>

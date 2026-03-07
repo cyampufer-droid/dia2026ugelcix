@@ -10,7 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { UserPlus, Upload, Loader2, Users, Building2, FileSpreadsheet, Download, CheckCircle2, XCircle } from 'lucide-react';
+import { UserPlus, Upload, Loader2, Users, Building2, FileSpreadsheet, Download, CheckCircle2, XCircle, Search } from 'lucide-react';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import * as XLSX from 'xlsx';
 
@@ -47,6 +47,7 @@ const EstudiantesRegistro = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const { profile } = useAuth();
 
@@ -394,7 +395,20 @@ const EstudiantesRegistro = () => {
 
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" />Lista de Estudiantes</CardTitle>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" />Lista de Estudiantes</CardTitle>
+            {students.length > 0 && (
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por DNI o nombre…"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {loadingStudents ? (
@@ -420,7 +434,13 @@ const EstudiantesRegistro = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {students.map((s, i) => (
+                {students
+                  .filter(s => {
+                    if (!searchQuery.trim()) return true;
+                    const q = searchQuery.toLowerCase();
+                    return s.dni.toLowerCase().includes(q) || s.nombre_completo.toLowerCase().includes(q);
+                  })
+                  .map((s, i) => (
                     <tr key={s.id} className="border-b border-border hover:bg-muted/50">
                       <td className="py-2 px-3">{i + 1}</td>
                       <td className="py-2 px-3 font-mono">{s.dni}</td>

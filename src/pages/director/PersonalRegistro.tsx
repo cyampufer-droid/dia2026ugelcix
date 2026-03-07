@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { UserPlus, RefreshCw, Pencil, Trash2, KeyRound } from 'lucide-react';
+import { UserPlus, RefreshCw, Pencil, Trash2, KeyRound, Search } from 'lucide-react';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import BulkPersonalUpload from '@/components/director/BulkPersonalUpload';
 import SortableTableHead, { useSort, sortData } from '@/components/SortableTableHead';
@@ -81,6 +81,9 @@ const PersonalRegistro = () => {
   // Reset password state
   const [resetItem, setResetItem] = useState<PersonalItem | null>(null);
   const [resetLoading, setResetLoading] = useState(false);
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch niveles/grados for the director's institution
   useEffect(() => {
@@ -288,7 +291,17 @@ const PersonalRegistro = () => {
 
   const { sort, handleSort } = useSort();
 
-  const sortedPersonal = sortData(personal, sort, (p, key) => {
+  const filteredPersonal = useMemo(() => {
+    if (!searchQuery.trim()) return personal;
+    const q = searchQuery.toLowerCase();
+    return personal.filter(p =>
+      p.dni.toLowerCase().includes(q) ||
+      p.nombre_completo.toLowerCase().includes(q) ||
+      p.roles.some(r => (roleLabelMap[r] || r).toLowerCase().includes(q))
+    );
+  }, [personal, searchQuery]);
+
+  const sortedPersonal = sortData(filteredPersonal, sort, (p, key) => {
     if (key === 'dni') return p.dni;
     if (key === 'nombre_completo') return p.nombre_completo;
     if (key === 'rol') return p.roles.map(r => roleLabelMap[r] || r).join(', ');
@@ -383,12 +396,23 @@ const PersonalRegistro = () => {
 
       <Card className="shadow-card">
         <CardContent className="pt-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
             <h2 className="text-lg font-semibold text-foreground">Personal Registrado</h2>
-            <Button variant="outline" size="sm" onClick={fetchPersonal} disabled={loadingList}>
-              <RefreshCw className={`h-4 w-4 mr-1 ${loadingList ? 'animate-spin' : ''}`} />
-              Actualizar
-            </Button>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="relative flex-1 sm:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por DNI o nombre…"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Button variant="outline" size="sm" onClick={fetchPersonal} disabled={loadingList}>
+                <RefreshCw className={`h-4 w-4 mr-1 ${loadingList ? 'animate-spin' : ''}`} />
+                Actualizar
+              </Button>
+            </div>
           </div>
           {loadingList ? (
             <p className="text-sm text-muted-foreground text-center py-4">Cargando personal…</p>

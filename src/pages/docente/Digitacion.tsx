@@ -23,6 +23,15 @@ const ESPECIALIDAD_AREA_MAP: Record<string, string> = {
   'DPCC': 'Habilidades Socioemocionales',
 };
 
+const GRADO_TO_ORDINAL: Record<string, string> = {
+  'Primero': '1°',
+  'Segundo': '2°',
+  'Tercero': '3°',
+  'Cuarto': '4°',
+  'Quinto': '5°',
+  'Sexto': '6°',
+};
+
 interface EvalInfo {
   id: string;
   area: string;

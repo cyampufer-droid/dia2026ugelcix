@@ -31,6 +31,7 @@ const EstudianteResultados = lazy(() => import("./pages/estudiante/EstudianteRes
 const EspecialistaDashboard = lazy(() => import("./pages/especialista/EspecialistaDashboard"));
 const MiPerfil = lazy(() => import("./pages/shared/MiPerfil"));
 const GuiaUsuario = lazy(() => import("./pages/shared/GuiaUsuario"));
+const TutorialInteractivo = lazy(() => import("./pages/shared/TutorialInteractivo"));
 const CambiarContrasena = lazy(() => import("./pages/shared/CambiarContrasena"));
 
 const PageLoader = () => (
@@ -105,6 +106,7 @@ const App = () => (
                 </Route>
 
                 <Route path="/guia" element={<GuiaUsuario />} />
+                <Route path="/tutorial" element={<TutorialInteractivo />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <ChatbotWidget />

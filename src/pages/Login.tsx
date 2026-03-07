@@ -93,10 +93,16 @@ const Login = () => {
             <Shield className="h-5 w-5 text-secondary" />
             <span className="text-sm">Protección de datos – Ley 29733</span>
           </div>
-          <a href="/guia" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 mt-6 px-4 py-2 rounded-lg bg-secondary/20 hover:bg-secondary/30 transition-colors text-secondary text-sm font-medium">
-            <BookOpen className="h-4 w-4" />
-            Manual de Usuario DIA 2026
-          </a>
+          <div className="flex flex-col gap-3 mt-6">
+            <a href="/tutorial" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary/30 hover:bg-secondary/40 transition-colors text-secondary text-sm font-bold shadow">
+              <BookOpen className="h-4 w-4" />
+              🎬 Tutorial Interactivo DIA 2026
+            </a>
+            <a href="/guia" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary/20 hover:bg-secondary/30 transition-colors text-secondary text-sm font-medium">
+              <BookOpen className="h-4 w-4" />
+              Manual de Usuario DIA 2026
+            </a>
+          </div>
         </div>
       </div>
 

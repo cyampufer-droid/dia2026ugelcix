@@ -43,14 +43,14 @@ const AdminDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Instituciones" value={String(stats.instituciones)} icon={School} description="Registradas" />
-        <StatCard title="Especialistas" value={String(stats.especialistas)} icon={Shield} description="UGEL" variant="primary" />
-        <StatCard title="Directores" value={String(stats.directores)} icon={UserCog} description="Activos" variant="success" />
-        <StatCard title="Subdirectores" value={String(stats.subdirectores)} icon={GraduationCap} description="Activos" variant="warning" />
-        <StatCard title="Docentes PIP" value={String(stats.pip)} icon={Lightbulb} description="Innovación Pedagógica" variant="primary" />
-        <StatCard title="Docentes" value={String(stats.docentes)} icon={Users} description="Activos" />
-        <StatCard title="Estudiantes" value={String(stats.estudiantes)} icon={Users} description="Registrados" variant="success" />
-        <StatCard title="Evaluaciones" value={String(stats.evaluaciones)} icon={ClipboardList} description="Configuradas" variant="warning" />
+        <StatCard title="Instituciones" value={String(stats.instituciones)} icon={School} description="Registradas" href="/admin/instituciones" />
+        <StatCard title="Especialistas" value={String(stats.especialistas)} icon={Shield} description="UGEL" variant="primary" href="/admin/usuarios?rol=especialista" />
+        <StatCard title="Directores" value={String(stats.directores)} icon={UserCog} description="Activos" variant="success" href="/admin/usuarios?rol=director" />
+        <StatCard title="Subdirectores" value={String(stats.subdirectores)} icon={GraduationCap} description="Activos" variant="warning" href="/admin/usuarios?rol=subdirector" />
+        <StatCard title="Docentes PIP" value={String(stats.pip)} icon={Lightbulb} description="Innovación Pedagógica" variant="primary" href="/admin/usuarios?rol=docente_pip" />
+        <StatCard title="Docentes" value={String(stats.docentes)} icon={Users} description="Activos" href="/admin/usuarios?rol=docente" />
+        <StatCard title="Estudiantes" value={String(stats.estudiantes)} icon={Users} description="Registrados" variant="success" href="/admin/usuarios?rol=estudiante" />
+        <StatCard title="Evaluaciones" value={String(stats.evaluaciones)} icon={ClipboardList} description="Configuradas" variant="warning" href="/admin/resultados" />
       </div>
 
       <div className="bg-card rounded-xl border border-border p-6 shadow-card">

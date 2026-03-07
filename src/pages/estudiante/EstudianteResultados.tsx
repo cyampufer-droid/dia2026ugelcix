@@ -306,7 +306,7 @@ const EstudianteResultados = () => {
   const [results, setResults] = useState<AreaResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [openAreas, setOpenAreas] = useState<Record<string, boolean>>({});
-
+  const [openRespuestas, setOpenRespuestas] = useState<Record<string, boolean>>({});
   useEffect(() => {
     if (!profile?.id) return;
     const fetchData = async () => {

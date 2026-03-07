@@ -354,6 +354,10 @@ const EstudianteResultados = () => {
     if (!config) return [];
     if (Array.isArray(config)) return config;
     if (config.preguntas && Array.isArray(config.preguntas)) return config.preguntas;
+    // Handle { respuestas_correctas: ["A", "B", ...] } format
+    if (config.respuestas_correctas && Array.isArray(config.respuestas_correctas)) {
+      return config.respuestas_correctas.map((r: string) => ({ correcta: r }));
+    }
     return [];
   };
 

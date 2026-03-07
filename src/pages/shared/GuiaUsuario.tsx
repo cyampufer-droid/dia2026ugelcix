@@ -826,35 +826,81 @@ const GuiaUsuario = () => {
         {/* ════════════════════════════════════════════════════════════ */}
         <SectionTitle id="estudiante" icon={ClipboardList} number="09" title="MÓDULO DEL ESTUDIANTE" />
 
-        <p>Los estudiantes pueden rendir evaluaciones directamente en la plataforma y consultar sus resultados.</p>
+        <p>Los estudiantes acceden a la plataforma para rendir evaluaciones en línea y consultar sus resultados. A continuación se describe paso a paso lo que puede hacer y visualizar.</p>
+
+        <div className="rounded-xl border-2 border-destructive/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3">🔐 ¿Cómo ingresa el Estudiante?</h4>
+          <div className="space-y-3 pl-2">
+            <StepCard step={1} title="Ingrese a la plataforma" description="Abra dia2026ugelcix.lovable.app en su navegador o tablet" />
+            <StepCard step={2} title="Escriba su DNI como usuario" description="8 dígitos de su Documento Nacional de Identidad" />
+            <StepCard step={3} title="Escriba su DNI como contraseña" description="La primera vez, su contraseña es su mismo DNI" />
+            <StepCard step={4} title="Acepte el aviso de privacidad" description="Marque la casilla de tratamiento de datos personales" />
+            <StepCard step={5} title='Presione "Ingresar"' description="El sistema lo llevará automáticamente al módulo de pruebas" />
+          </div>
+        </div>
+
+        {/* Screenshot Login */}
+        <div className="my-6 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-card">
+          <div className="bg-primary/10 px-4 py-2 text-xs font-bold text-primary flex items-center gap-2">
+            <Monitor className="h-4 w-4" /> Captura de pantalla – Pantalla de Inicio de Sesión
+          </div>
+          <img src={screenLogin} alt="Pantalla de login de la plataforma DIA 2026" className="w-full object-cover" />
+        </div>
 
         <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
           <BookOpenCheck className="h-5 w-5 text-secondary" /> 9.1 Rendir Evaluación en Línea
         </h3>
         <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Mis Pruebas</code></p>
+        <p className="mb-3">El estudiante visualiza las evaluaciones disponibles para su grado. El proceso paso a paso es:</p>
 
         <div className="space-y-3 pl-2 mb-4">
-          <StepCard step={1} title="Inicie la evaluación" description="Se mostrará la evaluación disponible con una barra de progreso" />
-          <StepCard step={2} title="Lea cada pregunta" description="Lea cuidadosamente. Puede usar el botón 🔊 para escuchar en voz alta" />
-          <StepCard step={3} title="Seleccione su respuesta" description="Toque/haga clic en la opción deseada (A, B, C o D). Se resaltará en azul" />
-          <StepCard step={4} title="Navegue entre preguntas" description='Use los botones "Anterior" y "Siguiente" para moverse' />
-          <StepCard step={5} title="Finalice la evaluación" description='Al terminar, presione "✅ Finalizar" para enviar sus respuestas' />
+          <StepCard step={1} title="Seleccione la evaluación" description="Se mostrará la evaluación disponible para su grado con una barra de progreso" />
+          <StepCard step={2} title="Lea cada pregunta con atención" description="Lea cuidadosamente el enunciado y las opciones. Puede usar el botón 🔊 para escuchar la pregunta en voz alta" />
+          <StepCard step={3} title="Seleccione su respuesta" description="Toque o haga clic en la opción deseada (A, B, C o D). La opción seleccionada se resaltará en azul" />
+          <StepCard step={4} title="Navegue entre preguntas" description='Use los botones "← Anterior" y "Siguiente →" para moverse entre las preguntas' />
+          <StepCard step={5} title="Revise sus respuestas" description="Antes de finalizar, verifique que todas las preguntas estén respondidas" />
+          <StepCard step={6} title="Finalice la evaluación" description='Al terminar, presione "✅ Finalizar" para enviar sus respuestas. ¡No se puede modificar después de finalizar!' />
         </div>
+
+        <Warning>
+          <ul className="space-y-1.5">
+            <li>Una vez presionado <strong>"Finalizar"</strong>, las respuestas no se pueden modificar.</li>
+            <li>Asegúrese de tener <strong>conexión estable a Internet</strong> durante toda la evaluación.</li>
+            <li>No cierre el navegador ni cambie de pestaña durante la prueba.</li>
+          </ul>
+        </Warning>
 
         <Tip emoji="👶" title="Para estudiantes pequeños (Inicial / 1.er Grado)">
           <ul className="space-y-1">
             <li>Los botones son <strong>grandes</strong> y fáciles de tocar en tablets</li>
             <li>El botón de audio <strong>🔊</strong> lee la pregunta en español peruano</li>
-            <li>Se recomienda que un <strong>adulto acompañe</strong> al estudiante</li>
+            <li>Se recomienda que un <strong>adulto acompañe</strong> al estudiante durante la evaluación</li>
           </ul>
         </Tip>
 
         <h3 className="font-bold text-lg mt-6 mb-3">📋 9.2 Mis Resultados</h3>
         <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Resultados</code></p>
-        <ul className="space-y-2 text-sm">
-          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><strong>Boleta de Resultados:</strong> puntaje y nivel de logro en cada área</li>
-          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><strong>Recomendaciones pedagógicas</strong> personalizadas según el nivel alcanzado</li>
-        </ul>
+        <p className="mb-3">Después de finalizar las evaluaciones, el estudiante puede consultar sus resultados:</p>
+
+        <div className="rounded-xl border-2 border-destructive/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3">📋 Paso a paso para ver resultados:</h4>
+          <div className="space-y-3 pl-2">
+            <StepCard step={1} title="Ingrese a Resultados" description="Desde el panel lateral izquierdo, presione 'Resultados'" />
+            <StepCard step={2} title="Visualice su Boleta" description="Se muestra el puntaje obtenido y el nivel de logro en cada área evaluada" />
+            <StepCard step={3} title="Consulte su nivel de logro" description="C = En Inicio (0-10), B = En Proceso (11-14), A = Logro Esperado (15-18), AD = Destacado (19-20)" />
+            <StepCard step={4} title="Lea las recomendaciones" description="Se incluyen sugerencias pedagógicas personalizadas según el nivel alcanzado" />
+          </div>
+        </div>
+
+        <div className="rounded-xl border-2 border-destructive/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3">👁️ ¿Qué visualiza el Estudiante?</h4>
+          <ul className="text-sm space-y-2">
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Boleta de Resultados:</strong> puntaje y nivel de logro en cada área (Matemática, Lectura, Socioemocional)</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Colores indicativos:</strong> <span className="text-destructive font-bold">Rojo = C</span>, <span className="text-warning font-bold">Amarillo = B</span>, <span className="text-accent font-bold">Verde = A</span>, <span className="text-primary font-bold">Azul = AD</span></span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Análisis Personalizado:</strong> conclusiones descriptivas generadas automáticamente por competencia</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Recomendaciones pedagógicas:</strong> sugerencias específicas para mejorar según el nivel alcanzado</span></li>
+          </ul>
+        </div>
 
         {/* ════════════════════════════════════════════════════════════ */}
         {/*  10. MÓDULO DEL ESPECIALISTA                               */}

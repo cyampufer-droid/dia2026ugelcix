@@ -20,6 +20,7 @@ const roles = [
   { value: 'director', label: 'Director' },
   { value: 'subdirector', label: 'Subdirector' },
   { value: 'docente', label: 'Docente' },
+  { value: 'docente_pip', label: 'Docente PIP' },
   { value: 'estudiante', label: 'Estudiante' },
   { value: 'especialista', label: 'Especialista' },
   { value: 'padre', label: 'Padre de Familia' },
@@ -30,6 +31,7 @@ const roleLabelMap: Record<string, string> = {
   director: 'Director',
   subdirector: 'Subdirector',
   docente: 'Docente',
+  docente_pip: 'Docente PIP',
   estudiante: 'Estudiante',
   especialista: 'Especialista',
   padre: 'Padre de Familia',
@@ -113,8 +115,9 @@ const AdminUsuarios = () => {
     try {
       const email = `${dni.trim()}@dia.ugel.local`;
       const password = dni.trim();
+      const isPip = rol === 'docente_pip';
       await invokeEdgeFunction('create-user', {
-        email, password, dni, nombre_completo: nombre, role: rol,
+        email, password, dni, nombre_completo: nombre, role: isPip ? 'docente' : rol, is_pip: isPip || undefined,
       });
       toast({ title: 'Usuario creado', description: `${nombre} registrado como ${roleLabelMap[rol] || rol}. Credenciales: DNI como usuario y contraseña.` });
       setOpen(false);

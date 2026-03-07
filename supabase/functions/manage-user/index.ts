@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
       }
       await adminClient.from("profiles").delete().eq("user_id", user_id);
       const { error: deleteError } = await adminClient.auth.admin.deleteUser(user_id);
-      if (deleteError) {
+      if (deleteError && !deleteError.message.includes("not found")) {
         console.error("Delete error:", deleteError.message);
         return jsonResponse({ error: "Error al eliminar usuario" }, 400);
       }

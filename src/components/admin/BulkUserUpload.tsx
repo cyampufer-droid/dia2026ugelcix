@@ -43,6 +43,7 @@ const TEMPLATE_EXAMPLE = [
   '87654321,María García Torres,estudiante,123456,Primaria,3,A,',
   '11223344,Carlos Ruiz Díaz,director,123456,,,,',
   '55667788,Ana López Vega,subdirector,123456,,,,',
+  '99887766,Pedro Sánchez Ríos,docente_pip,123456,,,,',
 ];
 
 const BulkUserUpload = ({ onComplete }: BulkUserUploadProps) => {
@@ -199,15 +200,19 @@ const BulkUserUpload = ({ onComplete }: BulkUserUploadProps) => {
     setProgress(10);
 
     try {
-      const payload = parsed.map(u => ({
-        dni: u.dni,
-        nombre_completo: u.nombre_completo,
-        email: u.email,
-        rol: u.rol,
-        password: u.password,
-        institucion_id: u.institucion_id || undefined,
-        grado_seccion_id: u.grado_seccion_id || undefined,
-      }));
+      const payload = parsed.map(u => {
+        const isPip = u.rol === 'docente_pip';
+        return {
+          dni: u.dni,
+          nombre_completo: u.nombre_completo,
+          email: u.email,
+          rol: isPip ? 'docente' : u.rol,
+          password: u.password,
+          institucion_id: u.institucion_id || undefined,
+          grado_seccion_id: isPip ? undefined : (u.grado_seccion_id || undefined),
+          is_pip: isPip || undefined,
+        };
+      });
 
       const data = await invokeEdgeFunction('bulk-create-users', { users: payload });
 
@@ -233,6 +238,7 @@ const BulkUserUpload = ({ onComplete }: BulkUserUploadProps) => {
 
   const rolLabel: Record<string, string> = {
     director: 'Director', subdirector: 'Subdirector', docente: 'Docente',
+    docente_pip: 'Docente PIP',
     estudiante: 'Estudiante', especialista: 'Especialista', padre: 'Padre de Familia',
     administrador: 'Administrador',
   };
@@ -259,8 +265,8 @@ const BulkUserUpload = ({ onComplete }: BulkUserUploadProps) => {
             </p>
             <div className="text-xs text-muted-foreground border rounded-md p-3 bg-muted/50 space-y-1">
               <p className="font-medium">Columnas de la plantilla:</p>
-              <p><strong>DNI</strong> (8 dígitos) · <strong>Nombre Completo</strong> · <strong>Rol</strong> (director, subdirector, docente, estudiante) · <strong>Código Local IE</strong> · <strong>Nivel</strong> (Inicial, Primaria, Secundaria) · <strong>Grado</strong> · <strong>Sección</strong> · <strong>Contraseña</strong> (opcional)</p>
-              <p className="text-muted-foreground">Para directores/subdirectores solo es necesario el Código Local IE. Para docentes y estudiantes incluya también Nivel, Grado y Sección.</p>
+              <p><strong>DNI</strong> (8 dígitos) · <strong>Nombre Completo</strong> · <strong>Rol</strong> (director, subdirector, docente, docente_pip, estudiante) · <strong>Código Local IE</strong> · <strong>Nivel</strong> (Inicial, Primaria, Secundaria) · <strong>Grado</strong> · <strong>Sección</strong> · <strong>Contraseña</strong> (opcional)</p>
+              <p className="text-muted-foreground">Para directores/subdirectores y docentes PIP solo es necesario el Código Local IE. Para docentes y estudiantes incluya también Nivel, Grado y Sección.</p>
             </div>
             <div className="flex gap-3">
               <Button variant="outline" onClick={downloadTemplate}>

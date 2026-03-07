@@ -47,6 +47,8 @@ const EstudiantePrueba = () => {
   const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([]);
   const [completedAreas, setCompletedAreas] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [gradoNombre, setGradoNombre] = useState<string | null>(null);
+  const [nivelNombre, setNivelNombre] = useState<string | null>(null);
 
   // Active test state
   const [activeEval, setActiveEval] = useState<Evaluacion | null>(null);

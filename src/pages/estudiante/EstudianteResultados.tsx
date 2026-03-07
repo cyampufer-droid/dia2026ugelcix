@@ -429,31 +429,49 @@ const EstudianteResultados = () => {
                             {isRespOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                           </CollapsibleTrigger>
                           <CollapsibleContent className="mt-3">
+                            {!hasConfig && (
+                              <div className="mb-3 p-3 rounded-lg bg-muted/30 border border-border text-sm text-muted-foreground">
+                                ℹ️ Las claves de respuesta aún no han sido cargadas. El puntaje mostrado ({area.puntaje}/20) fue registrado por tu docente. Cuando se carguen las claves, podrás ver el detalle pregunta por pregunta.
+                              </div>
+                            )}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               {area.respuestas.map((resp, i) => {
                                 const pregunta = preguntas[i];
-                                const correcta = pregunta?.correcta?.toUpperCase() || '—';
+                                const correcta = pregunta?.correcta?.toUpperCase() || null;
                                 const dada = resp?.toUpperCase() || '—';
-                                const esCorrecta = correcta !== '—' && dada === correcta;
+                                const esCorrecta = correcta !== null && dada === correcta;
+                                const esIncorrecta = correcta !== null && dada !== correcta;
                                 return (
                                   <div
                                     key={i}
                                     className={cn(
                                       'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm',
-                                      esCorrecta
-                                        ? 'border-nivel-logro/50 bg-nivel-logro/10'
-                                        : 'border-nivel-inicio/50 bg-nivel-inicio/10'
+                                      hasConfig
+                                        ? esCorrecta
+                                          ? 'border-nivel-logro/50 bg-nivel-logro/10'
+                                          : 'border-nivel-inicio/50 bg-nivel-inicio/10'
+                                        : 'border-border bg-muted/20'
                                     )}
                                   >
-                                    {esCorrecta ? (
-                                      <CheckCircle2 className="h-4 w-4 text-nivel-logro shrink-0" />
+                                    {hasConfig ? (
+                                      esCorrecta ? (
+                                        <CheckCircle2 className="h-4 w-4 text-nivel-logro shrink-0" />
+                                      ) : (
+                                        <XCircle className="h-4 w-4 text-nivel-inicio shrink-0" />
+                                      )
                                     ) : (
-                                      <XCircle className="h-4 w-4 text-nivel-inicio shrink-0" />
+                                      <span className="h-4 w-4 shrink-0 text-center text-xs text-muted-foreground">{i + 1}</span>
                                     )}
                                     <span className="font-medium">P{i + 1}:</span>
-                                    <span className={cn(!esCorrecta && 'line-through text-muted-foreground')}>{dada}</span>
-                                    {!esCorrecta && (
-                                      <span className="text-nivel-logro font-medium ml-1">→ {correcta}</span>
+                                    <span className={cn(
+                                      hasConfig && esCorrecta && 'text-nivel-logro font-semibold',
+                                      hasConfig && esIncorrecta && 'line-through text-muted-foreground',
+                                    )}>{dada}</span>
+                                    {hasConfig && esCorrecta && (
+                                      <span className="text-nivel-logro text-xs">✓ Correcta</span>
+                                    )}
+                                    {hasConfig && esIncorrecta && (
+                                      <span className="text-nivel-logro font-medium ml-1">→ Correcta: {correcta}</span>
                                     )}
                                   </div>
                                 );
@@ -464,11 +482,12 @@ const EstudianteResultados = () => {
                       );
                     })()}
 
+                    {/* Conclusiones Descriptivas - visible por defecto */}
                     {area.nivel && competencias.length > 0 && (
-                      <Collapsible open={isOpen} onOpenChange={() => toggleArea(area.area)}>
-                        <CollapsibleTrigger className="w-full flex items-center justify-between bg-muted/50 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
+                      <Collapsible open={isOpen ?? true} onOpenChange={() => toggleArea(area.area)}>
+                        <CollapsibleTrigger className="w-full flex items-center justify-between bg-primary/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-primary/20 transition-colors">
                           <span>📋 Conclusiones Descriptivas por Competencia</span>
-                          {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          {(isOpen ?? true) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </CollapsibleTrigger>
                         <CollapsibleContent className="mt-3 space-y-3">
                           {competencias.map((comp, i) => (

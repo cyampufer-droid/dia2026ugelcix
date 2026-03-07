@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { UserPlus, RefreshCw, Pencil, Trash2, KeyRound } from 'lucide-react';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import BulkPersonalUpload from '@/components/director/BulkPersonalUpload';
+import SortableTableHead, { useSort, sortData } from '@/components/SortableTableHead';
 
 const personalRoles = [
   { value: 'subdirector', label: 'Subdirector(a)' },
@@ -285,6 +286,16 @@ const PersonalRegistro = () => {
     return `${ng.nivel} - ${ng.grado} "${ng.seccion}"`;
   };
 
+  const { sort, handleSort } = useSort();
+
+  const sortedPersonal = sortData(personal, sort, (p, key) => {
+    if (key === 'dni') return p.dni;
+    if (key === 'nombre_completo') return p.nombre_completo;
+    if (key === 'rol') return p.roles.map(r => roleLabelMap[r] || r).join(', ');
+    if (key === 'aula') return formatAula(p.grado_seccion_id) || 'zzz';
+    return '';
+  });
+
   const AulaSelector = ({ value, onChange, label = 'Nivel / Grado / Sección' }: { value: string; onChange: (v: string) => void; label?: string }) => (
     <div>
       <Label>{label}</Label>
@@ -390,15 +401,15 @@ const PersonalRegistro = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>DNI</TableHead>
-                    <TableHead>Apellidos y Nombres</TableHead>
-                    <TableHead>Rol</TableHead>
-                    <TableHead>Nivel / Grado / Sección</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+                    <SortableTableHead label="DNI" sortKey="dni" currentSort={sort} onSort={handleSort} />
+                    <SortableTableHead label="Apellidos y Nombres" sortKey="nombre_completo" currentSort={sort} onSort={handleSort} />
+                    <SortableTableHead label="Rol" sortKey="rol" currentSort={sort} onSort={handleSort} />
+                    <SortableTableHead label="Nivel / Grado / Sección" sortKey="aula" currentSort={sort} onSort={handleSort} />
+                    <SortableTableHead label="Acciones" sortKey="" currentSort={{ key: '', direction: null }} onSort={() => {}} className="text-right" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {personal.map(p => (
+                  {sortedPersonal.map(p => (
                     <TableRow key={p.id}>
                       <TableCell className="font-mono">{p.dni}</TableCell>
                       <TableCell>{p.nombre_completo}</TableCell>

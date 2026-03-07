@@ -7,7 +7,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
+import SortableTableHead, { useSort, sortData } from '@/components/SortableTableHead';
 
 interface Aula {
   id: string;
@@ -21,6 +22,35 @@ interface Estudiante {
   dni: string;
   nombre_completo: string;
 }
+
+const StudentsSortableTable = ({ estudiantes }: { estudiantes: Estudiante[] }) => {
+  const { sort, handleSort } = useSort();
+  const sorted = sortData(estudiantes, sort, (e, key) => {
+    if (key === 'dni') return e.dni;
+    if (key === 'nombre_completo') return e.nombre_completo;
+    return '';
+  });
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <SortableTableHead label="#" sortKey="" currentSort={{ key: '', direction: null }} onSort={() => {}} className="w-12" />
+          <SortableTableHead label="DNI" sortKey="dni" currentSort={sort} onSort={handleSort} />
+          <SortableTableHead label="Nombre Completo" sortKey="nombre_completo" currentSort={sort} onSort={handleSort} />
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {sorted.map((e, i) => (
+          <TableRow key={e.id}>
+            <TableCell className="text-muted-foreground">{i + 1}</TableCell>
+            <TableCell className="font-mono">{e.dni}</TableCell>
+            <TableCell>{e.nombre_completo}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+};
 
 const DocenteDashboard = () => {
   const { profile, user } = useAuth();
@@ -208,24 +238,7 @@ const DocenteDashboard = () => {
           </div>
           {estudiantes.length > 0 ? (
             <div className="rounded-md border overflow-auto max-h-[400px]">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">#</TableHead>
-                    <TableHead>DNI</TableHead>
-                    <TableHead>Nombre Completo</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {estudiantes.map((e, i) => (
-                    <TableRow key={e.id}>
-                      <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                      <TableCell className="font-mono">{e.dni}</TableCell>
-                      <TableCell>{e.nombre_completo}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <StudentsSortableTable estudiantes={estudiantes} />
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">No hay estudiantes registrados en esta aula aún.</p>

@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +13,7 @@ import { UserPlus, Search, Pencil, Trash2, Loader2, RefreshCw, Download } from '
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import BulkUserUpload from '@/components/admin/BulkUserUpload';
 import * as XLSX from 'xlsx';
+import SortableTableHead, { useSort, sortData } from '@/components/SortableTableHead';
 
 const roles = [
   { value: 'director', label: 'Director' },
@@ -181,6 +182,16 @@ const AdminUsuarios = () => {
     );
   });
 
+  const { sort, handleSort } = useSort();
+
+  const sortedUsers = sortData(filteredUsers, sort, (u, key) => {
+    if (key === 'dni') return u.dni;
+    if (key === 'nombre_completo') return u.nombre_completo;
+    if (key === 'email') return u.email;
+    if (key === 'rol') return u.roles.map(r => roleLabelMap[r] || r).join(', ');
+    return '';
+  });
+
   const downloadExcel = () => {
     const data = filteredUsers.map((u) => ({
       'Distrito': u.distrito || '',
@@ -280,26 +291,26 @@ const AdminUsuarios = () => {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : filteredUsers.length === 0 ? (
+           ) : sortedUsers.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
               {users.length === 0
                 ? 'No hay usuarios registrados. Use el botón "Nuevo Usuario" para comenzar.'
                 : 'No se encontraron usuarios con ese criterio de búsqueda.'}
             </p>
           ) : (
-            <div className="overflow-x-auto">
+             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>DNI</TableHead>
-                    <TableHead>Nombre Completo</TableHead>
-                    <TableHead>Correo Electrónico</TableHead>
-                    <TableHead>Rol</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+                    <SortableTableHead label="DNI" sortKey="dni" currentSort={sort} onSort={handleSort} />
+                    <SortableTableHead label="Nombre Completo" sortKey="nombre_completo" currentSort={sort} onSort={handleSort} />
+                    <SortableTableHead label="Correo Electrónico" sortKey="email" currentSort={sort} onSort={handleSort} />
+                    <SortableTableHead label="Rol" sortKey="rol" currentSort={sort} onSort={handleSort} />
+                    <SortableTableHead label="Acciones" sortKey="" currentSort={{ key: '', direction: null }} onSort={() => {}} className="text-right" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.map((user) => (
+                  {sortedUsers.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell className="font-mono">{user.dni}</TableCell>
                       <TableCell>{user.nombre_completo}</TableCell>
@@ -332,7 +343,7 @@ const AdminUsuarios = () => {
                 </TableBody>
               </Table>
               <p className="text-xs text-muted-foreground mt-2">
-                {filteredUsers.length} de {users.length} usuarios
+                {sortedUsers.length} de {users.length} usuarios
               </p>
             </div>
           )}

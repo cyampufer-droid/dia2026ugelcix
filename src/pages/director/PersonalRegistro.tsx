@@ -19,6 +19,7 @@ import SortableTableHead, { useSort, sortData } from '@/components/SortableTable
 const personalRoles = [
   { value: 'subdirector', label: 'Subdirector(a)' },
   { value: 'docente', label: 'Docente' },
+  { value: 'docente_pip', label: 'Docente PIP (Innovación Pedagógica)' },
   { value: 'estudiante', label: 'Estudiante' },
 ];
 
@@ -35,12 +36,14 @@ interface PersonalItem {
   nombre_completo: string;
   user_id: string | null;
   grado_seccion_id: string | null;
+  is_pip: boolean;
   roles: string[];
 }
 
 const roleLabelMap: Record<string, string> = {
   subdirector: 'Subdirector(a)',
   docente: 'Docente',
+  docente_pip: 'Docente PIP',
   estudiante: 'Estudiante',
   director: 'Director(a)',
 };
@@ -118,7 +121,7 @@ const PersonalRegistro = () => {
     try {
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, dni, nombre_completo, user_id, grado_seccion_id')
+        .select('id, dni, nombre_completo, user_id, grado_seccion_id, is_pip')
         .eq('institucion_id', profile.institucion_id)
         .neq('user_id', user?.id ?? '');
 
@@ -140,6 +143,7 @@ const PersonalRegistro = () => {
 
       setPersonal((profiles || []).map(p => ({
         ...p,
+        is_pip: !!(p as any).is_pip,
         roles: p.user_id ? (rolesMap.get(p.user_id) || []) : [],
       })));
     } catch (err) {
@@ -180,16 +184,19 @@ const PersonalRegistro = () => {
     try {
       const email = `${trimmedDni}@dia.ugel.local`;
       const password = trimmedDni;
+      const isPip = rol === 'docente_pip';
+      const actualRole = isPip ? 'docente' : rol;
       const selectedNg = nivelesGrados.find(ng => ng.id === selectedGradoSeccion);
       const isSecundaria = selectedNg?.nivel === 'Secundaria';
       await invokeEdgeFunction('create-user', {
-        email, password, dni: trimmedDni, nombre_completo: nombre, role: rol,
+        email, password, dni: trimmedDni, nombre_completo: nombre, role: actualRole,
         institucion_id: profile?.institucion_id || undefined,
-        grado_seccion_id: selectedGradoSeccion || undefined,
-        especialidad: (rol === 'docente' && isSecundaria && especialidad) ? especialidad : undefined,
+        grado_seccion_id: isPip ? undefined : (selectedGradoSeccion || undefined),
+        especialidad: (actualRole === 'docente' && !isPip && isSecundaria && especialidad) ? especialidad : undefined,
+        is_pip: isPip || undefined,
       });
 
-      toast({ title: 'Personal registrado', description: `${nombre} como ${rol}. Credenciales: DNI como usuario y contraseña.` });
+      toast({ title: 'Personal registrado', description: `${nombre} como ${isPip ? 'Docente PIP' : actualRole}. Credenciales: DNI como usuario y contraseña.` });
       setOpen(false);
       setRol(''); setDni(''); setNombre(''); setSelectedGradoSeccion(''); setEspecialidad('');
       fetchPersonal();
@@ -367,7 +374,14 @@ const PersonalRegistro = () => {
                   📧 Correo: <strong>{dni ? `${dni}@dia.ugel.local` : '{DNI}@dia.ugel.local'}</strong><br/>
                   🔑 Contraseña inicial: <strong>DNI</strong>. El usuario deberá cambiarla al ingresar por primera vez.
                 </p>
-                <AulaSelector value={selectedGradoSeccion} onChange={setSelectedGradoSeccion} />
+                {rol !== 'docente_pip' && (
+                  <AulaSelector value={selectedGradoSeccion} onChange={setSelectedGradoSeccion} />
+                )}
+                {rol === 'docente_pip' && (
+                  <p className="text-xs text-muted-foreground bg-muted rounded p-2">
+                    ℹ️ El Docente PIP tiene privilegios de Director y no requiere aula asignada. Solo se vinculará a la institución.
+                  </p>
+                )}
                 {rol === 'docente' && (() => {
                   const selectedNg = nivelesGrados.find(ng => ng.id === selectedGradoSeccion);
                   return selectedNg?.nivel === 'Secundaria';
@@ -439,10 +453,14 @@ const PersonalRegistro = () => {
                       <TableCell>{p.nombre_completo}</TableCell>
                       <TableCell>
                         <div className="flex gap-1 flex-wrap">
-                          {p.roles.map(r => (
-                            <Badge key={r} variant="secondary">{roleLabelMap[r] || r}</Badge>
-                          ))}
-                          {p.roles.length === 0 && <span className="text-muted-foreground text-xs">Sin rol</span>}
+                          {p.is_pip ? (
+                            <Badge variant="secondary">Docente PIP</Badge>
+                          ) : (
+                            p.roles.map(r => (
+                              <Badge key={r} variant="secondary">{roleLabelMap[r] || r}</Badge>
+                            ))
+                          )}
+                          {p.roles.length === 0 && !p.is_pip && <span className="text-muted-foreground text-xs">Sin rol</span>}
                         </div>
                       </TableCell>
                       <TableCell>

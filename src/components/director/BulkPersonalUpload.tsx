@@ -49,12 +49,15 @@ const rolMap: Record<string, string> = {
   subdirector: 'subdirector',
   'subdirector(a)': 'subdirector',
   docente: 'docente',
+  docente_pip: 'docente_pip',
+  'docente pip': 'docente_pip',
   estudiante: 'estudiante',
 };
 
 const rolLabel: Record<string, string> = {
   subdirector: 'Subdirector(a)',
   docente: 'Docente',
+  docente_pip: 'Docente PIP',
   estudiante: 'Estudiante',
 };
 
@@ -142,11 +145,16 @@ const BulkPersonalUpload = ({ onComplete, nivelesGrados, institucionId }: BulkPe
     setStep('processing');
     setProgress(10);
 
-    // Assign grado_seccion_id to all users if a default was selected
-    const usersWithAula = parsed.map(u => ({
-      ...u,
-      grado_seccion_id: defaultGradoSeccion || undefined,
-    }));
+    // Assign grado_seccion_id to non-PIP users if a default was selected
+    const usersWithAula = parsed.map(u => {
+      const isPip = u.rol === 'docente_pip';
+      return {
+        ...u,
+        rol: isPip ? 'docente' : u.rol,
+        grado_seccion_id: isPip ? undefined : (defaultGradoSeccion || undefined),
+        is_pip: isPip || undefined,
+      };
+    });
 
     try {
       const data = await invokeEdgeFunction('bulk-create-users', {

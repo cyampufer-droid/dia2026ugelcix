@@ -19,7 +19,7 @@ const AdminDashboard = () => {
         supabase.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'especialista'),
         supabase.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'director'),
         supabase.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'subdirector'),
-        supabase.from('niveles_grados').select('id', { count: 'exact', head: true }).eq('seccion', 'PIP'),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('is_pip', true),
       ]);
       setStats({
         instituciones: instRes.count ?? 0,

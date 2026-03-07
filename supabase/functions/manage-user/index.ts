@@ -45,17 +45,10 @@ Deno.serve(async (req) => {
     if (!isAdmin && !isDirector && roles.includes("docente")) {
       const { data: callerProfile } = await adminClient
         .from("profiles")
-        .select("grado_seccion_id")
+        .select("is_pip")
         .eq("user_id", caller.id)
         .single();
-      if (callerProfile?.grado_seccion_id) {
-        const { data: ng } = await adminClient
-          .from("niveles_grados")
-          .select("seccion")
-          .eq("id", callerProfile.grado_seccion_id)
-          .single();
-        if (ng?.seccion === "PIP") isDirector = true;
-      }
+      if (callerProfile?.is_pip) isDirector = true;
     }
 
     if (!isAdmin && !isDirector) {
@@ -164,7 +157,6 @@ Deno.serve(async (req) => {
     }
 
     if (action === "delete") {
-      // Look up the profile id for this user to clean up resultados
       const { data: targetProfile } = await adminClient
         .from("profiles")
         .select("id")
@@ -185,7 +177,6 @@ Deno.serve(async (req) => {
     }
 
     if (action === "reset-password") {
-      // Reset password to DNI
       const { data: targetProfile } = await adminClient
         .from("profiles")
         .select("dni")
@@ -203,7 +194,6 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Error al resetear contraseña" }, 400);
       }
 
-      // Force password change on next login
       await adminClient
         .from("profiles")
         .update({ must_change_password: true })

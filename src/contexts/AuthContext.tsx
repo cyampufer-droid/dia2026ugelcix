@@ -12,6 +12,7 @@ interface Profile {
   institucion_id: string | null;
   grado_seccion_id: string | null;
   especialidad: string | null;
+  is_pip: boolean;
 }
 
 interface AuthContextType {
@@ -58,18 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const p = profileRes.data as any;
         setProfile(p as Profile);
         setMustChangePassword(!!p.must_change_password);
-
-        // Check if docente is PIP
-        if (p.grado_seccion_id) {
-          const { data: ng } = await supabase
-            .from('niveles_grados')
-            .select('seccion')
-            .eq('id', p.grado_seccion_id)
-            .single();
-          setIsPIP(ng?.seccion === 'PIP');
-        } else {
-          setIsPIP(false);
-        }
+        setIsPIP(!!p.is_pip);
       }
 
       if (rolesRes.data) {

@@ -272,6 +272,8 @@ interface AreaResult {
   icon: typeof Calculator;
   puntaje: number | null;
   nivel: string | null;
+  respuestas: string[] | null;
+  configPreguntas: any;
 }
 
 const ConclusionDescriptiva = ({ competencia, nivel }: { competencia: Competencia; nivel: string }) => {

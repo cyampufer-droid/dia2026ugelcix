@@ -537,16 +537,36 @@ const GuiaUsuario = () => {
 
         <p>El director gestiona su institución educativa: configura niveles, grados, secciones, registra personal y supervisa resultados.</p>
 
+        <p>El director gestiona su institución educativa: configura niveles, grados, secciones, registra personal y supervisa resultados. A continuación se describe cada paso que debe seguir.</p>
+
+        {/* Screenshot del Dashboard Director */}
+        <div className="my-6 rounded-2xl overflow-hidden border-2 border-secondary/20 shadow-card">
+          <div className="bg-secondary/10 px-4 py-2 text-xs font-bold text-secondary flex items-center gap-2">
+            <Monitor className="h-4 w-4" /> Captura de pantalla – Dashboard del Director
+          </div>
+          <img src={screenDirector} alt="Dashboard del Director" className="w-full object-cover" />
+        </div>
+
         <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-secondary" /> 6.1 Dashboard del Director
         </h3>
-        <p>Panel con estadísticas de la institución y acceso rápido a las funciones principales:</p>
+        <p>Al ingresar, el Director visualiza un panel con estadísticas generales de su institución:</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
           {['Total docentes', 'Total estudiantes', 'Evaluaciones completadas', 'Avance por área'].map((stat, i) => (
             <div key={i} className="rounded-xl bg-secondary/5 border border-secondary/10 p-4 text-center">
               <p className="text-xs font-bold text-secondary">{stat}</p>
             </div>
           ))}
+        </div>
+
+        <div className="rounded-xl border-2 border-secondary/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3">📋 ¿Qué puede ver el Director en el Dashboard?</h4>
+          <ul className="text-sm space-y-2">
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span>Resumen de <strong>cantidad de docentes</strong> registrados en la IE</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span>Resumen de <strong>cantidad de estudiantes</strong> por nivel y grado</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span>Indicadores de <strong>evaluaciones completadas</strong> vs pendientes</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span>Acceso rápido a <strong>descarga de evaluaciones de entrada</strong> (Primaria)</span></li>
+          </ul>
         </div>
 
         <Tip emoji="📥" title="Descarga de Evaluaciones de Entrada (Primaria)">
@@ -557,18 +577,31 @@ const GuiaUsuario = () => {
           <Settings className="h-5 w-5 text-secondary" /> 6.2 Configuración de la Institución
         </h3>
         <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Institución</code></p>
-        <p>Permite verificar y actualizar: nombre, código local, provincia, distrito, centro poblado, dirección y tipo de gestión.</p>
+        <p className="mb-3">Permite verificar y actualizar los datos de la institución educativa.</p>
+        <div className="space-y-3 pl-2 mb-4">
+          <StepCard step={1} title="Ingrese al menú Institución" description="Desde el panel lateral izquierdo, presione 'Institución'" />
+          <StepCard step={2} title="Verifique los datos" description="Revise: nombre de la IE, código modular, código local, provincia, distrito, centro poblado" />
+          <StepCard step={3} title="Actualice si es necesario" description="Modifique dirección, tipo de gestión u otros datos y presione 'Guardar'" />
+        </div>
 
         <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
           <Layers className="h-5 w-5 text-secondary" /> 6.3 Niveles y Grados
         </h3>
         <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Niveles y Grados</code></p>
+        <p className="mb-3">Este es el <strong>primer paso obligatorio</strong> antes de registrar personal o estudiantes.</p>
         <div className="space-y-3 pl-2 mb-4">
           <StepCard step={1} title="Seleccione el Nivel" description="Inicial, Primaria o Secundaria" />
           <StepCard step={2} title="Seleccione el Grado" description="Los grados disponibles dependen del nivel seleccionado" />
           <StepCard step={3} title="Agregue las Secciones" description="Inicial: texto libre (ej: 'Ositos'). Primaria/Secundaria: opciones estandarizadas (PIP, A, B, C...)" />
           <StepCard step={4} title='Presione "Guardar"' description="La estructura queda: Nivel → Grado → Secciones" />
         </div>
+
+        <Warning>
+          <ul className="space-y-1.5">
+            <li><strong>Importante:</strong> Sin configurar niveles y grados, no podrá asignar docentes a secciones ni registrar estudiantes.</li>
+            <li>Configure <strong>TODOS</strong> los niveles, grados y secciones de su IE antes de proceder.</li>
+          </ul>
+        </Warning>
 
         <Tip title="Sección PIP">
           <p>En Primaria y Secundaria, la primera opción de sección es <strong>"PIP"</strong> (Profesor de Innovación Pedagógica). Al asignar un docente a esta sección, automáticamente tendrá los mismos privilegios y funciones que un Director.</p>
@@ -578,15 +611,17 @@ const GuiaUsuario = () => {
           <UserPlus className="h-5 w-5 text-secondary" /> 6.4 Registro de Personal
         </h3>
         <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Personal</code></p>
+        <p className="mb-3">El Director debe registrar a <strong>todos los docentes y subdirectores</strong> de su IE.</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="rounded-xl border-2 border-primary/10 bg-card p-5">
             <h4 className="font-bold text-sm mb-3">👤 Registro individual</h4>
             <ol className="text-sm space-y-1.5 list-decimal list-inside">
               <li>Presione <strong>"+ Agregar Personal"</strong></li>
-              <li>Ingrese <strong>DNI</strong> y <strong>Nombre Completo</strong></li>
+              <li>Ingrese <strong>DNI</strong> (8 dígitos) y <strong>Nombre Completo</strong></li>
               <li>Seleccione <strong>Cargo</strong> (Docente o Subdirector)</li>
               <li>Para Docentes: asigne <strong>Grado y Sección</strong></li>
+              <li>En Secundaria: seleccione la <strong>Especialidad</strong> (Matemática o Comunicación)</li>
               <li>Presione <strong>"Registrar"</strong></li>
             </ol>
           </div>
@@ -601,15 +636,48 @@ const GuiaUsuario = () => {
           </div>
         </div>
 
+        <Tip title="Credenciales automáticas">
+          <p>Al registrar personal, el sistema crea automáticamente una cuenta con <strong>DNI como usuario y contraseña</strong>. El docente podrá ingresar usando su DNI en ambos campos.</p>
+        </Tip>
+
         <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-secondary" /> 6.5 Resultados de la Institución
         </h3>
         <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Resultados</code></p>
-        <ul className="space-y-2 text-sm">
-          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />Resultados consolidados de toda la institución</li>
-          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />Filtros por nivel, grado, sección o área</li>
-          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />Gráficos de distribución de niveles de logro</li>
-        </ul>
+        <p className="mb-3">El Director puede visualizar los resultados de <strong>toda su institución</strong> con múltiples niveles de detalle:</p>
+
+        {/* Screenshot de Resultados */}
+        <div className="my-6 rounded-2xl overflow-hidden border-2 border-secondary/20 shadow-card">
+          <div className="bg-secondary/10 px-4 py-2 text-xs font-bold text-secondary flex items-center gap-2">
+            <Monitor className="h-4 w-4" /> Captura de pantalla – Panel de Resultados
+          </div>
+          <img src={screenResultados} alt="Panel de Resultados" className="w-full object-cover" />
+        </div>
+
+        <div className="rounded-xl border-2 border-secondary/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3">📊 Opciones de visualización de resultados:</h4>
+          <ul className="text-sm space-y-2">
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Por Estudiante:</strong> resultados individuales con nombre, puntaje y nivel de logro</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Por Sección:</strong> distribución de niveles de logro por sección</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Por Grado:</strong> comparativa entre grados del mismo nivel</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Por Nivel:</strong> resultados consolidados de Inicial, Primaria y/o Secundaria</span></li>
+          </ul>
+        </div>
+
+        <div className="rounded-xl border-2 border-secondary/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3">📋 Paso a paso para consultar resultados:</h4>
+          <div className="space-y-3 pl-2">
+            <StepCard step={1} title="Ingrese a Resultados" description="Desde el panel lateral izquierdo, presione 'Resultados'" />
+            <StepCard step={2} title="Seleccione el tipo de vista" description="Use el menú desplegable para elegir: Por Estudiante, Por Sección, Por Grado o Por Nivel" />
+            <StepCard step={3} title="Aplique filtros" description="Seleccione el área (Matemática o Lectura) para filtrar los resultados" />
+            <StepCard step={4} title="Analice los gráficos" description="Observe la distribución de niveles de logro: C (Inicio), B (Proceso), A (Logro Esperado), AD (Destacado)" />
+            <StepCard step={5} title="Busque estudiantes específicos" description="En la vista 'Por Estudiante', use el campo de búsqueda por nombre o DNI" />
+          </div>
+        </div>
+
+        <Tip title="Colores de Niveles de Logro">
+          <p>Los resultados usan colores para identificar rápidamente el nivel: <span className="text-destructive font-bold">Rojo = C (Inicio)</span>, <span className="text-warning font-bold">Amarillo = B (Proceso)</span>, <span className="text-accent font-bold">Verde = A (Logro Esperado)</span>, <span className="text-primary font-bold">Azul = AD (Destacado)</span>.</p>
+        </Tip>
 
         {/* ════════════════════════════════════════════════════════════ */}
         {/*  7. MÓDULO DEL DOCENTE                                     */}

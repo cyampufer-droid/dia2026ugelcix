@@ -3,6 +3,11 @@ import { Printer, ArrowLeft, BookOpen, Shield, Users, School, GraduationCap, Use
 import { useNavigate } from 'react-router-dom';
 import diaLogo from '@/assets/dia_ugel_cix_2026.png';
 import dgpLogo from '@/assets/logo_dgp_ugel_cix.jpg';
+import screenLogin from '@/assets/tutorial/screen-login.jpg';
+import screenDirector from '@/assets/tutorial/screen-director.jpg';
+import screenDocente from '@/assets/tutorial/screen-docente.jpg';
+import screenDigitacion from '@/assets/tutorial/screen-digitacion.jpg';
+import screenResultados from '@/assets/tutorial/screen-resultados.jpg';
 
 /* ──────────── Reusable sub-components ──────────── */
 
@@ -330,19 +335,19 @@ const GuiaUsuario = () => {
           <div className="rounded-xl p-4 text-center border-2 border-warning/30 bg-warning/5">
             <div className="w-10 h-10 rounded-full bg-warning/20 mx-auto mb-2 flex items-center justify-center text-lg font-black text-warning">B</div>
             <p className="font-bold text-sm text-warning">En Proceso</p>
-            <p className="text-xs text-muted-foreground mt-1">11 – 13 pts</p>
+            <p className="text-xs text-muted-foreground mt-1">11 – 14 pts</p>
             <p className="text-xs text-muted-foreground">Próximo al logro</p>
           </div>
           <div className="rounded-xl p-4 text-center border-2 border-accent/30 bg-accent/5">
             <div className="w-10 h-10 rounded-full bg-accent/20 mx-auto mb-2 flex items-center justify-center text-lg font-black text-accent">A</div>
             <p className="font-bold text-sm text-accent">Logro Esperado</p>
-            <p className="text-xs text-muted-foreground mt-1">14 – 17 pts</p>
+            <p className="text-xs text-muted-foreground mt-1">15 – 18 pts</p>
             <p className="text-xs text-muted-foreground">Nivel esperado</p>
           </div>
           <div className="rounded-xl p-4 text-center border-2 border-primary/30 bg-primary/5">
             <div className="w-10 h-10 rounded-full bg-primary/20 mx-auto mb-2 flex items-center justify-center text-sm font-black text-primary">AD</div>
             <p className="font-bold text-sm text-primary">Destacado</p>
-            <p className="text-xs text-muted-foreground mt-1">18 – 20 pts</p>
+            <p className="text-xs text-muted-foreground mt-1">19 – 20 pts</p>
             <p className="text-xs text-muted-foreground">Sobresaliente</p>
           </div>
         </div>
@@ -408,12 +413,22 @@ const GuiaUsuario = () => {
         </div>
 
         <h3 className="font-bold text-sm mb-4">📋 Pasos para ingresar:</h3>
+
+        {/* Screenshot de Login */}
+        <div className="my-6 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-card">
+          <div className="bg-primary/10 px-4 py-2 text-xs font-bold text-primary flex items-center gap-2">
+            <Monitor className="h-4 w-4" /> Captura de pantalla – Pantalla de Inicio de Sesión
+          </div>
+          <img src={screenLogin} alt="Pantalla de login" className="w-full object-cover" />
+        </div>
+
         <div className="space-y-4 pl-2">
           <StepCard step={1} title="Abra su navegador" description="Ingrese a la URL: dia2026ugelcix.lovable.app" />
           <StepCard step={2} title="Ingrese su DNI como usuario" description='Escriba los 8 dígitos de su DNI en el campo "DNI o Correo electrónico"' />
           <StepCard step={3} title="Ingrese su DNI como contraseña" description='Escriba nuevamente su DNI en el campo "Contraseña"' />
-          <StepCard step={4} title='Presione "Ingresar"' description="El sistema le redirigirá automáticamente al panel que corresponde a su rol" />
-          <StepCard step={5} title="Cambie su contraseña" description="En su primera sesión, se recomienda cambiar la contraseña desde Mi Perfil" />
+          <StepCard step={4} title="Acepte el aviso de privacidad" description="Marque la casilla de aceptación del tratamiento de datos personales (Ley N.° 29733)" />
+          <StepCard step={5} title='Presione "Ingresar"' description="El sistema le redirigirá automáticamente al panel que corresponde a su rol" />
+          <StepCard step={6} title="Cambie su contraseña" description="En su primera sesión, se recomienda cambiar la contraseña desde Mi Perfil" />
         </div>
 
         <Warning>
@@ -532,16 +547,36 @@ const GuiaUsuario = () => {
 
         <p>El director gestiona su institución educativa: configura niveles, grados, secciones, registra personal y supervisa resultados.</p>
 
+        <p>El director gestiona su institución educativa: configura niveles, grados, secciones, registra personal y supervisa resultados. A continuación se describe cada paso que debe seguir.</p>
+
+        {/* Screenshot del Dashboard Director */}
+        <div className="my-6 rounded-2xl overflow-hidden border-2 border-secondary/20 shadow-card">
+          <div className="bg-secondary/10 px-4 py-2 text-xs font-bold text-secondary flex items-center gap-2">
+            <Monitor className="h-4 w-4" /> Captura de pantalla – Dashboard del Director
+          </div>
+          <img src={screenDirector} alt="Dashboard del Director" className="w-full object-cover" />
+        </div>
+
         <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-secondary" /> 6.1 Dashboard del Director
         </h3>
-        <p>Panel con estadísticas de la institución y acceso rápido a las funciones principales:</p>
+        <p>Al ingresar, el Director visualiza un panel con estadísticas generales de su institución:</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
           {['Total docentes', 'Total estudiantes', 'Evaluaciones completadas', 'Avance por área'].map((stat, i) => (
             <div key={i} className="rounded-xl bg-secondary/5 border border-secondary/10 p-4 text-center">
               <p className="text-xs font-bold text-secondary">{stat}</p>
             </div>
           ))}
+        </div>
+
+        <div className="rounded-xl border-2 border-secondary/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3">📋 ¿Qué puede ver el Director en el Dashboard?</h4>
+          <ul className="text-sm space-y-2">
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span>Resumen de <strong>cantidad de docentes</strong> registrados en la IE</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span>Resumen de <strong>cantidad de estudiantes</strong> por nivel y grado</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span>Indicadores de <strong>evaluaciones completadas</strong> vs pendientes</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span>Acceso rápido a <strong>descarga de evaluaciones de entrada</strong> (Primaria)</span></li>
+          </ul>
         </div>
 
         <Tip emoji="📥" title="Descarga de Evaluaciones de Entrada (Primaria)">
@@ -552,18 +587,31 @@ const GuiaUsuario = () => {
           <Settings className="h-5 w-5 text-secondary" /> 6.2 Configuración de la Institución
         </h3>
         <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Institución</code></p>
-        <p>Permite verificar y actualizar: nombre, código local, provincia, distrito, centro poblado, dirección y tipo de gestión.</p>
+        <p className="mb-3">Permite verificar y actualizar los datos de la institución educativa.</p>
+        <div className="space-y-3 pl-2 mb-4">
+          <StepCard step={1} title="Ingrese al menú Institución" description="Desde el panel lateral izquierdo, presione 'Institución'" />
+          <StepCard step={2} title="Verifique los datos" description="Revise: nombre de la IE, código modular, código local, provincia, distrito, centro poblado" />
+          <StepCard step={3} title="Actualice si es necesario" description="Modifique dirección, tipo de gestión u otros datos y presione 'Guardar'" />
+        </div>
 
         <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
           <Layers className="h-5 w-5 text-secondary" /> 6.3 Niveles y Grados
         </h3>
         <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Niveles y Grados</code></p>
+        <p className="mb-3">Este es el <strong>primer paso obligatorio</strong> antes de registrar personal o estudiantes.</p>
         <div className="space-y-3 pl-2 mb-4">
           <StepCard step={1} title="Seleccione el Nivel" description="Inicial, Primaria o Secundaria" />
           <StepCard step={2} title="Seleccione el Grado" description="Los grados disponibles dependen del nivel seleccionado" />
           <StepCard step={3} title="Agregue las Secciones" description="Inicial: texto libre (ej: 'Ositos'). Primaria/Secundaria: opciones estandarizadas (PIP, A, B, C...)" />
           <StepCard step={4} title='Presione "Guardar"' description="La estructura queda: Nivel → Grado → Secciones" />
         </div>
+
+        <Warning>
+          <ul className="space-y-1.5">
+            <li><strong>Importante:</strong> Sin configurar niveles y grados, no podrá asignar docentes a secciones ni registrar estudiantes.</li>
+            <li>Configure <strong>TODOS</strong> los niveles, grados y secciones de su IE antes de proceder.</li>
+          </ul>
+        </Warning>
 
         <Tip title="Sección PIP">
           <p>En Primaria y Secundaria, la primera opción de sección es <strong>"PIP"</strong> (Profesor de Innovación Pedagógica). Al asignar un docente a esta sección, automáticamente tendrá los mismos privilegios y funciones que un Director.</p>
@@ -573,15 +621,17 @@ const GuiaUsuario = () => {
           <UserPlus className="h-5 w-5 text-secondary" /> 6.4 Registro de Personal
         </h3>
         <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Personal</code></p>
+        <p className="mb-3">El Director debe registrar a <strong>todos los docentes y subdirectores</strong> de su IE.</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="rounded-xl border-2 border-primary/10 bg-card p-5">
             <h4 className="font-bold text-sm mb-3">👤 Registro individual</h4>
             <ol className="text-sm space-y-1.5 list-decimal list-inside">
               <li>Presione <strong>"+ Agregar Personal"</strong></li>
-              <li>Ingrese <strong>DNI</strong> y <strong>Nombre Completo</strong></li>
+              <li>Ingrese <strong>DNI</strong> (8 dígitos) y <strong>Nombre Completo</strong></li>
               <li>Seleccione <strong>Cargo</strong> (Docente o Subdirector)</li>
               <li>Para Docentes: asigne <strong>Grado y Sección</strong></li>
+              <li>En Secundaria: seleccione la <strong>Especialidad</strong> (Matemática o Comunicación)</li>
               <li>Presione <strong>"Registrar"</strong></li>
             </ol>
           </div>
@@ -596,60 +646,123 @@ const GuiaUsuario = () => {
           </div>
         </div>
 
+        <Tip title="Credenciales automáticas">
+          <p>Al registrar personal, el sistema crea automáticamente una cuenta con <strong>DNI como usuario y contraseña</strong>. El docente podrá ingresar usando su DNI en ambos campos.</p>
+        </Tip>
+
         <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-secondary" /> 6.5 Resultados de la Institución
         </h3>
         <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Resultados</code></p>
-        <ul className="space-y-2 text-sm">
-          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />Resultados consolidados de toda la institución</li>
-          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />Filtros por nivel, grado, sección o área</li>
-          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />Gráficos de distribución de niveles de logro</li>
-        </ul>
+        <p className="mb-3">El Director puede visualizar los resultados de <strong>toda su institución</strong> con múltiples niveles de detalle:</p>
+
+        {/* Screenshot de Resultados */}
+        <div className="my-6 rounded-2xl overflow-hidden border-2 border-secondary/20 shadow-card">
+          <div className="bg-secondary/10 px-4 py-2 text-xs font-bold text-secondary flex items-center gap-2">
+            <Monitor className="h-4 w-4" /> Captura de pantalla – Panel de Resultados
+          </div>
+          <img src={screenResultados} alt="Panel de Resultados" className="w-full object-cover" />
+        </div>
+
+        <div className="rounded-xl border-2 border-secondary/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3">📊 Opciones de visualización de resultados:</h4>
+          <ul className="text-sm space-y-2">
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Por Estudiante:</strong> resultados individuales con nombre, puntaje y nivel de logro</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Por Sección:</strong> distribución de niveles de logro por sección</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Por Grado:</strong> comparativa entre grados del mismo nivel</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Por Nivel:</strong> resultados consolidados de Inicial, Primaria y/o Secundaria</span></li>
+          </ul>
+        </div>
+
+        <div className="rounded-xl border-2 border-secondary/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3">📋 Paso a paso para consultar resultados:</h4>
+          <div className="space-y-3 pl-2">
+            <StepCard step={1} title="Ingrese a Resultados" description="Desde el panel lateral izquierdo, presione 'Resultados'" />
+            <StepCard step={2} title="Seleccione el tipo de vista" description="Use el menú desplegable para elegir: Por Estudiante, Por Sección, Por Grado o Por Nivel" />
+            <StepCard step={3} title="Aplique filtros" description="Seleccione el área (Matemática o Lectura) para filtrar los resultados" />
+            <StepCard step={4} title="Analice los gráficos" description="Observe la distribución de niveles de logro: C (Inicio), B (Proceso), A (Logro Esperado), AD (Destacado)" />
+            <StepCard step={5} title="Busque estudiantes específicos" description="En la vista 'Por Estudiante', use el campo de búsqueda por nombre o DNI" />
+          </div>
+        </div>
+
+        <Tip title="Colores de Niveles de Logro">
+          <p>Los resultados usan colores para identificar rápidamente el nivel: <span className="text-destructive font-bold">Rojo = C (Inicio)</span>, <span className="text-warning font-bold">Amarillo = B (Proceso)</span>, <span className="text-accent font-bold">Verde = A (Logro Esperado)</span>, <span className="text-primary font-bold">Azul = AD (Destacado)</span>.</p>
+        </Tip>
 
         {/* ════════════════════════════════════════════════════════════ */}
         {/*  7. MÓDULO DEL DOCENTE                                     */}
         {/* ════════════════════════════════════════════════════════════ */}
         <SectionTitle id="docente" icon={GraduationCap} number="07" title="MÓDULO DEL DOCENTE" />
 
-        <p>El docente es responsable del registro de estudiantes, la digitación de respuestas y la consulta de resultados de su aula.</p>
+        <p>El docente es responsable del registro de estudiantes, la digitación de respuestas y la consulta de resultados de su aula. A continuación se detalla cada función paso a paso.</p>
+
+        {/* Screenshot del Dashboard Docente */}
+        <div className="my-6 rounded-2xl overflow-hidden border-2 border-accent/20 shadow-card">
+          <div className="bg-accent/10 px-4 py-2 text-xs font-bold text-accent flex items-center gap-2">
+            <Monitor className="h-4 w-4" /> Captura de pantalla – Dashboard del Docente
+          </div>
+          <img src={screenDocente} alt="Dashboard del Docente" className="w-full object-cover" />
+        </div>
 
         <h3 className="font-bold text-lg mt-6 mb-3">📊 7.1 Dashboard del Docente</h3>
-        <p>Panel con estadísticas de su aula: total de estudiantes, evaluaciones pendientes y completadas.</p>
+        <p className="mb-3">Al ingresar, el Docente visualiza un panel con información de su aula:</p>
+        <div className="rounded-xl border-2 border-accent/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3">📋 ¿Qué puede ver el Docente en el Dashboard?</h4>
+          <ul className="text-sm space-y-2">
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Total de estudiantes</strong> registrados en su sección</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Evaluaciones pendientes</strong> por digitar</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Evaluaciones completadas</strong> por área</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span>Acceso rápido a <strong>cuadernillos de evaluación de entrada</strong> (solo Primaria)</span></li>
+          </ul>
+        </div>
 
-        <Tip emoji="📥" title="Evaluaciones de Entrada">
-          <p>Si es docente de <strong>Primaria</strong>, en su Dashboard encontrará los cuadernillos de evaluación de entrada de <strong>Matemática y Comunicación de su grado específico</strong>. Puede verlos o descargarlos directamente.</p>
+        <Tip emoji="📥" title="Evaluaciones de Entrada (Primaria)">
+          <p>Si es docente de <strong>Primaria</strong>, en su Dashboard encontrará los cuadernillos de evaluación de entrada de <strong>Matemática y Comunicación de su grado específico</strong>. Puede verlos o descargarlos directamente para imprimir y aplicar en su aula.</p>
         </Tip>
 
         <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
           <UserPlus className="h-5 w-5 text-secondary" /> 7.2 Registro de Estudiantes
         </h3>
         <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Estudiantes</code></p>
+        <p className="mb-3">El docente debe registrar a <strong>todos los estudiantes de su aula</strong> antes de iniciar las evaluaciones.</p>
         <div className="space-y-3 pl-2 mb-4">
           <StepCard step={1} title='Presione "+ Agregar Estudiante"' description="Se abrirá el formulario de registro" />
-          <StepCard step={2} title="Ingrese los datos" description="DNI (8 dígitos) y Nombre Completo del estudiante" />
-          <StepCard step={3} title="Vinculación automática" description="El estudiante queda asignado al grado y sección del docente" />
+          <StepCard step={2} title="Ingrese los datos del estudiante" description="DNI (8 dígitos) y Nombre Completo" />
+          <StepCard step={3} title="Vinculación automática" description="El estudiante queda asignado automáticamente al grado y sección del docente" />
           <StepCard step={4} title='Presione "Registrar"' description="Se crea automáticamente su cuenta (DNI como usuario y contraseña)" />
         </div>
+
+        <Tip title="Credenciales del Estudiante">
+          <p>Al registrar un estudiante, el sistema genera una cuenta con <strong>DNI como usuario y contraseña</strong>. Comparta estas credenciales con el estudiante o padre de familia para que pueda acceder a sus resultados.</p>
+        </Tip>
 
         <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
           <PenTool className="h-5 w-5 text-secondary" /> 7.3 Digitación de Respuestas
         </h3>
         <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Digitación</code></p>
-        <p className="mb-3">Este módulo permite ingresar las respuestas cuando las evaluaciones se aplican en formato <strong>impreso (papel)</strong>:</p>
+        <p className="mb-3">Este módulo permite ingresar las respuestas cuando las evaluaciones se aplican en formato <strong>impreso (papel)</strong>.</p>
+
+        {/* Screenshot de Digitación */}
+        <div className="my-6 rounded-2xl overflow-hidden border-2 border-accent/20 shadow-card">
+          <div className="bg-accent/10 px-4 py-2 text-xs font-bold text-accent flex items-center gap-2">
+            <Monitor className="h-4 w-4" /> Captura de pantalla – Módulo de Digitación
+          </div>
+          <img src={screenDigitacion} alt="Módulo de Digitación de Respuestas" className="w-full object-cover" />
+        </div>
 
         <div className="space-y-3 pl-2 mb-4">
           <StepCard step={1} title="Seleccione el Área" description="Matemática, Lectura o Socioemocional" />
-          <StepCard step={2} title="Lista de estudiantes" description="Se muestran todos los estudiantes de su aula" />
+          <StepCard step={2} title="Visualice la lista de estudiantes" description="Se muestra una grilla con todos los estudiantes de su aula y las preguntas del área seleccionada" />
           <StepCard step={3} title="Ingrese las respuestas" description="Para cada estudiante, marque la alternativa seleccionada (A, B, C o D) en cada pregunta" />
-          <StepCard step={4} title="Cálculo automático" description="El sistema calcula automáticamente el puntaje total y nivel de logro" />
-          <StepCard step={5} title='Presione "Guardar"' description="Las respuestas quedan registradas en el sistema" />
+          <StepCard step={4} title="Verifique el cálculo automático" description="El sistema calcula automáticamente el puntaje total y asigna el nivel de logro: C (0-10), B (11-14), A (15-18), AD (19-20)" />
+          <StepCard step={5} title='Presione "Guardar"' description="Las respuestas quedan registradas y los puntajes se actualizan automáticamente" />
         </div>
 
         <Warning>
           <ul className="space-y-1.5">
-            <li>Verifique cuidadosamente las respuestas <strong>antes de guardar</strong>.</li>
+            <li>Verifique cuidadosamente las respuestas <strong>antes de guardar</strong>. Una alternativa incorrecta afecta el puntaje total.</li>
             <li>Complete la digitación de <strong>TODOS</strong> los estudiantes antes de la fecha límite.</li>
-            <li>Las respuestas pueden editarse posteriormente si es necesario.</li>
+            <li>Las respuestas pueden editarse posteriormente si detecta algún error.</li>
           </ul>
         </Warning>
 
@@ -657,13 +770,26 @@ const GuiaUsuario = () => {
           <BarChart3 className="h-5 w-5 text-secondary" /> 7.4 Resultados del Aula
         </h3>
         <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Resultados</code></p>
-        <ul className="space-y-2 text-sm">
-          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />Resultados individuales de cada estudiante</li>
-          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />Tabla con nombre, puntaje y nivel de logro con colores indicativos</li>
-          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-            <span>Colores: <span className="text-destructive font-bold">Rojo</span> = Inicio, <span className="text-warning font-bold">Amarillo</span> = Proceso, <span className="text-accent font-bold">Verde</span> = Logro, <span className="text-primary font-bold">Azul</span> = Destacado</span>
-          </li>
-        </ul>
+        <p className="mb-3">El Docente puede consultar los resultados de <strong>todos los estudiantes de su aula</strong>:</p>
+
+        <div className="rounded-xl border-2 border-accent/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3">📋 Paso a paso para consultar resultados:</h4>
+          <div className="space-y-3 pl-2">
+            <StepCard step={1} title="Ingrese a Resultados" description="Desde el panel lateral izquierdo, presione 'Resultados'" />
+            <StepCard step={2} title="Seleccione la vista" description="Use el menú desplegable: 'Por Estudiante' para ver el detalle individual" />
+            <StepCard step={3} title="Filtre por área" description="Seleccione Matemática o Lectura para ver los puntajes específicos" />
+            <StepCard step={4} title="Busque un estudiante" description="Use el campo de búsqueda para encontrar por nombre o DNI" />
+          </div>
+        </div>
+
+        <div className="rounded-xl border-2 border-accent/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3">📊 ¿Qué visualiza el Docente?</h4>
+          <ul className="text-sm space-y-2">
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Tabla de resultados:</strong> nombre, puntaje y nivel de logro de cada estudiante</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Niveles de logro con colores:</strong> <span className="text-destructive font-bold">C (Inicio)</span>, <span className="text-warning font-bold">B (Proceso)</span>, <span className="text-accent font-bold">A (Logro Esperado)</span>, <span className="text-primary font-bold">AD (Destacado)</span></span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Gráficos de distribución:</strong> proporción de estudiantes por nivel de logro</span></li>
+          </ul>
+        </div>
 
         {/* ════════════════════════════════════════════════════════════ */}
         {/*  8. DOCENTE PIP                                            */}
@@ -710,35 +836,81 @@ const GuiaUsuario = () => {
         {/* ════════════════════════════════════════════════════════════ */}
         <SectionTitle id="estudiante" icon={ClipboardList} number="09" title="MÓDULO DEL ESTUDIANTE" />
 
-        <p>Los estudiantes pueden rendir evaluaciones directamente en la plataforma y consultar sus resultados.</p>
+        <p>Los estudiantes acceden a la plataforma para rendir evaluaciones en línea y consultar sus resultados. A continuación se describe paso a paso lo que puede hacer y visualizar.</p>
+
+        <div className="rounded-xl border-2 border-destructive/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3">🔐 ¿Cómo ingresa el Estudiante?</h4>
+          <div className="space-y-3 pl-2">
+            <StepCard step={1} title="Ingrese a la plataforma" description="Abra dia2026ugelcix.lovable.app en su navegador o tablet" />
+            <StepCard step={2} title="Escriba su DNI como usuario" description="8 dígitos de su Documento Nacional de Identidad" />
+            <StepCard step={3} title="Escriba su DNI como contraseña" description="La primera vez, su contraseña es su mismo DNI" />
+            <StepCard step={4} title="Acepte el aviso de privacidad" description="Marque la casilla de tratamiento de datos personales" />
+            <StepCard step={5} title='Presione "Ingresar"' description="El sistema lo llevará automáticamente al módulo de pruebas" />
+          </div>
+        </div>
+
+        {/* Screenshot Login */}
+        <div className="my-6 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-card">
+          <div className="bg-primary/10 px-4 py-2 text-xs font-bold text-primary flex items-center gap-2">
+            <Monitor className="h-4 w-4" /> Captura de pantalla – Pantalla de Inicio de Sesión
+          </div>
+          <img src={screenLogin} alt="Pantalla de login de la plataforma DIA 2026" className="w-full object-cover" />
+        </div>
 
         <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
           <BookOpenCheck className="h-5 w-5 text-secondary" /> 9.1 Rendir Evaluación en Línea
         </h3>
         <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Mis Pruebas</code></p>
+        <p className="mb-3">El estudiante visualiza las evaluaciones disponibles para su grado. El proceso paso a paso es:</p>
 
         <div className="space-y-3 pl-2 mb-4">
-          <StepCard step={1} title="Inicie la evaluación" description="Se mostrará la evaluación disponible con una barra de progreso" />
-          <StepCard step={2} title="Lea cada pregunta" description="Lea cuidadosamente. Puede usar el botón 🔊 para escuchar en voz alta" />
-          <StepCard step={3} title="Seleccione su respuesta" description="Toque/haga clic en la opción deseada (A, B, C o D). Se resaltará en azul" />
-          <StepCard step={4} title="Navegue entre preguntas" description='Use los botones "Anterior" y "Siguiente" para moverse' />
-          <StepCard step={5} title="Finalice la evaluación" description='Al terminar, presione "✅ Finalizar" para enviar sus respuestas' />
+          <StepCard step={1} title="Seleccione la evaluación" description="Se mostrará la evaluación disponible para su grado con una barra de progreso" />
+          <StepCard step={2} title="Lea cada pregunta con atención" description="Lea cuidadosamente el enunciado y las opciones. Puede usar el botón 🔊 para escuchar la pregunta en voz alta" />
+          <StepCard step={3} title="Seleccione su respuesta" description="Toque o haga clic en la opción deseada (A, B, C o D). La opción seleccionada se resaltará en azul" />
+          <StepCard step={4} title="Navegue entre preguntas" description='Use los botones "← Anterior" y "Siguiente →" para moverse entre las preguntas' />
+          <StepCard step={5} title="Revise sus respuestas" description="Antes de finalizar, verifique que todas las preguntas estén respondidas" />
+          <StepCard step={6} title="Finalice la evaluación" description='Al terminar, presione "✅ Finalizar" para enviar sus respuestas. ¡No se puede modificar después de finalizar!' />
         </div>
+
+        <Warning>
+          <ul className="space-y-1.5">
+            <li>Una vez presionado <strong>"Finalizar"</strong>, las respuestas no se pueden modificar.</li>
+            <li>Asegúrese de tener <strong>conexión estable a Internet</strong> durante toda la evaluación.</li>
+            <li>No cierre el navegador ni cambie de pestaña durante la prueba.</li>
+          </ul>
+        </Warning>
 
         <Tip emoji="👶" title="Para estudiantes pequeños (Inicial / 1.er Grado)">
           <ul className="space-y-1">
             <li>Los botones son <strong>grandes</strong> y fáciles de tocar en tablets</li>
             <li>El botón de audio <strong>🔊</strong> lee la pregunta en español peruano</li>
-            <li>Se recomienda que un <strong>adulto acompañe</strong> al estudiante</li>
+            <li>Se recomienda que un <strong>adulto acompañe</strong> al estudiante durante la evaluación</li>
           </ul>
         </Tip>
 
         <h3 className="font-bold text-lg mt-6 mb-3">📋 9.2 Mis Resultados</h3>
         <p className="mb-2">Ruta: <code className="bg-muted px-2 py-0.5 rounded text-xs">Panel lateral → Resultados</code></p>
-        <ul className="space-y-2 text-sm">
-          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><strong>Boleta de Resultados:</strong> puntaje y nivel de logro en cada área</li>
-          <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><strong>Recomendaciones pedagógicas</strong> personalizadas según el nivel alcanzado</li>
-        </ul>
+        <p className="mb-3">Después de finalizar las evaluaciones, el estudiante puede consultar sus resultados:</p>
+
+        <div className="rounded-xl border-2 border-destructive/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3">📋 Paso a paso para ver resultados:</h4>
+          <div className="space-y-3 pl-2">
+            <StepCard step={1} title="Ingrese a Resultados" description="Desde el panel lateral izquierdo, presione 'Resultados'" />
+            <StepCard step={2} title="Visualice su Boleta" description="Se muestra el puntaje obtenido y el nivel de logro en cada área evaluada" />
+            <StepCard step={3} title="Consulte su nivel de logro" description="C = En Inicio (0-10), B = En Proceso (11-14), A = Logro Esperado (15-18), AD = Destacado (19-20)" />
+            <StepCard step={4} title="Lea las recomendaciones" description="Se incluyen sugerencias pedagógicas personalizadas según el nivel alcanzado" />
+          </div>
+        </div>
+
+        <div className="rounded-xl border-2 border-destructive/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3">👁️ ¿Qué visualiza el Estudiante?</h4>
+          <ul className="text-sm space-y-2">
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Boleta de Resultados:</strong> puntaje y nivel de logro en cada área (Matemática, Lectura, Socioemocional)</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Colores indicativos:</strong> <span className="text-destructive font-bold">Rojo = C</span>, <span className="text-warning font-bold">Amarillo = B</span>, <span className="text-accent font-bold">Verde = A</span>, <span className="text-primary font-bold">Azul = AD</span></span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Análisis Personalizado:</strong> conclusiones descriptivas generadas automáticamente por competencia</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Recomendaciones pedagógicas:</strong> sugerencias específicas para mejorar según el nivel alcanzado</span></li>
+          </ul>
+        </div>
 
         {/* ════════════════════════════════════════════════════════════ */}
         {/*  10. MÓDULO DEL ESPECIALISTA                               */}

@@ -23,6 +23,35 @@ interface Estudiante {
   nombre_completo: string;
 }
 
+const StudentsSortableTable = ({ estudiantes }: { estudiantes: Estudiante[] }) => {
+  const { sort, handleSort } = useSort();
+  const sorted = sortData(estudiantes, sort, (e, key) => {
+    if (key === 'dni') return e.dni;
+    if (key === 'nombre_completo') return e.nombre_completo;
+    return '';
+  });
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <SortableTableHead label="#" sortKey="" currentSort={{ key: '', direction: null }} onSort={() => {}} className="w-12" />
+          <SortableTableHead label="DNI" sortKey="dni" currentSort={sort} onSort={handleSort} />
+          <SortableTableHead label="Nombre Completo" sortKey="nombre_completo" currentSort={sort} onSort={handleSort} />
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {sorted.map((e, i) => (
+          <TableRow key={e.id}>
+            <TableCell className="text-muted-foreground">{i + 1}</TableCell>
+            <TableCell className="font-mono">{e.dni}</TableCell>
+            <TableCell>{e.nombre_completo}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+};
+
 const DocenteDashboard = () => {
   const { profile, user } = useAuth();
   const [stats, setStats] = useState({ students: 0, evaluaciones: 0, digitados: 0, pendientes: 0 });

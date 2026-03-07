@@ -95,11 +95,11 @@ const AIConclusiones = ({ area, nivel, grado, respuestas_dadas, respuestas_corre
           ) : (
             <Sparkles className="h-4 w-4 text-primary" />
           )}
-          {loading ? 'Analizando con IA...' : '🤖 Generar Análisis Personalizado con IA'}
+          {loading ? 'Analizando...' : '🤖 Generar Análisis Personalizado'}
         </Button>
         {error && <p className="text-xs text-destructive">{error}</p>}
         <p className="text-xs text-muted-foreground text-center max-w-md">
-          La IA analizará tu patrón de respuestas y generará conclusiones descriptivas personalizadas por competencia.
+          Se analizará tu patrón de respuestas y se generarán conclusiones descriptivas personalizadas por competencia.
         </p>
       </div>
     );
@@ -109,7 +109,7 @@ const AIConclusiones = ({ area, nivel, grado, respuestas_dadas, respuestas_corre
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-center gap-2 text-sm font-medium text-primary">
         <Sparkles className="h-4 w-4" />
-        Análisis Personalizado con IA
+        Análisis Personalizado
       </div>
 
       {/* Resumen */}

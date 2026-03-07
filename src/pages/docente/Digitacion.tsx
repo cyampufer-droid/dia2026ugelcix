@@ -23,6 +23,15 @@ const ESPECIALIDAD_AREA_MAP: Record<string, string> = {
   'DPCC': 'Habilidades Socioemocionales',
 };
 
+const GRADO_TO_ORDINAL: Record<string, string> = {
+  'Primero': '1°',
+  'Segundo': '2°',
+  'Tercero': '3°',
+  'Cuarto': '4°',
+  'Quinto': '5°',
+  'Sexto': '6°',
+};
+
 interface EvalInfo {
   id: string;
   area: string;
@@ -53,11 +62,14 @@ const Digitacion = () => {
         .single();
       if (!ng) return;
 
+      // Map grado name (e.g. "Primero") to evaluaciones format (e.g. "1°")
+      const gradoEval = GRADO_TO_ORDINAL[ng.grado] || ng.grado;
+
       const { data: evals } = await supabase
         .from('evaluaciones')
         .select('id, area, nivel, grado, numero_preguntas, config_preguntas')
         .eq('nivel', ng.nivel)
-        .eq('grado', ng.grado);
+        .eq('grado', gradoEval);
 
       if (!evals?.length) return;
 

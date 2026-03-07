@@ -6,11 +6,17 @@ import {
   ArrowLeft, ArrowRight, Play, School, GraduationCap, Users, Settings,
   ClipboardList, BarChart3, BookOpen, Shield, CheckCircle2, Rocket,
   Star, ChevronRight, Monitor, KeyRound, Layers, UserPlus, FileText,
-  PenTool, Award, Eye, Home
+  PenTool, Award, Eye, Home, Image
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import diaLogo from '@/assets/dia_ugel_cix_2026.png';
 import dgpLogo from '@/assets/logo_dgp_ugel_cix.jpg';
+import screenLogin from '@/assets/tutorial/screen-login.jpg';
+import screenAdmin from '@/assets/tutorial/screen-admin.jpg';
+import screenDirector from '@/assets/tutorial/screen-director.jpg';
+import screenDocente from '@/assets/tutorial/screen-docente.jpg';
+import screenDigitacion from '@/assets/tutorial/screen-digitacion.jpg';
+import screenResultados from '@/assets/tutorial/screen-resultados.jpg';
 
 /* ────────── Step Data ────────── */
 
@@ -303,6 +309,49 @@ const steps: TutorialStep[] = [
           className="bg-accent/10 border-l-4 border-accent rounded-r-xl p-4"
         >
           <p className="text-sm">💡 <strong>Tip:</strong> Usa los datos para tomar decisiones pedagógicas informadas. Los resultados del DIA permiten focalizar el acompañamiento donde más se necesita.</p>
+        </motion.div>
+      </div>
+    ),
+  },
+  {
+    id: 'capturas',
+    title: 'Conoce los Módulos',
+    subtitle: 'Capturas de pantalla de la plataforma',
+    icon: Image,
+    color: 'primary',
+    content: (
+      <div className="space-y-6">
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-base text-muted-foreground">
+          Aquí te mostramos cómo luce cada módulo de la plataforma para que te familiarices antes de ingresar. 👀
+        </motion.p>
+        {[
+          { img: screenLogin, label: '🔐 Pantalla de Inicio de Sesión', desc: 'Ingresa con tu DNI y contraseña. Interfaz sencilla y segura.' },
+          { img: screenAdmin, label: '🛠️ Panel del Administrador', desc: 'Vista general con estadísticas de instituciones, docentes y estudiantes registrados.' },
+          { img: screenDirector, label: '🏫 Módulo del Director', desc: 'Configura tu institución educativa, niveles, grados, secciones y registra docentes.' },
+          { img: screenDocente, label: '👩‍🏫 Módulo del Docente', desc: 'Registra estudiantes, consulta listas y gestiona tu aula de forma sencilla.' },
+          { img: screenDigitacion, label: '✏️ Grilla de Digitación', desc: 'Digita las respuestas de cada estudiante pregunta por pregunta. El sistema calcula los puntajes.' },
+          { img: screenResultados, label: '📊 Resultados y Reportes', desc: 'Gráficos de barras, tortas y tablas con los niveles de logro de tus estudiantes.' },
+        ].map((item, i) => (
+          <motion.div
+            key={item.label}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 + i * 0.12 }}
+            className="rounded-2xl border-2 border-border overflow-hidden"
+          >
+            <div className="relative aspect-video bg-muted">
+              <img src={item.img} alt={item.label} className="w-full h-full object-cover" loading="lazy" />
+            </div>
+            <div className="p-4">
+              <p className="font-bold text-sm">{item.label}</p>
+              <p className="text-xs text-muted-foreground mt-1">{item.desc}</p>
+            </div>
+          </motion.div>
+        ))}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
+          className="bg-accent/10 border-l-4 border-accent rounded-r-xl p-4"
+        >
+          <p className="text-sm">💡 <strong>Tip:</strong> La plataforma real puede verse ligeramente diferente según las actualizaciones, pero la estructura y funciones son las mismas.</p>
         </motion.div>
       </div>
     ),

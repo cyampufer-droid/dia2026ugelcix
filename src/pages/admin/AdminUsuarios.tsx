@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +13,7 @@ import { UserPlus, Search, Pencil, Trash2, Loader2, RefreshCw, Download } from '
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import BulkUserUpload from '@/components/admin/BulkUserUpload';
 import * as XLSX from 'xlsx';
+import SortableTableHead, { useSort, sortData } from '@/components/SortableTableHead';
 
 const roles = [
   { value: 'director', label: 'Director' },
@@ -287,19 +288,19 @@ const AdminUsuarios = () => {
                 : 'No se encontraron usuarios con ese criterio de búsqueda.'}
             </p>
           ) : (
-            <div className="overflow-x-auto">
+             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>DNI</TableHead>
-                    <TableHead>Nombre Completo</TableHead>
-                    <TableHead>Correo Electrónico</TableHead>
-                    <TableHead>Rol</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+                    <SortableTableHead label="DNI" sortKey="dni" currentSort={sort} onSort={handleSort} />
+                    <SortableTableHead label="Nombre Completo" sortKey="nombre_completo" currentSort={sort} onSort={handleSort} />
+                    <SortableTableHead label="Correo Electrónico" sortKey="email" currentSort={sort} onSort={handleSort} />
+                    <SortableTableHead label="Rol" sortKey="rol" currentSort={sort} onSort={handleSort} />
+                    <SortableTableHead label="Acciones" sortKey="" currentSort={{ key: '', direction: null }} onSort={() => {}} className="text-right" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.map((user) => (
+                  {sortedUsers.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell className="font-mono">{user.dni}</TableCell>
                       <TableCell>{user.nombre_completo}</TableCell>

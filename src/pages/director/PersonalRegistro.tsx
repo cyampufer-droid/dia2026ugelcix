@@ -19,6 +19,7 @@ import SortableTableHead, { useSort, sortData } from '@/components/SortableTable
 const personalRoles = [
   { value: 'subdirector', label: 'Subdirector(a)' },
   { value: 'docente', label: 'Docente' },
+  { value: 'docente_pip', label: 'Docente PIP (Innovación Pedagógica)' },
   { value: 'estudiante', label: 'Estudiante' },
 ];
 
@@ -41,6 +42,7 @@ interface PersonalItem {
 const roleLabelMap: Record<string, string> = {
   subdirector: 'Subdirector(a)',
   docente: 'Docente',
+  docente_pip: 'Docente PIP',
   estudiante: 'Estudiante',
   director: 'Director(a)',
 };

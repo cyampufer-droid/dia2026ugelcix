@@ -4,7 +4,19 @@ import {
   LayoutDashboard, Users, School, BookOpen, ClipboardList,
   BarChart3, LogOut, GraduationCap, UserCog, Building2, FileSpreadsheet, UserCircle
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarFooter,
+  SidebarHeader,
+  useSidebar,
+} from '@/components/ui/sidebar';
 
 interface NavItem {
   label: string;
@@ -59,70 +71,86 @@ const roleNavItems: Record<string, NavItem[]> = {
   ],
 };
 
+const roleLabels: Record<string, string> = {
+  administrador: 'Administrador',
+  director: 'Director',
+  subdirector: 'Subdirector',
+  docente: 'Docente',
+  especialista: 'Especialista UGEL',
+  estudiante: 'Estudiante',
+  padre: 'Padre de Familia',
+};
+
 const AppSidebar = () => {
   const { primaryRole, profile, signOut, isPIP } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { state, setOpenMobile } = useSidebar();
+  const collapsed = state === 'collapsed';
 
-  // PIP docentes see director navigation
   const effectiveRole = (isPIP && primaryRole === 'docente') ? 'director' : primaryRole;
   const items = effectiveRole ? (roleNavItems[effectiveRole] || []) : [];
 
-  const roleLabels: Record<string, string> = {
-    administrador: 'Administrador',
-    director: 'Director',
-    subdirector: 'Subdirector',
-    docente: 'Docente',
-    especialista: 'Especialista UGEL',
-    estudiante: 'Estudiante',
-    padre: 'Padre de Familia',
+  const handleNav = (path: string) => {
+    navigate(path);
+    setOpenMobile(false);
   };
 
   return (
-    <aside className="flex flex-col w-64 min-h-screen bg-sidebar text-sidebar-foreground">
-      <div className="p-5 border-b border-sidebar-border">
-        <h1 className="text-lg font-bold tracking-tight">UGEL Chiclayo</h1>
-        <p className="text-xs opacity-70 mt-1">Diagnóstico Integral 2026</p>
-      </div>
+    <Sidebar collapsible="offcanvas">
+      <SidebarHeader className="p-4 border-b border-sidebar-border">
+        <h1 className="text-lg font-bold tracking-tight text-sidebar-foreground">UGEL Chiclayo</h1>
+        {!collapsed && <p className="text-xs text-sidebar-foreground/70 mt-1">Diagnóstico Integral 2026</p>}
+      </SidebarHeader>
 
-      <div className="p-4 border-b border-sidebar-border">
-        <p className="text-sm font-medium truncate">{profile?.nombre_completo || 'Usuario'}</p>
-        <span className="inline-block mt-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-sidebar-accent text-sidebar-accent-foreground">
-          {isPIP ? 'Docente PIP' : (primaryRole ? roleLabels[primaryRole] : 'Sin rol')}
-        </span>
-      </div>
+      {!collapsed && (
+        <div className="p-4 border-b border-sidebar-border">
+          <p className="text-sm font-medium truncate text-sidebar-foreground">{profile?.nombre_completo || 'Usuario'}</p>
+          <span className="inline-block mt-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-sidebar-accent text-sidebar-accent-foreground">
+            {isPIP ? 'Docente PIP' : (primaryRole ? roleLabels[primaryRole] : 'Sin rol')}
+          </span>
+        </div>
+      )}
 
-      <nav className="flex-1 p-3 space-y-1">
-        {items.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <button
-              key={item.path}
-              onClick={() => navigate(item.path)}
-              className={cn(
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-                  : 'hover:bg-sidebar-accent text-sidebar-foreground/80 hover:text-sidebar-accent-foreground'
-              )}
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-sidebar-foreground/50">Navegación</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {items.map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton
+                      onClick={() => handleNav(item.path)}
+                      isActive={isActive}
+                      tooltip={item.label}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter className="border-t border-sidebar-border">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => { signOut(); navigate('/login'); }}
+              tooltip="Cerrar Sesión"
             >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </button>
-          );
-        })}
-      </nav>
-
-      <div className="p-3 border-t border-sidebar-border">
-        <button
-          onClick={() => { signOut(); navigate('/login'); }}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-sidebar-accent text-sidebar-foreground/80 hover:text-sidebar-accent-foreground transition-colors"
-        >
-          <LogOut className="h-4 w-4" />
-          Cerrar Sesión
-        </button>
-      </div>
-    </aside>
+              <LogOut className="h-4 w-4" />
+              <span>Cerrar Sesión</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   );
 };
 

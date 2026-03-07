@@ -17,6 +17,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminUsuarios = lazy(() => import("./pages/admin/AdminUsuarios"));
 const AdminInstituciones = lazy(() => import("./pages/admin/AdminInstituciones"));
+const AdminResultados = lazy(() => import("./pages/admin/AdminResultados"));
 const DirectorDashboard = lazy(() => import("./pages/director/DirectorDashboard"));
 const InstitucionSetup = lazy(() => import("./pages/director/InstitucionSetup"));
 const NivelesSetup = lazy(() => import("./pages/director/NivelesSetup"));
@@ -69,6 +70,7 @@ const App = () => (
                   <Route path="/admin" element={<ProtectedRoute allowedRoles={['administrador']}><AdminDashboard /></ProtectedRoute>} />
                   <Route path="/admin/usuarios" element={<ProtectedRoute allowedRoles={['administrador']}><AdminUsuarios /></ProtectedRoute>} />
                   <Route path="/admin/instituciones" element={<ProtectedRoute allowedRoles={['administrador']}><AdminInstituciones /></ProtectedRoute>} />
+                  <Route path="/admin/resultados" element={<ProtectedRoute allowedRoles={['administrador']}><AdminResultados /></ProtectedRoute>} />
                 </Route>
 
                 {/* Director routes */}

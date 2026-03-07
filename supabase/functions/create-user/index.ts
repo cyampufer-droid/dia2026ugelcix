@@ -56,17 +56,10 @@ Deno.serve(async (req) => {
     if (callerRoleList.includes("docente")) {
       const { data: callerProfile } = await adminClient
         .from("profiles")
-        .select("grado_seccion_id")
+        .select("is_pip")
         .eq("user_id", caller.id)
         .single();
-      if (callerProfile?.grado_seccion_id) {
-        const { data: ng } = await adminClient
-          .from("niveles_grados")
-          .select("seccion")
-          .eq("id", callerProfile.grado_seccion_id)
-          .single();
-        isPIPDocente = ng?.seccion === "PIP";
-      }
+      isPIPDocente = !!callerProfile?.is_pip;
     }
 
     const roleHierarchy = ["administrador", "director", "subdirector", "docente"];
@@ -80,7 +73,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { email, password, dni, nombre_completo, role, institucion_id, grado_seccion_id, especialidad } = body;
+    const { email, password, dni, nombre_completo, role, institucion_id, grado_seccion_id, especialidad, is_pip } = body;
 
     if (!email || !password || !dni || !nombre_completo) {
       return jsonResponse({ error: "Faltan campos obligatorios" }, 400);
@@ -124,7 +117,6 @@ Deno.serve(async (req) => {
       if (msg.includes("already been registered") || msg.includes("already exists")) {
         errorMsg = "El correo electrónico ya está registrado.";
       } else if (msg.includes("profiles_dni_key") || msg.includes("duplicate key") || msg.includes("database error")) {
-        // "Database error creating new user" typically means the trigger failed due to duplicate DNI
         errorMsg = "El DNI ya está registrado en el sistema. Verifique que no exista un usuario previo con ese DNI.";
       } else {
         errorMsg += " " + createError.message;
@@ -144,20 +136,24 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update profile with institucion_id, grado_seccion_id and especialidad if provided
-    if (newUser.user && (institucion_id || grado_seccion_id || especialidad)) {
-      const updateData: Record<string, string> = {};
+    // Update profile with institucion_id, grado_seccion_id, especialidad, and is_pip
+    if (newUser.user) {
+      const updateData: Record<string, unknown> = {};
       if (institucion_id) updateData.institucion_id = institucion_id;
-      if (grado_seccion_id) updateData.grado_seccion_id = grado_seccion_id;
+      // PIP docentes don't get grado_seccion_id
+      if (grado_seccion_id && !is_pip) updateData.grado_seccion_id = grado_seccion_id;
       if (especialidad) updateData.especialidad = especialidad;
+      if (is_pip) updateData.is_pip = true;
 
-      const { error: profileError } = await adminClient
-        .from("profiles")
-        .update(updateData)
-        .eq("user_id", newUser.user.id);
+      if (Object.keys(updateData).length > 0) {
+        const { error: profileError } = await adminClient
+          .from("profiles")
+          .update(updateData)
+          .eq("user_id", newUser.user.id);
 
-      if (profileError) {
-        console.error("Profile update error:", profileError.message);
+        if (profileError) {
+          console.error("Profile update error:", profileError.message);
+        }
       }
     }
 

@@ -30,6 +30,7 @@ interface UserInput {
   password: string;
   institucion_id?: string;
   grado_seccion_id?: string;
+  is_pip?: boolean;
 }
 
 interface ResultItem {
@@ -74,17 +75,10 @@ Deno.serve(async (req) => {
     if (callerRoleList.includes("docente")) {
       const { data: callerProfile } = await adminClient
         .from("profiles")
-        .select("grado_seccion_id")
+        .select("is_pip")
         .eq("user_id", caller.id)
         .single();
-      if (callerProfile?.grado_seccion_id) {
-        const { data: ng } = await adminClient
-          .from("niveles_grados")
-          .select("seccion")
-          .eq("id", callerProfile.grado_seccion_id)
-          .single();
-        isPIPDocente = ng?.seccion === "PIP";
-      }
+      isPIPDocente = !!callerProfile?.is_pip;
     }
 
     const roleHierarchy = ["administrador", "director", "subdirector", "docente"];
@@ -177,12 +171,13 @@ Deno.serve(async (req) => {
             continue;
           }
 
-          // Update profile with institucion_id and grado_seccion_id
-          const profileUpdate: Record<string, string> = {};
-          // Per-user institucion_id takes priority, then fallback to default
+          // Update profile with institucion_id, grado_seccion_id, and is_pip
+          const profileUpdate: Record<string, unknown> = {};
           const instId = u.institucion_id || default_institucion_id;
           if (instId) profileUpdate.institucion_id = instId;
-          if (u.grado_seccion_id) profileUpdate.grado_seccion_id = u.grado_seccion_id;
+          // PIP docentes don't get grado_seccion_id
+          if (u.grado_seccion_id && !u.is_pip) profileUpdate.grado_seccion_id = u.grado_seccion_id;
+          if (u.is_pip) profileUpdate.is_pip = true;
           if (Object.keys(profileUpdate).length > 0) {
             await adminClient.from("profiles").update(profileUpdate).eq("user_id", newUser.user.id);
           }

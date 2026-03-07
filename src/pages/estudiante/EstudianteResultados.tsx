@@ -313,22 +313,26 @@ const EstudianteResultados = () => {
       setLoading(true);
       const { data: evaluaciones } = await supabase
         .from('evaluaciones')
-        .select('id, area');
+        .select('id, area, config_preguntas');
 
       const { data: resultados } = await supabase
         .from('resultados')
-        .select('evaluacion_id, puntaje_total, nivel_logro')
+        .select('evaluacion_id, puntaje_total, nivel_logro, respuestas_dadas')
         .eq('estudiante_id', profile.id);
 
       const mapped: AreaResult[] = AREAS.map(a => {
-        const evalIds = (evaluaciones || []).filter(e => e.area === a.key).map(e => e.id);
+        const evals = (evaluaciones || []).filter(e => e.area === a.key);
+        const evalIds = evals.map(e => e.id);
         const res = (resultados || []).find(r => evalIds.includes(r.evaluacion_id));
+        const evalMatch = res ? evals.find(e => e.id === res.evaluacion_id) : null;
         return {
           area: a.key,
           label: a.label,
           icon: a.icon,
           puntaje: res?.puntaje_total ?? null,
           nivel: res?.nivel_logro ?? null,
+          respuestas: res?.respuestas_dadas ?? null,
+          configPreguntas: evalMatch?.config_preguntas ?? null,
         };
       });
       setResults(mapped);

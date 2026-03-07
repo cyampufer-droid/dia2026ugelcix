@@ -182,16 +182,19 @@ const PersonalRegistro = () => {
     try {
       const email = `${trimmedDni}@dia.ugel.local`;
       const password = trimmedDni;
+      const isPip = rol === 'docente_pip';
+      const actualRole = isPip ? 'docente' : rol;
       const selectedNg = nivelesGrados.find(ng => ng.id === selectedGradoSeccion);
       const isSecundaria = selectedNg?.nivel === 'Secundaria';
       await invokeEdgeFunction('create-user', {
-        email, password, dni: trimmedDni, nombre_completo: nombre, role: rol,
+        email, password, dni: trimmedDni, nombre_completo: nombre, role: actualRole,
         institucion_id: profile?.institucion_id || undefined,
-        grado_seccion_id: selectedGradoSeccion || undefined,
-        especialidad: (rol === 'docente' && isSecundaria && especialidad) ? especialidad : undefined,
+        grado_seccion_id: isPip ? undefined : (selectedGradoSeccion || undefined),
+        especialidad: (actualRole === 'docente' && !isPip && isSecundaria && especialidad) ? especialidad : undefined,
+        is_pip: isPip || undefined,
       });
 
-      toast({ title: 'Personal registrado', description: `${nombre} como ${rol}. Credenciales: DNI como usuario y contraseña.` });
+      toast({ title: 'Personal registrado', description: `${nombre} como ${isPip ? 'Docente PIP' : actualRole}. Credenciales: DNI como usuario y contraseña.` });
       setOpen(false);
       setRol(''); setDni(''); setNombre(''); setSelectedGradoSeccion(''); setEspecialidad('');
       fetchPersonal();

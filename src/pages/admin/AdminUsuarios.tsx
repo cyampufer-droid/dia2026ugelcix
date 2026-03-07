@@ -81,6 +81,11 @@ const AdminUsuarios = () => {
   const [deleteUser, setDeleteUser] = useState<UserRow | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // Bulk select state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
+
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
@@ -193,6 +198,38 @@ const AdminUsuarios = () => {
     return '';
   });
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === sortedUsers.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sortedUsers.map(u => u.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleteLoading(true);
+    try {
+      const ids = Array.from(selectedIds);
+      await Promise.all(ids.map(id => invokeEdgeFunction('manage-user', { action: 'delete', user_id: id })));
+      toast({ title: 'Usuarios eliminados', description: `${ids.length} usuario(s) eliminado(s) correctamente` });
+      setBulkDeleteOpen(false);
+      setSelectedIds(new Set());
+      fetchUsers();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Error al eliminar usuarios', variant: 'destructive' });
+    } finally {
+      setBulkDeleteLoading(false);
+    }
+  };
+
   const downloadExcel = () => {
     const data = filteredUsers.map((u) => ({
       'Distrito': u.distrito || '',
@@ -281,10 +318,18 @@ const AdminUsuarios = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button variant="outline" size="sm" onClick={fetchUsers} disabled={loadingUsers}>
-              <RefreshCw className={`h-4 w-4 mr-1 ${loadingUsers ? 'animate-spin' : ''}`} />
-              Actualizar
-            </Button>
+            <div className="flex items-center gap-2">
+              {selectedIds.size > 0 && (
+                <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Eliminar ({selectedIds.size})
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={fetchUsers} disabled={loadingUsers}>
+                <RefreshCw className={`h-4 w-4 mr-1 ${loadingUsers ? 'animate-spin' : ''}`} />
+                Actualizar
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -303,6 +348,13 @@ const AdminUsuarios = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableCell className="w-10 p-2">
+                      <Checkbox
+                        checked={sortedUsers.length > 0 && selectedIds.size === sortedUsers.length}
+                        onCheckedChange={toggleSelectAll}
+                        aria-label="Seleccionar todos"
+                      />
+                    </TableCell>
                     <SortableTableHead label="DNI" sortKey="dni" currentSort={sort} onSort={handleSort} />
                     <SortableTableHead label="Nombre Completo" sortKey="nombre_completo" currentSort={sort} onSort={handleSort} />
                     <SortableTableHead label="Correo Electrónico" sortKey="email" currentSort={sort} onSort={handleSort} />
@@ -312,7 +364,14 @@ const AdminUsuarios = () => {
                 </TableHeader>
                 <TableBody>
                   {sortedUsers.map((user) => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user.id} data-state={selectedIds.has(user.id) ? 'selected' : undefined}>
+                      <TableCell className="w-10 p-2">
+                        <Checkbox
+                          checked={selectedIds.has(user.id)}
+                          onCheckedChange={() => toggleSelect(user.id)}
+                          aria-label={`Seleccionar ${user.nombre_completo}`}
+                        />
+                      </TableCell>
                       <TableCell className="font-mono">{user.dni}</TableCell>
                       <TableCell>{user.nombre_completo}</TableCell>
                       <TableCell>{user.email}</TableCell>
@@ -408,6 +467,27 @@ const AdminUsuarios = () => {
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleteLoading}>
               {deleteLoading ? 'Eliminando…' : 'Eliminar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Eliminación Masiva</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground py-4">
+            ¿Está seguro de que desea eliminar <strong>{selectedIds.size} usuario(s)</strong>?
+            Esta acción no se puede deshacer.
+          </p>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setBulkDeleteOpen(false)} disabled={bulkDeleteLoading}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleBulkDelete} disabled={bulkDeleteLoading}>
+              {bulkDeleteLoading ? 'Eliminando…' : `Eliminar ${selectedIds.size} usuario(s)`}
             </Button>
           </DialogFooter>
         </DialogContent>

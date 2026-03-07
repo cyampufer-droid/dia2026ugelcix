@@ -288,7 +288,13 @@ const EstudiantePrueba = () => {
         <p className="text-muted-foreground mt-1">Responde las evaluaciones de cada área</p>
       </div>
 
-      {evaluaciones.length === 0 ? (
+      {nivelNombre === 'Primaria' && gradoNombre && (
+        <EvaluacionesDownloadCard
+          gradoFilter={gradoNombre}
+          title="Cuadernillos de Evaluación"
+        />
+      )}
+
         <Card className="shadow-card">
           <CardContent className="py-8 text-center text-muted-foreground">
             No se encontraron evaluaciones asignadas para tu grado.

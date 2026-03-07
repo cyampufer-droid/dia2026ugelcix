@@ -413,12 +413,22 @@ const GuiaUsuario = () => {
         </div>
 
         <h3 className="font-bold text-sm mb-4">📋 Pasos para ingresar:</h3>
+
+        {/* Screenshot de Login */}
+        <div className="my-6 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-card">
+          <div className="bg-primary/10 px-4 py-2 text-xs font-bold text-primary flex items-center gap-2">
+            <Monitor className="h-4 w-4" /> Captura de pantalla – Pantalla de Inicio de Sesión
+          </div>
+          <img src={screenLogin} alt="Pantalla de login" className="w-full object-cover" />
+        </div>
+
         <div className="space-y-4 pl-2">
           <StepCard step={1} title="Abra su navegador" description="Ingrese a la URL: dia2026ugelcix.lovable.app" />
           <StepCard step={2} title="Ingrese su DNI como usuario" description='Escriba los 8 dígitos de su DNI en el campo "DNI o Correo electrónico"' />
           <StepCard step={3} title="Ingrese su DNI como contraseña" description='Escriba nuevamente su DNI en el campo "Contraseña"' />
-          <StepCard step={4} title='Presione "Ingresar"' description="El sistema le redirigirá automáticamente al panel que corresponde a su rol" />
-          <StepCard step={5} title="Cambie su contraseña" description="En su primera sesión, se recomienda cambiar la contraseña desde Mi Perfil" />
+          <StepCard step={4} title="Acepte el aviso de privacidad" description="Marque la casilla de aceptación del tratamiento de datos personales (Ley N.° 29733)" />
+          <StepCard step={5} title='Presione "Ingresar"' description="El sistema le redirigirá automáticamente al panel que corresponde a su rol" />
+          <StepCard step={6} title="Cambie su contraseña" description="En su primera sesión, se recomienda cambiar la contraseña desde Mi Perfil" />
         </div>
 
         <Warning>

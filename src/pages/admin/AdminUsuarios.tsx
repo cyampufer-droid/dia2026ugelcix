@@ -14,6 +14,7 @@ import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import BulkUserUpload from '@/components/admin/BulkUserUpload';
 import * as XLSX from 'xlsx';
 import SortableTableHead, { useSort, sortData } from '@/components/SortableTableHead';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const roles = [
   { value: 'director', label: 'Director' },

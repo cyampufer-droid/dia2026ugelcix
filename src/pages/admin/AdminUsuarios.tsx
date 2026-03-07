@@ -291,7 +291,7 @@ const AdminUsuarios = () => {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : filteredUsers.length === 0 ? (
+           ) : sortedUsers.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
               {users.length === 0
                 ? 'No hay usuarios registrados. Use el botón "Nuevo Usuario" para comenzar.'

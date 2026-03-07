@@ -6,11 +6,17 @@ import {
   ArrowLeft, ArrowRight, Play, School, GraduationCap, Users, Settings,
   ClipboardList, BarChart3, BookOpen, Shield, CheckCircle2, Rocket,
   Star, ChevronRight, Monitor, KeyRound, Layers, UserPlus, FileText,
-  PenTool, Award, Eye, Home
+  PenTool, Award, Eye, Home, Image
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import diaLogo from '@/assets/dia_ugel_cix_2026.png';
 import dgpLogo from '@/assets/logo_dgp_ugel_cix.jpg';
+import screenLogin from '@/assets/tutorial/screen-login.jpg';
+import screenAdmin from '@/assets/tutorial/screen-admin.jpg';
+import screenDirector from '@/assets/tutorial/screen-director.jpg';
+import screenDocente from '@/assets/tutorial/screen-docente.jpg';
+import screenDigitacion from '@/assets/tutorial/screen-digitacion.jpg';
+import screenResultados from '@/assets/tutorial/screen-resultados.jpg';
 
 /* ────────── Step Data ────────── */
 

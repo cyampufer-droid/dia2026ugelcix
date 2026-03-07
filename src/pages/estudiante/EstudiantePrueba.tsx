@@ -74,6 +74,8 @@ const EstudiantePrueba = () => {
 
         if (!ng) { setLoading(false); return; }
 
+        setGradoNombre(ng.grado);
+        setNivelNombre(ng.nivel);
         const gradoEval = GRADO_TO_ORDINAL[ng.grado] || ng.grado;
 
         // Fetch evaluaciones for this nivel/grado

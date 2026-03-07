@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-
+import AIConclusiones from '@/components/estudiante/AIConclusiones';
 const AREAS = [
   { key: 'Matemática', label: 'Matemática', icon: Calculator },
   { key: 'Comprensión Lectora', label: 'Comprensión Lectora', icon: BookOpen },

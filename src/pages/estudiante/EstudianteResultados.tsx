@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calculator, BookOpen, Heart, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calculator, BookOpen, Heart, ChevronDown, ChevronUp, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -272,6 +272,8 @@ interface AreaResult {
   icon: typeof Calculator;
   puntaje: number | null;
   nivel: string | null;
+  respuestas: string[] | null;
+  configPreguntas: any;
 }
 
 const ConclusionDescriptiva = ({ competencia, nivel }: { competencia: Competencia; nivel: string }) => {
@@ -304,29 +306,33 @@ const EstudianteResultados = () => {
   const [results, setResults] = useState<AreaResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [openAreas, setOpenAreas] = useState<Record<string, boolean>>({});
-
+  const [openRespuestas, setOpenRespuestas] = useState<Record<string, boolean>>({});
   useEffect(() => {
     if (!profile?.id) return;
     const fetchData = async () => {
       setLoading(true);
       const { data: evaluaciones } = await supabase
         .from('evaluaciones')
-        .select('id, area');
+        .select('id, area, config_preguntas');
 
       const { data: resultados } = await supabase
         .from('resultados')
-        .select('evaluacion_id, puntaje_total, nivel_logro')
+        .select('evaluacion_id, puntaje_total, nivel_logro, respuestas_dadas')
         .eq('estudiante_id', profile.id);
 
       const mapped: AreaResult[] = AREAS.map(a => {
-        const evalIds = (evaluaciones || []).filter(e => e.area === a.key).map(e => e.id);
+        const evals = (evaluaciones || []).filter(e => e.area === a.key);
+        const evalIds = evals.map(e => e.id);
         const res = (resultados || []).find(r => evalIds.includes(r.evaluacion_id));
+        const evalMatch = res ? evals.find(e => e.id === res.evaluacion_id) : null;
         return {
           area: a.key,
           label: a.label,
           icon: a.icon,
           puntaje: res?.puntaje_total ?? null,
           nivel: res?.nivel_logro ?? null,
+          respuestas: res?.respuestas_dadas ?? null,
+          configPreguntas: evalMatch?.config_preguntas ?? null,
         };
       });
       setResults(mapped);
@@ -337,6 +343,18 @@ const EstudianteResultados = () => {
 
   const toggleArea = (area: string) => {
     setOpenAreas(prev => ({ ...prev, [area]: !prev[area] }));
+  };
+
+  const toggleRespuestas = (area: string) => {
+    setOpenRespuestas(prev => ({ ...prev, [area]: !prev[area] }));
+  };
+
+  // Parse config_preguntas to get correct answers
+  const getPreguntas = (config: any): { correcta: string; texto?: string }[] => {
+    if (!config) return [];
+    if (Array.isArray(config)) return config;
+    if (config.preguntas && Array.isArray(config.preguntas)) return config.preguntas;
+    return [];
   };
 
   return (
@@ -393,7 +411,56 @@ const EstudianteResultados = () => {
                       </div>
                     </div>
 
-                    {/* Conclusiones Descriptivas */}
+                    {/* Detalle de Respuestas */}
+                    {area.respuestas && area.respuestas.length > 0 && (() => {
+                      const preguntas = getPreguntas(area.configPreguntas);
+                      const isRespOpen = openRespuestas[area.area] ?? false;
+                      const totalCorrectas = area.respuestas.filter((r, i) => {
+                        const correcta = preguntas[i]?.correcta;
+                        return correcta && r?.toUpperCase() === correcta.toUpperCase();
+                      }).length;
+                      return (
+                        <Collapsible open={isRespOpen} onOpenChange={() => toggleRespuestas(area.area)}>
+                          <CollapsibleTrigger className="w-full flex items-center justify-between bg-muted/50 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
+                            <span>📝 Detalle de Respuestas ({totalCorrectas}/{area.respuestas.length} correctas)</span>
+                            {isRespOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {area.respuestas.map((resp, i) => {
+                                const pregunta = preguntas[i];
+                                const correcta = pregunta?.correcta?.toUpperCase() || '—';
+                                const dada = resp?.toUpperCase() || '—';
+                                const esCorrecta = correcta !== '—' && dada === correcta;
+                                return (
+                                  <div
+                                    key={i}
+                                    className={cn(
+                                      'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm',
+                                      esCorrecta
+                                        ? 'border-nivel-logro/50 bg-nivel-logro/10'
+                                        : 'border-nivel-inicio/50 bg-nivel-inicio/10'
+                                    )}
+                                  >
+                                    {esCorrecta ? (
+                                      <CheckCircle2 className="h-4 w-4 text-nivel-logro shrink-0" />
+                                    ) : (
+                                      <XCircle className="h-4 w-4 text-nivel-inicio shrink-0" />
+                                    )}
+                                    <span className="font-medium">P{i + 1}:</span>
+                                    <span className={cn(!esCorrecta && 'line-through text-muted-foreground')}>{dada}</span>
+                                    {!esCorrecta && (
+                                      <span className="text-nivel-logro font-medium ml-1">→ {correcta}</span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      );
+                    })()}
+
                     {area.nivel && competencias.length > 0 && (
                       <Collapsible open={isOpen} onOpenChange={() => toggleArea(area.area)}>
                         <CollapsibleTrigger className="w-full flex items-center justify-between bg-muted/50 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">

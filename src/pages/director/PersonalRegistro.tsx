@@ -372,7 +372,14 @@ const PersonalRegistro = () => {
                   📧 Correo: <strong>{dni ? `${dni}@dia.ugel.local` : '{DNI}@dia.ugel.local'}</strong><br/>
                   🔑 Contraseña inicial: <strong>DNI</strong>. El usuario deberá cambiarla al ingresar por primera vez.
                 </p>
-                <AulaSelector value={selectedGradoSeccion} onChange={setSelectedGradoSeccion} />
+                {rol !== 'docente_pip' && (
+                  <AulaSelector value={selectedGradoSeccion} onChange={setSelectedGradoSeccion} />
+                )}
+                {rol === 'docente_pip' && (
+                  <p className="text-xs text-muted-foreground bg-muted rounded p-2">
+                    ℹ️ El Docente PIP tiene privilegios de Director y no requiere aula asignada. Solo se vinculará a la institución.
+                  </p>
+                )}
                 {rol === 'docente' && (() => {
                   const selectedNg = nivelesGrados.find(ng => ng.id === selectedGradoSeccion);
                   return selectedNg?.nivel === 'Secundaria';

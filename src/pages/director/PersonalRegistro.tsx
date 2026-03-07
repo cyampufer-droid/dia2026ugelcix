@@ -36,6 +36,7 @@ interface PersonalItem {
   nombre_completo: string;
   user_id: string | null;
   grado_seccion_id: string | null;
+  is_pip: boolean;
   roles: string[];
 }
 
@@ -120,7 +121,7 @@ const PersonalRegistro = () => {
     try {
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, dni, nombre_completo, user_id, grado_seccion_id')
+        .select('id, dni, nombre_completo, user_id, grado_seccion_id, is_pip')
         .eq('institucion_id', profile.institucion_id)
         .neq('user_id', user?.id ?? '');
 
@@ -142,6 +143,7 @@ const PersonalRegistro = () => {
 
       setPersonal((profiles || []).map(p => ({
         ...p,
+        is_pip: !!(p as any).is_pip,
         roles: p.user_id ? (rolesMap.get(p.user_id) || []) : [],
       })));
     } catch (err) {

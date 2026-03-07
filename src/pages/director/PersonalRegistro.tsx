@@ -286,6 +286,16 @@ const PersonalRegistro = () => {
     return `${ng.nivel} - ${ng.grado} "${ng.seccion}"`;
   };
 
+  const { sort, handleSort } = useSort();
+
+  const sortedPersonal = sortData(personal, sort, (p, key) => {
+    if (key === 'dni') return p.dni;
+    if (key === 'nombre_completo') return p.nombre_completo;
+    if (key === 'rol') return p.roles.map(r => roleLabelMap[r] || r).join(', ');
+    if (key === 'aula') return formatAula(p.grado_seccion_id) || 'zzz';
+    return '';
+  });
+
   const AulaSelector = ({ value, onChange, label = 'Nivel / Grado / Sección' }: { value: string; onChange: (v: string) => void; label?: string }) => (
     <div>
       <Label>{label}</Label>

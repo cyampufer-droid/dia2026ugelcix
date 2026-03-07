@@ -182,6 +182,16 @@ const AdminUsuarios = () => {
     );
   });
 
+  const { sort, handleSort } = useSort();
+
+  const sortedUsers = sortData(filteredUsers, sort, (u, key) => {
+    if (key === 'dni') return u.dni;
+    if (key === 'nombre_completo') return u.nombre_completo;
+    if (key === 'email') return u.email;
+    if (key === 'rol') return u.roles.map(r => roleLabelMap[r] || r).join(', ');
+    return '';
+  });
+
   const downloadExcel = () => {
     const data = filteredUsers.map((u) => ({
       'Distrito': u.distrito || '',

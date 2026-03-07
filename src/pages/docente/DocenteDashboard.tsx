@@ -209,24 +209,7 @@ const DocenteDashboard = () => {
           </div>
           {estudiantes.length > 0 ? (
             <div className="rounded-md border overflow-auto max-h-[400px]">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">#</TableHead>
-                    <TableHead>DNI</TableHead>
-                    <TableHead>Nombre Completo</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {estudiantes.map((e, i) => (
-                    <TableRow key={e.id}>
-                      <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                      <TableCell className="font-mono">{e.dni}</TableCell>
-                      <TableCell>{e.nombre_completo}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <StudentsSortableTable estudiantes={estudiantes} />
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">No hay estudiantes registrados en esta aula aún.</p>

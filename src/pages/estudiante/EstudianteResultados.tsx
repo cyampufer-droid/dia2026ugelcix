@@ -415,10 +415,13 @@ const EstudianteResultados = () => {
                     {area.respuestas && area.respuestas.length > 0 && (() => {
                       const preguntas = getPreguntas(area.configPreguntas);
                       const isRespOpen = openRespuestas[area.area] ?? false;
-                      const totalCorrectas = area.respuestas.filter((r, i) => {
-                        const correcta = preguntas[i]?.correcta;
-                        return correcta && r?.toUpperCase() === correcta.toUpperCase();
-                      }).length;
+                      const hasConfig = preguntas.length > 0;
+                      const totalCorrectas = hasConfig
+                        ? area.respuestas.filter((r, i) => {
+                            const correcta = preguntas[i]?.correcta;
+                            return correcta && r?.toUpperCase() === correcta.toUpperCase();
+                          }).length
+                        : (area.puntaje ?? 0);
                       return (
                         <Collapsible open={isRespOpen} onOpenChange={() => toggleRespuestas(area.area)}>
                           <CollapsibleTrigger className="w-full flex items-center justify-between bg-muted/50 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">

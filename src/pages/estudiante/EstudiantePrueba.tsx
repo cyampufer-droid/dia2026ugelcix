@@ -53,7 +53,7 @@ const EstudiantePrueba = () => {
   const [respuestas, setRespuestas] = useState<Record<number, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
-  const [activeTab, setActiveTab] = useState(AREAS[0].key);
+  const [activeTab, setActiveTab] = useState<string>(AREAS[0].key);
 
   // Fetch evaluaciones and existing results
   useEffect(() => {

@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import EvaluacionesDownloadCard from '@/components/EvaluacionesDownloadCard';
 
 const AREAS = [
   { key: 'Matemática', label: 'Matemática', icon: Calculator },
@@ -46,6 +47,8 @@ const EstudiantePrueba = () => {
   const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([]);
   const [completedAreas, setCompletedAreas] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [gradoNombre, setGradoNombre] = useState<string | null>(null);
+  const [nivelNombre, setNivelNombre] = useState<string | null>(null);
 
   // Active test state
   const [activeEval, setActiveEval] = useState<Evaluacion | null>(null);
@@ -71,6 +74,8 @@ const EstudiantePrueba = () => {
 
         if (!ng) { setLoading(false); return; }
 
+        setGradoNombre(ng.grado);
+        setNivelNombre(ng.nivel);
         const gradoEval = GRADO_TO_ORDINAL[ng.grado] || ng.grado;
 
         // Fetch evaluaciones for this nivel/grado
@@ -282,6 +287,13 @@ const EstudiantePrueba = () => {
         <h1 className="text-2xl font-bold text-foreground">Evaluación Diagnóstica 2026</h1>
         <p className="text-muted-foreground mt-1">Responde las evaluaciones de cada área</p>
       </div>
+
+      {nivelNombre === 'Primaria' && gradoNombre && (
+        <EvaluacionesDownloadCard
+          gradoFilter={gradoNombre}
+          title="Cuadernillos de Evaluación"
+        />
+      )}
 
       {evaluaciones.length === 0 ? (
         <Card className="shadow-card">

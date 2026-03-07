@@ -127,7 +127,7 @@ const MiPerfil = () => {
     }
   };
 
-  const canEditAula = primaryRole === 'docente' || primaryRole === 'estudiante';
+  const canEditAula = primaryRole === 'docente';
 
   if (loading) {
     return (

@@ -345,6 +345,18 @@ const EstudianteResultados = () => {
     setOpenAreas(prev => ({ ...prev, [area]: !prev[area] }));
   };
 
+  const toggleRespuestas = (area: string) => {
+    setOpenRespuestas(prev => ({ ...prev, [area]: !prev[area] }));
+  };
+
+  // Parse config_preguntas to get correct answers
+  const getPreguntas = (config: any): { correcta: string; texto?: string }[] => {
+    if (!config) return [];
+    if (Array.isArray(config)) return config;
+    if (config.preguntas && Array.isArray(config.preguntas)) return config.preguntas;
+    return [];
+  };
+
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
       <div className="text-center">

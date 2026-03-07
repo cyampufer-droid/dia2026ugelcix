@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;</script>
+
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>DIA 2026 - Diagnóstico Integral de Aprendizajes</title>
+    <meta name="description" content="Plataforma de diagnóstico educativo regional para la UGEL Chiclayo 2026. Evaluación de Matemática, Lectura y Socioemocional." />
+    <meta name="author" content="UGEL Chiclayo" />
+    <meta name="theme-color" content="#1e3a5f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
+
+    <meta property="og:title" content="DIA 2026 - Diagnóstico Integral de Aprendizajes" />
+    <meta property="og:description" content="Evaluación diagnóstica regional - UGEL Chiclayo 2026" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@Lovable" />
+    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+  </head>
+
+  <body>
+    <div id="root"></div><script src="https://cdn.gpteng.co/lovable.js" type="module"></script>
+    <script type="module" src="/src/main.tsx?t=1772851480204"></script>
+  </body>
+</html>

@@ -217,10 +217,10 @@ const DocenteDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Estudiantes" value={String(stats.students)} icon={Users} />
-        <StatCard title="Evaluaciones" value={String(stats.evaluaciones)} icon={BookOpen} variant="primary" />
-        <StatCard title="Digitados" value={String(stats.digitados)} icon={FileSpreadsheet} variant="success" />
-        <StatCard title="Pendientes" value={String(stats.pendientes)} icon={ClipboardList} variant="warning" />
+        <StatCard title="Estudiantes" value={String(stats.students)} icon={Users} href="/docente/estudiantes" />
+        <StatCard title="Evaluaciones" value={String(stats.evaluaciones)} icon={BookOpen} variant="primary" href="/docente/digitacion" />
+        <StatCard title="Digitados" value={String(stats.digitados)} icon={FileSpreadsheet} variant="success" href="/docente/resultados" />
+        <StatCard title="Pendientes" value={String(stats.pendientes)} icon={ClipboardList} variant="warning" href="/docente/digitacion" />
       </div>
 
       {/* Students list */}

@@ -314,6 +314,49 @@ const steps: TutorialStep[] = [
     ),
   },
   {
+    id: 'capturas',
+    title: 'Conoce los Módulos',
+    subtitle: 'Capturas de pantalla de la plataforma',
+    icon: Image,
+    color: 'primary',
+    content: (
+      <div className="space-y-6">
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-base text-muted-foreground">
+          Aquí te mostramos cómo luce cada módulo de la plataforma para que te familiarices antes de ingresar. 👀
+        </motion.p>
+        {[
+          { img: screenLogin, label: '🔐 Pantalla de Inicio de Sesión', desc: 'Ingresa con tu DNI y contraseña. Interfaz sencilla y segura.' },
+          { img: screenAdmin, label: '🛠️ Panel del Administrador', desc: 'Vista general con estadísticas de instituciones, docentes y estudiantes registrados.' },
+          { img: screenDirector, label: '🏫 Módulo del Director', desc: 'Configura tu institución educativa, niveles, grados, secciones y registra docentes.' },
+          { img: screenDocente, label: '👩‍🏫 Módulo del Docente', desc: 'Registra estudiantes, consulta listas y gestiona tu aula de forma sencilla.' },
+          { img: screenDigitacion, label: '✏️ Grilla de Digitación', desc: 'Digita las respuestas de cada estudiante pregunta por pregunta. El sistema calcula los puntajes.' },
+          { img: screenResultados, label: '📊 Resultados y Reportes', desc: 'Gráficos de barras, tortas y tablas con los niveles de logro de tus estudiantes.' },
+        ].map((item, i) => (
+          <motion.div
+            key={item.label}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 + i * 0.12 }}
+            className="rounded-2xl border-2 border-border overflow-hidden"
+          >
+            <div className="relative aspect-video bg-muted">
+              <img src={item.img} alt={item.label} className="w-full h-full object-cover" loading="lazy" />
+            </div>
+            <div className="p-4">
+              <p className="font-bold text-sm">{item.label}</p>
+              <p className="text-xs text-muted-foreground mt-1">{item.desc}</p>
+            </div>
+          </motion.div>
+        ))}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
+          className="bg-accent/10 border-l-4 border-accent rounded-r-xl p-4"
+        >
+          <p className="text-sm">💡 <strong>Tip:</strong> La plataforma real puede verse ligeramente diferente según las actualizaciones, pero la estructura y funciones son las mismas.</p>
+        </motion.div>
+      </div>
+    ),
+  },
+  {
     id: 'cierre',
     title: '¡Listo para empezar! 🚀',
     subtitle: 'Juntos mejoramos los aprendizajes',

@@ -295,6 +295,7 @@ const EstudiantePrueba = () => {
         />
       )}
 
+      {evaluaciones.length === 0 ? (
         <Card className="shadow-card">
           <CardContent className="py-8 text-center text-muted-foreground">
             No se encontraron evaluaciones asignadas para tu grado.

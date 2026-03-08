@@ -512,6 +512,7 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
                             <th className="text-center py-2 px-3 font-medium text-muted-foreground">DNI</th>
                             <th className="text-center py-2 px-3 font-medium text-muted-foreground">Puntaje</th>
                             <th className="text-center py-2 px-3 font-medium text-muted-foreground">Nivel de Logro</th>
+                            <th className="text-center py-2 px-3 font-medium text-muted-foreground">Boleta</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -531,6 +532,17 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
                                 ) : (
                                   <span className="text-muted-foreground text-xs">Sin evaluar</span>
                                 )}
+                              </td>
+                              <td className="py-2 px-3 text-center">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="gap-1 text-xs h-7"
+                                  onClick={() => setSelectedStudent({ id: r.profileId, nombre: r.nombre })}
+                                >
+                                  <FileText className="h-3.5 w-3.5" />
+                                  Ver
+                                </Button>
                               </td>
                             </tr>
                           ))}

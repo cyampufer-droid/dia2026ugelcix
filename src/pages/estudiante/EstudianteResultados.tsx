@@ -543,6 +543,7 @@ const EstudianteResultados = () => {
                         </Collapsible>
                       );
                     })()}
+                  </>
                 ) : (
                   <p className="text-sm text-muted-foreground">Sin evaluar aún.</p>
                 )}

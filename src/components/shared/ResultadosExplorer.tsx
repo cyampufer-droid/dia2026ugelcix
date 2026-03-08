@@ -3,10 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
-import { Calculator, BookOpen, Heart, Search, Filter } from 'lucide-react';
+import { Calculator, BookOpen, Heart, Search, Filter, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import BoletaResultados from '@/components/shared/BoletaResultados';
 
 const AREAS = [
   { key: 'Matemática', label: 'Matemática', icon: Calculator },
@@ -85,6 +88,7 @@ interface AggRow {
 }
 
 interface StudentRow {
+  profileId: string;
   nombre: string;
   dni: string;
   puntaje: number | null;
@@ -112,6 +116,7 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
   const [nivelesGrados, setNivelesGrados] = useState<NivelGrado[]>([]);
   const [instituciones, setInstituciones] = useState<Institucion[]>([]);
   const [evaluaciones, setEvaluaciones] = useState<{ id: string; area: string }[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<{ id: string; nombre: string } | null>(null);
 
   const viewOptions = scope === 'global' ? VIEWS_GLOBAL : scope === 'institucion' ? VIEWS_INSTITUCION : VIEWS_SECCION;
   const [viewMode, setViewMode] = useState<ViewMode>(viewOptions[0].value);
@@ -302,6 +307,7 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
         const rows: StudentRow[] = filteredProfiles.map(p => {
           const res = areaResults.find(r => r.estudiante_id === p.id);
           return {
+            profileId: p.id,
             nombre: p.nombre_completo,
             dni: p.dni,
             puntaje: res?.puntaje_total ?? null,
@@ -506,6 +512,7 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
                             <th className="text-center py-2 px-3 font-medium text-muted-foreground">DNI</th>
                             <th className="text-center py-2 px-3 font-medium text-muted-foreground">Puntaje</th>
                             <th className="text-center py-2 px-3 font-medium text-muted-foreground">Nivel de Logro</th>
+                            <th className="text-center py-2 px-3 font-medium text-muted-foreground">Boleta</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -525,6 +532,17 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
                                 ) : (
                                   <span className="text-muted-foreground text-xs">Sin evaluar</span>
                                 )}
+                              </td>
+                              <td className="py-2 px-3 text-center">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="gap-1 text-xs h-7"
+                                  onClick={() => setSelectedStudent({ id: r.profileId, nombre: r.nombre })}
+                                >
+                                  <FileText className="h-3.5 w-3.5" />
+                                  Ver
+                                </Button>
                               </td>
                             </tr>
                           ))}
@@ -560,6 +578,21 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
           );
         })}
       </Tabs>
+
+      {/* Boleta Dialog */}
+      <Dialog open={!!selectedStudent} onOpenChange={(open) => { if (!open) setSelectedStudent(null); }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Boleta de Resultados – {selectedStudent?.nombre}</DialogTitle>
+          </DialogHeader>
+          {selectedStudent && (
+            <BoletaResultados
+              studentProfileId={selectedStudent.id}
+              studentName={selectedStudent.nombre}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -75,6 +75,7 @@ const RecomendacionesPadres = ({ nombre_estudiante, resultados, nivel_educativo,
       }
 
       setRecomendaciones(data);
+      onDataReady?.(data);
     } catch (e: any) {
       const msg = e.message || 'Error al generar las recomendaciones';
       setError(msg);
@@ -83,6 +84,15 @@ const RecomendacionesPadres = ({ nombre_estudiante, resultados, nivel_educativo,
       setLoading(false);
     }
   };
+
+  // Auto-generate on mount if requested
+  const didAuto = useRef(false);
+  useEffect(() => {
+    if (autoGenerate && areasConResultados.length > 0 && !didAuto.current) {
+      didAuto.current = true;
+      handleGenerar();
+    }
+  }, [autoGenerate]);
 
   if (areasConResultados.length === 0) {
     return null;

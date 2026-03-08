@@ -18,6 +18,7 @@ const roleConfig: Record<string, { label: string; icon: React.ElementType; color
 
 const AppLayout = () => {
   const { user, loading, primaryRole, profile } = useAuth();
+  usePresenceHeartbeat();
 
   if (loading) {
     return (

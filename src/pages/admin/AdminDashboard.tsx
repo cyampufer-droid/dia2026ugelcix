@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Users, School, ClipboardList, UserCog, GraduationCap, Shield, Lightbulb } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import { supabase } from '@/integrations/supabase/client';
+import OnlineUsersPanel from '@/components/admin/OnlineUsersPanel';
+import LoginHistoryPanel from '@/components/admin/LoginHistoryPanel';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -51,6 +53,11 @@ const AdminDashboard = () => {
         <StatCard title="Docentes" value={String(stats.docentes)} icon={Users} description="Activos" href="/admin/usuarios?rol=docente" />
         <StatCard title="Estudiantes" value={String(stats.estudiantes)} icon={Users} description="Registrados" variant="success" href="/admin/usuarios?rol=estudiante" />
         <StatCard title="Evaluaciones" value={String(stats.evaluaciones)} icon={ClipboardList} description="Configuradas" variant="warning" href="/admin/resultados" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <OnlineUsersPanel />
+        <LoginHistoryPanel />
       </div>
 
       <div className="bg-card rounded-xl border border-border p-6 shadow-card">

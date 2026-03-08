@@ -309,13 +309,28 @@ const EstudianteResultados = () => {
   const [loading, setLoading] = useState(true);
   const [openAreas, setOpenAreas] = useState<Record<string, boolean>>({ 'Matemática': true, 'Comprensión Lectora': true, 'Habilidades Socioemocionales': true });
   const [openRespuestas, setOpenRespuestas] = useState<Record<string, boolean>>({});
+  const [gradoInfo, setGradoInfo] = useState<{ nivel: string; grado: string } | null>(null);
+
   useEffect(() => {
     if (!profile?.id) return;
     const fetchData = async () => {
       setLoading(true);
+
+      // Fetch student's grado info if available
+      if (profile.grado_seccion_id) {
+        const { data: gradoData } = await supabase
+          .from('niveles_grados')
+          .select('nivel, grado')
+          .eq('id', profile.grado_seccion_id)
+          .single();
+        if (gradoData) {
+          setGradoInfo({ nivel: gradoData.nivel, grado: gradoData.grado });
+        }
+      }
+
       const { data: evaluaciones } = await supabase
         .from('evaluaciones')
-        .select('id, area, config_preguntas');
+        .select('id, area, config_preguntas, nivel, grado');
 
       const { data: resultados } = await supabase
         .from('resultados')
@@ -341,7 +356,7 @@ const EstudianteResultados = () => {
       setLoading(false);
     };
     fetchData();
-  }, [profile?.id]);
+  }, [profile?.id, profile?.grado_seccion_id]);
 
   const toggleArea = (area: string) => {
     setOpenAreas(prev => ({ ...prev, [area]: !prev[area] }));

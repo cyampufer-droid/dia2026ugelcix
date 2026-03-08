@@ -552,6 +552,34 @@ const EstudianteResultados = () => {
           );
         })
       )}
+
+      {/* Recomendaciones para Padres de Familia */}
+      {!loading && results.some(r => r.puntaje !== null) && (
+        <Card className="shadow-card border-l-4 border-secondary">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Users className="h-5 w-5" />
+              Recomendaciones para Padres de Familia
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Collapsible>
+              <CollapsibleTrigger className="w-full flex items-center justify-between bg-secondary/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-secondary/20 transition-colors">
+                <span>👨‍👩‍👧 Recomendaciones Personalizadas para Apoyar el Aprendizaje</span>
+                <ChevronDown className="h-4 w-4" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3">
+                <RecomendacionesPadres
+                  nombre_estudiante={profile?.nombre_completo || ''}
+                  resultados={results.map(r => ({ area: r.area, puntaje: r.puntaje, nivel_logro: r.nivel }))}
+                  nivel_educativo={gradoInfo?.nivel}
+                  grado={gradoInfo?.grado}
+                />
+              </CollapsibleContent>
+            </Collapsible>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

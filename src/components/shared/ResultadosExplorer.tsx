@@ -147,91 +147,95 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
   // Fetch data
   useEffect(() => {
     const load = async () => {
-      setLoading(true);
+      try {
+        setLoading(true);
 
-      // Fetch evaluaciones
-      const { data: evals } = await supabase.from('evaluaciones').select('id, area');
-      setEvaluaciones(evals || []);
+        // Fetch evaluaciones
+        const { data: evals } = await supabase.from('evaluaciones').select('id, area');
+        setEvaluaciones(evals || []);
 
-      // Fetch instituciones
-      if (scope === 'global') {
-        const { data } = await supabase.from('instituciones').select('id, nombre, distrito, provincia');
-        setInstituciones(data || []);
-      } else if (scope === 'institucion' && institucionId) {
-        const { data } = await supabase.from('instituciones').select('id, nombre, distrito, provincia').eq('id', institucionId);
-        setInstituciones(data || []);
-      }
-
-      // Fetch niveles_grados
-      let ngQuery = supabase.from('niveles_grados').select('id, nivel, grado, seccion, institucion_id');
-      if (scope === 'institucion' && institucionId) {
-        ngQuery = ngQuery.eq('institucion_id', institucionId);
-      } else if (scope === 'seccion' && gradoSeccionId) {
-        ngQuery = ngQuery.eq('id', gradoSeccionId);
-      }
-      const { data: ngData } = await ngQuery.order('nivel').order('grado');
-      setNivelesGrados(ngData || []);
-
-      // Fetch profiles scoped
-      let profilesQuery = supabase.from('profiles').select('id, user_id, nombre_completo, dni, institucion_id, grado_seccion_id');
-      if (scope === 'institucion' && institucionId) {
-        profilesQuery = profilesQuery.eq('institucion_id', institucionId);
-      } else if (scope === 'seccion' && gradoSeccionId) {
-        profilesQuery = profilesQuery.eq('grado_seccion_id', gradoSeccionId);
-      }
-      profilesQuery = profilesQuery.order('nombre_completo');
-
-      // Fetch in chunks for large datasets
-      const allProfilesRaw: (ProfileData & { user_id: string | null })[] = [];
-      let from = 0;
-      const chunkSize = 1000;
-      while (true) {
-        const { data } = await profilesQuery.range(from, from + chunkSize - 1);
-        if (!data || data.length === 0) break;
-        allProfilesRaw.push(...(data as any));
-        if (data.length < chunkSize) break;
-        from += chunkSize;
-      }
-
-      // Filter to only estudiantes (exclude docentes, directors, etc.)
-      const userIds = allProfilesRaw.filter(p => p.user_id).map(p => p.user_id!);
-      let studentUserIds = new Set<string>();
-      if (userIds.length > 0) {
-        for (let i = 0; i < userIds.length; i += 500) {
-          const chunk = userIds.slice(i, i + 500);
-          const { data: roles } = await supabase
-            .from('user_roles')
-            .select('user_id, role')
-            .in('user_id', chunk);
-          (roles || [])
-            .filter(r => r.role === 'estudiante')
-            .forEach(r => studentUserIds.add(r.user_id));
+        // Fetch instituciones
+        if (scope === 'global') {
+          const { data } = await supabase.from('instituciones').select('id, nombre, distrito, provincia');
+          setInstituciones(data || []);
+        } else if (scope === 'institucion' && institucionId) {
+          const { data } = await supabase.from('instituciones').select('id, nombre, distrito, provincia').eq('id', institucionId);
+          setInstituciones(data || []);
         }
-      }
-      const allProfiles = allProfilesRaw
-        .filter(p => p.user_id && studentUserIds.has(p.user_id))
-        .map(({ id, nombre_completo, dni, institucion_id, grado_seccion_id }) => 
-          ({ id, nombre_completo, dni, institucion_id, grado_seccion_id }));
-      setProfiles(allProfiles);
 
-      // Fetch resultados
-      if (allProfiles.length > 0) {
-        const studentIds = allProfiles.map(p => p.id);
-        const allResultados: RawResult[] = [];
-        for (let i = 0; i < studentIds.length; i += 500) {
-          const chunk = studentIds.slice(i, i + 500);
-          const { data } = await supabase
-            .from('resultados')
-            .select('estudiante_id, evaluacion_id, puntaje_total, nivel_logro')
-            .in('estudiante_id', chunk);
-          if (data) allResultados.push(...data);
+        // Fetch niveles_grados
+        let ngQuery = supabase.from('niveles_grados').select('id, nivel, grado, seccion, institucion_id');
+        if (scope === 'institucion' && institucionId) {
+          ngQuery = ngQuery.eq('institucion_id', institucionId);
+        } else if (scope === 'seccion' && gradoSeccionId) {
+          ngQuery = ngQuery.eq('id', gradoSeccionId);
         }
-        setResultados(allResultados);
-      } else {
-        setResultados([]);
-      }
+        const { data: ngData } = await ngQuery.order('nivel').order('grado');
+        setNivelesGrados(ngData || []);
 
-      setLoading(false);
+        // Fetch profiles scoped
+        const baseQuery = supabase.from('profiles').select('id, user_id, nombre_completo, dni, institucion_id, grado_seccion_id');
+
+        // Fetch in chunks for large datasets
+        const allProfilesRaw: (ProfileData & { user_id: string | null })[] = [];
+        let from = 0;
+        const chunkSize = 1000;
+        while (true) {
+          let query = baseQuery;
+          if (scope === 'institucion' && institucionId) {
+            query = query.eq('institucion_id', institucionId);
+          } else if (scope === 'seccion' && gradoSeccionId) {
+            query = query.eq('grado_seccion_id', gradoSeccionId);
+          }
+          const { data } = await query.order('nombre_completo').range(from, from + chunkSize - 1);
+          if (!data || data.length === 0) break;
+          allProfilesRaw.push(...(data as any));
+          if (data.length < chunkSize) break;
+          from += chunkSize;
+        }
+
+        // Filter to only estudiantes (exclude docentes, directors, etc.)
+        const userIds = allProfilesRaw.filter(p => p.user_id).map(p => p.user_id!);
+        let studentUserIds = new Set<string>();
+        if (userIds.length > 0) {
+          for (let i = 0; i < userIds.length; i += 500) {
+            const chunk = userIds.slice(i, i + 500);
+            const { data: roles } = await supabase
+              .from('user_roles')
+              .select('user_id, role')
+              .in('user_id', chunk);
+            (roles || [])
+              .filter(r => r.role === 'estudiante')
+              .forEach(r => studentUserIds.add(r.user_id));
+          }
+        }
+        const allProfiles = allProfilesRaw
+          .filter(p => p.user_id && studentUserIds.has(p.user_id))
+          .map(({ id, nombre_completo, dni, institucion_id, grado_seccion_id }) => 
+            ({ id, nombre_completo, dni, institucion_id, grado_seccion_id }));
+        setProfiles(allProfiles);
+
+        // Fetch resultados
+        if (allProfiles.length > 0) {
+          const studentIds = allProfiles.map(p => p.id);
+          const allResultados: RawResult[] = [];
+          for (let i = 0; i < studentIds.length; i += 500) {
+            const chunk = studentIds.slice(i, i + 500);
+            const { data } = await supabase
+              .from('resultados')
+              .select('estudiante_id, evaluacion_id, puntaje_total, nivel_logro')
+              .in('estudiante_id', chunk);
+            if (data) allResultados.push(...data);
+          }
+          setResultados(allResultados);
+        } else {
+          setResultados([]);
+        }
+      } catch (err) {
+        console.error('Error loading ResultadosExplorer data:', err);
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, [scope, institucionId, gradoSeccionId]);

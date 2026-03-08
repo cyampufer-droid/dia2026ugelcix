@@ -126,8 +126,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+
+    // Record login event
+    if (data.user) {
+      try {
+        const [profileRes, rolesRes] = await Promise.all([
+          supabase.from('profiles').select('nombre_completo').eq('user_id', data.user.id).single(),
+          supabase.from('user_roles').select('role').eq('user_id', data.user.id),
+        ]);
+        const nombre = profileRes.data?.nombre_completo || '';
+        const role = rolesRes.data?.map(r => r.role).join(', ') || '';
+        await supabase.from('login_logs').insert({
+          user_id: data.user.id,
+          nombre_completo: nombre,
+          role: role,
+        });
+      } catch (e) {
+        console.warn('Failed to record login log:', e);
+      }
+    }
   };
 
   const signUp = async (email: string, password: string, metadata: Record<string, string>) => {

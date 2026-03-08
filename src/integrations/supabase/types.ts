@@ -86,6 +86,30 @@ export type Database = {
         }
         Relationships: []
       }
+      login_logs: {
+        Row: {
+          id: string
+          logged_in_at: string
+          nombre_completo: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          logged_in_at?: string
+          nombre_completo?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          logged_in_at?: string
+          nombre_completo?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       niveles_grados: {
         Row: {
           created_at: string
@@ -130,6 +154,7 @@ export type Database = {
           id: string
           institucion_id: string | null
           is_pip: boolean
+          last_seen: string | null
           must_change_password: boolean
           nombre_completo: string
           updated_at: string
@@ -143,6 +168,7 @@ export type Database = {
           id?: string
           institucion_id?: string | null
           is_pip?: boolean
+          last_seen?: string | null
           must_change_password?: boolean
           nombre_completo: string
           updated_at?: string
@@ -156,6 +182,7 @@ export type Database = {
           id?: string
           institucion_id?: string | null
           is_pip?: boolean
+          last_seen?: string | null
           must_change_password?: boolean
           nombre_completo?: string
           updated_at?: string

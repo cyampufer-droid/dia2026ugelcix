@@ -4,6 +4,7 @@ import AppSidebar from './AppSidebar';
 import { Badge } from '@/components/ui/badge';
 import { Shield, GraduationCap, School, Users, BookOpen, Briefcase } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { usePresenceHeartbeat } from '@/hooks/usePresenceHeartbeat';
 
 const roleConfig: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   administrador: { label: 'Administrador', icon: Shield, color: 'bg-destructive text-destructive-foreground' },
@@ -17,6 +18,7 @@ const roleConfig: Record<string, { label: string; icon: React.ElementType; color
 
 const AppLayout = () => {
   const { user, loading, primaryRole, profile } = useAuth();
+  usePresenceHeartbeat();
 
   if (loading) {
     return (

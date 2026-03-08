@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      docente_grados: {
+        Row: {
+          created_at: string
+          grado_seccion_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          grado_seccion_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          grado_seccion_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "docente_grados_grado_seccion_id_fkey"
+            columns: ["grado_seccion_id"]
+            isOneToOne: false
+            referencedRelation: "niveles_grados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       evaluaciones: {
         Row: {
           anio: number

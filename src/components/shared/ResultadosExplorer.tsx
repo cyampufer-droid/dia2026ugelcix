@@ -306,6 +306,7 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
         const rows: StudentRow[] = filteredProfiles.map(p => {
           const res = areaResults.find(r => r.estudiante_id === p.id);
           return {
+            profileId: p.id,
             nombre: p.nombre_completo,
             dni: p.dni,
             puntaje: res?.puntaje_total ?? null,

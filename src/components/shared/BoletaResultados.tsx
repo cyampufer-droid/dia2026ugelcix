@@ -346,8 +346,9 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
         <div className="text-center">
           <h2 className="text-xl font-bold text-foreground">Boleta de Resultados</h2>
           <p className="text-muted-foreground font-semibold">{studentName}</p>
-          {institucionNombre && <p className="text-xs text-muted-foreground">I.E. {institucionNombre}</p>}
-          {seccionLabel && <p className="text-xs text-muted-foreground">{gradoInfo?.nivel} – {seccionLabel}</p>}
+          {studentDni && <p className="text-xs text-muted-foreground">DNI: {studentDni}</p>}
+          {institucionData.nombre && <p className="text-xs text-muted-foreground">I.E. {institucionData.nombre} – {institucionData.distrito}</p>}
+          {gradoInfo && <p className="text-xs text-muted-foreground">{gradoInfo.nivel} – {gradoInfo.grado} "{gradoInfo.seccion}"</p>}
           <p className="text-xs text-muted-foreground mt-1">Diagnóstico Integral de Aprendizajes 2026 – UGEL Chiclayo</p>
         </div>
 

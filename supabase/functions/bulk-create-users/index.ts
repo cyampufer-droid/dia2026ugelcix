@@ -173,15 +173,25 @@ Deno.serve(async (req) => {
             continue;
           }
 
-          // Update profile with institucion_id, grado_seccion_id, and is_pip
+          // Update profile with institucion_id, grado_seccion_id, especialidad, and is_pip
           const profileUpdate: Record<string, unknown> = {};
           const instId = u.institucion_id || default_institucion_id;
           if (instId) profileUpdate.institucion_id = instId;
           // PIP docentes don't get grado_seccion_id
           if (u.grado_seccion_id && !u.is_pip) profileUpdate.grado_seccion_id = u.grado_seccion_id;
+          if (u.especialidad) profileUpdate.especialidad = u.especialidad;
           if (u.is_pip) profileUpdate.is_pip = true;
           if (Object.keys(profileUpdate).length > 0) {
             await adminClient.from("profiles").update(profileUpdate).eq("user_id", newUser.user.id);
+          }
+
+          // Insert multiple grado_seccion assignments for secondary teachers
+          if (Array.isArray(u.grado_seccion_ids) && u.grado_seccion_ids.length > 0 && !u.is_pip) {
+            const inserts = u.grado_seccion_ids.map((gsId: string) => ({
+              user_id: newUser.user!.id,
+              grado_seccion_id: gsId,
+            }));
+            await adminClient.from("docente_grados").insert(inserts);
           }
         }
 

@@ -77,6 +77,7 @@ const AIConclusiones = ({ area, nivel, grado, respuestas_dadas, respuestas_corre
       }
 
       setConclusiones(data);
+      onDataReady?.(area, data);
     } catch (e: any) {
       const msg = e.message || 'Error al generar el análisis';
       setError(msg);

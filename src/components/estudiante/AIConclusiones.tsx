@@ -40,10 +40,11 @@ const nivelBadge: Record<string, string> = {
   'Logro Destacado': 'bg-nivel-destacado/20 text-primary-foreground border-nivel-destacado',
 };
 
-const AIConclusiones = ({ area, nivel, grado, respuestas_dadas, respuestas_correctas, puntaje, nivel_logro, nombre_estudiante }: Props) => {
+const AIConclusiones = ({ area, nivel, grado, respuestas_dadas, respuestas_correctas, puntaje, nivel_logro, nombre_estudiante, autoGenerate = false, onDataReady }: Props) => {
   const [conclusiones, setConclusiones] = useState<ConclusionesIA | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [autoTriggered, setAutoTriggered] = useState(false);
   const { toast } = useToast();
 
   const handleGenerar = async () => {

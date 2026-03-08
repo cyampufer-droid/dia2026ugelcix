@@ -94,16 +94,31 @@ const Digitacion = () => {
     loadEvaluaciones();
   }, [profile?.grado_seccion_id, profile?.especialidad]);
 
-  // Load students
+  // Load students (only role=estudiante, exclude docentes)
   useEffect(() => {
     const loadStudents = async () => {
       if (!profile?.grado_seccion_id) return;
-      const { data } = await supabase
+      const { data: allProfiles } = await supabase
         .from('profiles')
-        .select('id, nombre_completo, dni')
+        .select('id, user_id, nombre_completo, dni')
         .eq('grado_seccion_id', profile.grado_seccion_id)
         .order('nombre_completo');
-      if (data?.length) setStudents(data);
+      if (!allProfiles?.length) return;
+
+      // Filter to only students by checking roles
+      const userIds = allProfiles.filter(p => p.user_id).map(p => p.user_id!);
+      if (userIds.length === 0) return;
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('user_id', userIds);
+      const studentUserIds = new Set(
+        (roles || []).filter(r => r.role === 'estudiante').map(r => r.user_id)
+      );
+      const students = allProfiles
+        .filter(p => p.user_id && studentUserIds.has(p.user_id))
+        .map(({ id, nombre_completo, dni }) => ({ id, nombre_completo, dni }));
+      if (students.length) setStudents(students);
     };
     loadStudents();
   }, [profile?.grado_seccion_id]);

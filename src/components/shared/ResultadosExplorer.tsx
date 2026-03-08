@@ -168,7 +168,7 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
       setNivelesGrados(ngData || []);
 
       // Fetch profiles scoped
-      let profilesQuery = supabase.from('profiles').select('id, nombre_completo, dni, institucion_id, grado_seccion_id');
+      let profilesQuery = supabase.from('profiles').select('id, user_id, nombre_completo, dni, institucion_id, grado_seccion_id');
       if (scope === 'institucion' && institucionId) {
         profilesQuery = profilesQuery.eq('institucion_id', institucionId);
       } else if (scope === 'seccion' && gradoSeccionId) {
@@ -177,16 +177,36 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
       profilesQuery = profilesQuery.order('nombre_completo');
 
       // Fetch in chunks for large datasets
-      const allProfiles: ProfileData[] = [];
+      const allProfilesRaw: (ProfileData & { user_id: string | null })[] = [];
       let from = 0;
       const chunkSize = 1000;
       while (true) {
         const { data } = await profilesQuery.range(from, from + chunkSize - 1);
         if (!data || data.length === 0) break;
-        allProfiles.push(...data);
+        allProfilesRaw.push(...(data as any));
         if (data.length < chunkSize) break;
         from += chunkSize;
       }
+
+      // Filter to only estudiantes (exclude docentes, directors, etc.)
+      const userIds = allProfilesRaw.filter(p => p.user_id).map(p => p.user_id!);
+      let studentUserIds = new Set<string>();
+      if (userIds.length > 0) {
+        for (let i = 0; i < userIds.length; i += 500) {
+          const chunk = userIds.slice(i, i + 500);
+          const { data: roles } = await supabase
+            .from('user_roles')
+            .select('user_id, role')
+            .in('user_id', chunk);
+          (roles || [])
+            .filter(r => r.role === 'estudiante')
+            .forEach(r => studentUserIds.add(r.user_id));
+        }
+      }
+      const allProfiles = allProfilesRaw
+        .filter(p => p.user_id && studentUserIds.has(p.user_id))
+        .map(({ id, nombre_completo, dni, institucion_id, grado_seccion_id }) => 
+          ({ id, nombre_completo, dni, institucion_id, grado_seccion_id }));
       setProfiles(allProfiles);
 
       // Fetch resultados

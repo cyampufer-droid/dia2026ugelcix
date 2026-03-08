@@ -525,12 +525,14 @@ const EstudianteResultados = () => {
                       return (
                         <Collapsible>
                           <CollapsibleTrigger className="w-full flex items-center justify-between bg-accent/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-accent/20 transition-colors">
-                            <span>🤖 Análisis Personalizado con IA</span>
+                            <span>🤖 Análisis Personalizado</span>
                             <ChevronDown className="h-4 w-4" />
                           </CollapsibleTrigger>
                           <CollapsibleContent className="mt-3">
                             <AIConclusiones
                               area={area.area}
+                              nivel={gradoInfo?.nivel}
+                              grado={gradoInfo?.grado}
                               respuestas_dadas={area.respuestas!}
                               respuestas_correctas={preguntas.map(p => p.correcta)}
                               puntaje={area.puntaje}
@@ -541,7 +543,6 @@ const EstudianteResultados = () => {
                         </Collapsible>
                       );
                     })()}
-                  </>
                 ) : (
                   <p className="text-sm text-muted-foreground">Sin evaluar aún.</p>
                 )}

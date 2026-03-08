@@ -3,10 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
-import { Calculator, BookOpen, Heart, Search, Filter } from 'lucide-react';
+import { Calculator, BookOpen, Heart, Search, Filter, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import BoletaResultados from '@/components/shared/BoletaResultados';
 
 const AREAS = [
   { key: 'Matemática', label: 'Matemática', icon: Calculator },

@@ -285,8 +285,74 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
         </div>
         ${respuestasHtml}
         ${conclusionesHtml ? `<div style="margin-top:8px;"><b style="font-size:11px;">📋 Conclusiones Descriptivas por Competencia</b><div style="margin-top:4px;">${conclusionesHtml}</div></div>` : ''}
+        ${(() => {
+          const ai = aiAnalysis[area.area];
+          if (!ai) return '';
+          const nivelBadgePdf: Record<string, string> = {
+            'En Inicio': 'background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;',
+            'En Proceso': 'background:#fef3c7;color:#92400e;border:1px solid #fcd34d;',
+            'Logro Esperado': 'background:#dcfce7;color:#166534;border:1px solid #86efac;',
+            'Logro Destacado': 'background:#dbeafe;color:#1e3a5f;border:1px solid #93c5fd;',
+          };
+          return `<div style="margin-top:10px;page-break-inside:avoid;">
+            <b style="font-size:11px;color:#6d28d9;">🤖 Análisis Personalizado</b>
+            <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:6px;padding:8px;margin-top:4px;font-size:10px;">
+              <p>${ai.resumen}</p>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">
+              <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:6px;">
+                <b style="font-size:10px;color:#166534;">✅ Fortalezas</b>
+                <ul style="font-size:9px;margin:2px 0 0 12px;">${ai.fortalezas.map(f => `<li>${f}</li>`).join('')}</ul>
+              </div>
+              <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:6px;">
+                <b style="font-size:10px;color:#991b1b;">⚠️ Áreas de mejora</b>
+                <ul style="font-size:9px;margin:2px 0 0 12px;">${ai.dificultades.map(d => `<li>${d}</li>`).join('')}</ul>
+              </div>
+            </div>
+            ${ai.por_competencia?.length ? `<div style="margin-top:6px;">
+              <b style="font-size:10px;">📊 Por Competencia</b>
+              ${ai.por_competencia.map(c => `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:6px;margin-top:4px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <b style="font-size:10px;">${c.competencia}</b>
+                  <span style="font-size:9px;padding:1px 6px;border-radius:8px;${nivelBadgePdf[c.nivel] || ''}">${c.aciertos}/${c.total} — ${c.nivel}</span>
+                </div>
+                <p style="font-size:9px;margin-top:2px;color:#555;">${c.descripcion}</p>
+              </div>`).join('')}
+            </div>` : ''}
+            <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:6px;padding:6px;margin-top:6px;">
+              <b style="font-size:10px;color:#6d28d9;">💡 Recomendaciones</b>
+              <ul style="font-size:9px;margin:2px 0 0 12px;">${ai.recomendaciones.map(r => `<li>${r}</li>`).join('')}</ul>
+            </div>
+          </div>`;
+        })()}
       </div>`;
     }).join('');
+
+    // Parent recommendations HTML for PDF
+    const parentRecsHtml = parentRecs ? `<div style="border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:12px;page-break-inside:avoid;border-left:4px solid #f59e0b;">
+      <h2 style="font-size:14px;margin-bottom:8px;">👨‍👩‍👧 Recomendaciones para Padres de Familia</h2>
+      <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;padding:8px;font-size:10px;margin-bottom:8px;">
+        <p>${parentRecs.introduccion}</p>
+      </div>
+      <div style="margin-bottom:8px;">
+        <b style="font-size:11px;">📋 Recomendaciones Generales</b>
+        <ul style="font-size:10px;margin:4px 0 0 14px;">${parentRecs.recomendaciones_generales.map(r => `<li>${r}</li>`).join('')}</ul>
+      </div>
+      ${parentRecs.por_area?.map(a => `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px;margin-bottom:6px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <b style="font-size:11px;">${a.area}</b>
+          <span style="font-size:9px;padding:1px 6px;border-radius:8px;background:#fef3c7;color:#92400e;">${a.nivel_logro}</span>
+        </div>
+        <div style="font-size:9px;">
+          <div><b>🏠 En el hogar:</b><ul style="margin:2px 0 0 12px;">${a.consejos_hogar.map(c => `<li>${c}</li>`).join('')}</ul></div>
+          <div style="margin-top:4px;"><b>🎯 Actividades:</b><ul style="margin:2px 0 0 12px;">${a.actividades_sugeridas.map(c => `<li>${c}</li>`).join('')}</ul></div>
+          ${a.recursos_apoyo?.length ? `<div style="margin-top:4px;"><b>📚 Recursos:</b><ul style="margin:2px 0 0 12px;">${a.recursos_apoyo.map(c => `<li>${c}</li>`).join('')}</ul></div>` : ''}
+        </div>
+      </div>`).join('') || ''}
+      <div style="background:#ecfdf5;border:1px solid #86efac;border-radius:6px;padding:8px;font-size:10px;font-style:italic;margin-top:6px;">
+        💪 ${parentRecs.mensaje_motivacional}
+      </div>
+    </div>` : '';
 
     const logoUrl = window.location.origin + '/images/logo-dia-boleta.png';
     const printWindow = window.open('', '_blank');

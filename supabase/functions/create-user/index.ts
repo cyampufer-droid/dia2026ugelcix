@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { email, password, dni, nombre_completo, role, institucion_id, grado_seccion_id, especialidad, is_pip } = body;
+    const { email, password, dni, nombre_completo, role, institucion_id, grado_seccion_id, grado_seccion_ids, especialidad, is_pip } = body;
 
     if (!email || !password || !dni || !nombre_completo) {
       return jsonResponse({ error: "Faltan campos obligatorios" }, 400);
@@ -153,6 +153,20 @@ Deno.serve(async (req) => {
 
         if (profileError) {
           console.error("Profile update error:", profileError.message);
+        }
+      }
+
+      // Insert multiple grado_seccion assignments for secondary teachers
+      if (Array.isArray(grado_seccion_ids) && grado_seccion_ids.length > 0 && !is_pip) {
+        const inserts = grado_seccion_ids.map((gsId: string) => ({
+          user_id: newUser.user!.id,
+          grado_seccion_id: gsId,
+        }));
+        const { error: dgError } = await adminClient
+          .from("docente_grados")
+          .insert(inserts);
+        if (dgError) {
+          console.error("docente_grados insert error:", dgError.message);
         }
       }
     }

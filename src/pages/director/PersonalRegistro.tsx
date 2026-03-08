@@ -2,12 +2,12 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,6 +38,8 @@ interface PersonalItem {
   grado_seccion_id: string | null;
   is_pip: boolean;
   roles: string[];
+  especialidad?: string | null;
+  docente_grados_ids?: string[];
 }
 
 const roleLabelMap: Record<string, string> = {
@@ -60,6 +62,7 @@ const PersonalRegistro = () => {
   const [dni, setDni] = useState('');
   const [nombre, setNombre] = useState('');
   const [selectedGradoSeccion, setSelectedGradoSeccion] = useState('');
+  const [selectedMultiGrados, setSelectedMultiGrados] = useState<string[]>([]);
   const [especialidad, setEspecialidad] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [personal, setPersonal] = useState<PersonalItem[]>([]);
@@ -75,6 +78,8 @@ const PersonalRegistro = () => {
   const [editNombre, setEditNombre] = useState('');
   const [editRol, setEditRol] = useState('');
   const [editGradoSeccion, setEditGradoSeccion] = useState('');
+  const [editMultiGrados, setEditMultiGrados] = useState<string[]>([]);
+  const [editEspecialidad, setEditEspecialidad] = useState('');
   const [editLoading, setEditLoading] = useState(false);
 
   // Delete state
@@ -111,6 +116,21 @@ const PersonalRegistro = () => {
     return map;
   }, [nivelesGrados]);
 
+  const secundariaNiveles = useMemo(() => {
+    return nivelesGrados.filter(ng => ng.nivel === 'Secundaria');
+  }, [nivelesGrados]);
+
+  // Group secundaria by grado for display
+  const secundariaByGrado = useMemo(() => {
+    const map = new Map<string, NivelGrado[]>();
+    for (const ng of secundariaNiveles) {
+      const list = map.get(ng.grado) || [];
+      list.push(ng);
+      map.set(ng.grado, list);
+    }
+    return map;
+  }, [secundariaNiveles]);
+
   const fetchPersonal = useCallback(async () => {
     if (!profile?.institucion_id) {
       setPersonal([]);
@@ -121,7 +141,7 @@ const PersonalRegistro = () => {
     try {
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('id, dni, nombre_completo, user_id, grado_seccion_id, is_pip')
+        .select('id, dni, nombre_completo, user_id, grado_seccion_id, is_pip, especialidad')
         .eq('institucion_id', profile.institucion_id)
         .neq('user_id', user?.id ?? '');
 
@@ -129,15 +149,23 @@ const PersonalRegistro = () => {
 
       const userIds = (profiles || []).map(p => p.user_id).filter(Boolean) as string[];
       let rolesMap = new Map<string, string[]>();
+      let docenteGradosMap = new Map<string, string[]>();
+
       if (userIds.length > 0) {
-        const { data: rolesData } = await supabase
-          .from('user_roles')
-          .select('user_id, role')
-          .in('user_id', userIds);
-        for (const r of rolesData || []) {
+        const [rolesRes, dgRes] = await Promise.all([
+          supabase.from('user_roles').select('user_id, role').in('user_id', userIds),
+          supabase.from('docente_grados').select('user_id, grado_seccion_id').in('user_id', userIds),
+        ]);
+
+        for (const r of rolesRes.data || []) {
           const existing = rolesMap.get(r.user_id) || [];
           existing.push(r.role);
           rolesMap.set(r.user_id, existing);
+        }
+        for (const dg of dgRes.data || []) {
+          const existing = docenteGradosMap.get(dg.user_id) || [];
+          existing.push(dg.grado_seccion_id);
+          docenteGradosMap.set(dg.user_id, existing);
         }
       }
 
@@ -145,6 +173,7 @@ const PersonalRegistro = () => {
         ...p,
         is_pip: !!(p as any).is_pip,
         roles: p.user_id ? (rolesMap.get(p.user_id) || []) : [],
+        docente_grados_ids: p.user_id ? (docenteGradosMap.get(p.user_id) || []) : [],
       })));
     } catch (err) {
       console.error('Error fetching personal:', err);
@@ -156,6 +185,21 @@ const PersonalRegistro = () => {
   useEffect(() => {
     fetchPersonal();
   }, [fetchPersonal]);
+
+  // Determine if we should show multi-select (secundaria docente, not PIP)
+  const isSecundariaDocente = (rolValue: string, gradoSeccionId?: string) => {
+    if (rolValue === 'docente_pip') return false;
+    if (rolValue !== 'docente') return false;
+    // If a single grado is selected, check if it's secundaria
+    if (gradoSeccionId) {
+      const ng = nivelesMap.get(gradoSeccionId);
+      return ng?.nivel === 'Secundaria';
+    }
+    return false;
+  };
+
+  // For new docente: detect if we should show secundaria multi-select
+  const showSecundariaMulti = rol === 'docente' && secundariaNiveles.length > 0;
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,7 +213,6 @@ const PersonalRegistro = () => {
       return;
     }
 
-    // Pre-check: detect if DNI already exists in loaded personnel list
     const existing = personal.find(p => p.dni === trimmedDni);
     if (existing) {
       toast({
@@ -180,29 +223,50 @@ const PersonalRegistro = () => {
       return;
     }
 
+    // For secundaria docentes, validate multi-select
+    const useMultiGrado = rol === 'docente' && selectedMultiGrados.length > 0;
+    const isSecundaria = useMultiGrado || (() => {
+      const ng = nivelesGrados.find(ng => ng.id === selectedGradoSeccion);
+      return ng?.nivel === 'Secundaria';
+    })();
+
+    if (rol === 'docente' && isSecundaria && !especialidad) {
+      toast({ title: 'Error', description: 'Seleccione la especialidad del docente de Secundaria', variant: 'destructive' });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const email = `${trimmedDni}@dia.ugel.local`;
       const password = trimmedDni;
       const isPip = rol === 'docente_pip';
       const actualRole = isPip ? 'docente' : rol;
-      const selectedNg = nivelesGrados.find(ng => ng.id === selectedGradoSeccion);
-      const isSecundaria = selectedNg?.nivel === 'Secundaria';
+
+      // Determine grado_seccion_ids
+      let gradoSeccionIds: string[] = [];
+      if (!isPip) {
+        if (useMultiGrado) {
+          gradoSeccionIds = selectedMultiGrados;
+        } else if (selectedGradoSeccion) {
+          gradoSeccionIds = [selectedGradoSeccion];
+        }
+      }
+
       await invokeEdgeFunction('create-user', {
         email, password, dni: trimmedDni, nombre_completo: nombre, role: actualRole,
         institucion_id: profile?.institucion_id || undefined,
-        grado_seccion_id: isPip ? undefined : (selectedGradoSeccion || undefined),
+        grado_seccion_id: isPip ? undefined : (gradoSeccionIds[0] || undefined),
+        grado_seccion_ids: gradoSeccionIds.length > 1 ? gradoSeccionIds : undefined,
         especialidad: (actualRole === 'docente' && !isPip && isSecundaria && especialidad) ? especialidad : undefined,
         is_pip: isPip || undefined,
       });
 
       toast({ title: 'Personal registrado', description: `${nombre} como ${isPip ? 'Docente PIP' : actualRole}. Credenciales: DNI como usuario y contraseña.` });
       setOpen(false);
-      setRol(''); setDni(''); setNombre(''); setSelectedGradoSeccion(''); setEspecialidad('');
+      setRol(''); setDni(''); setNombre(''); setSelectedGradoSeccion(''); setSelectedMultiGrados([]); setEspecialidad('');
       fetchPersonal();
     } catch (err: any) {
       const msg = err.message || 'Error al registrar personal';
-      // Translate common backend errors to actionable messages
       const friendlyMsg = msg.includes('ya está registrado')
         ? `${msg} Use el botón de editar si necesita modificar sus datos.`
         : msg;
@@ -216,8 +280,10 @@ const PersonalRegistro = () => {
     setEditItem(item);
     setEditDni(item.dni);
     setEditNombre(item.nombre_completo);
-    setEditRol(item.roles[0] || '');
+    setEditRol(item.is_pip ? 'docente_pip' : (item.roles[0] || ''));
     setEditGradoSeccion(item.grado_seccion_id || '');
+    setEditMultiGrados(item.docente_grados_ids || []);
+    setEditEspecialidad(item.especialidad || '');
     setEditOpen(true);
   };
 
@@ -230,20 +296,46 @@ const PersonalRegistro = () => {
     }
     setEditLoading(true);
     try {
+      const isPip = editRol === 'docente_pip';
+      const actualRole = isPip ? 'docente' : editRol;
+
       await invokeEdgeFunction('manage-user', {
         action: 'update',
         user_id: editItem.user_id,
         dni: editDni,
         nombre_completo: editNombre,
-        role: editRol || undefined,
+        role: actualRole || undefined,
+        especialidad: editEspecialidad || undefined,
       });
 
-      // Update grado_seccion_id directly on profile (using service role via manage-user would be better, but for now update directly)
+      // Update grado_seccion_id and multi-grados
       if (editItem.user_id) {
+        const useMulti = editMultiGrados.length > 0;
+        const primaryGrado = useMulti ? editMultiGrados[0] : (editGradoSeccion || null);
+
         await supabase
           .from('profiles')
-          .update({ grado_seccion_id: editGradoSeccion || null })
+          .update({
+            grado_seccion_id: isPip ? null : primaryGrado,
+            especialidad: editEspecialidad || null,
+          })
           .eq('user_id', editItem.user_id);
+
+        // Update docente_grados for multi-grado assignments
+        if (!isPip && useMulti) {
+          // Delete existing and re-insert
+          await supabase.from('docente_grados').delete().eq('user_id', editItem.user_id);
+          const inserts = editMultiGrados.map(gsId => ({
+            user_id: editItem.user_id!,
+            grado_seccion_id: gsId,
+          }));
+          if (inserts.length > 0) {
+            await supabase.from('docente_grados').insert(inserts);
+          }
+        } else if (!isPip && !useMulti) {
+          // Single grado - clear docente_grados
+          await supabase.from('docente_grados').delete().eq('user_id', editItem.user_id);
+        }
       }
 
       toast({ title: 'Actualizado', description: `${editNombre} actualizado correctamente` });
@@ -296,6 +388,14 @@ const PersonalRegistro = () => {
     return `${ng.nivel} - ${ng.grado} "${ng.seccion}"`;
   };
 
+  const formatMultiAulas = (item: PersonalItem) => {
+    const ids = item.docente_grados_ids && item.docente_grados_ids.length > 0
+      ? item.docente_grados_ids
+      : item.grado_seccion_id ? [item.grado_seccion_id] : [];
+    if (ids.length === 0) return null;
+    return ids.map(id => formatAula(id)).filter(Boolean);
+  };
+
   const { sort, handleSort } = useSort();
 
   const filteredPersonal = useMemo(() => {
@@ -325,7 +425,7 @@ const PersonalRegistro = () => {
         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <option value="">Seleccione aula (opcional)</option>
-        {nivelesGrados.map(ng => (
+        {nivelesGrados.filter(ng => ng.nivel !== 'Secundaria').map(ng => (
           <option key={ng.id} value={ng.id}>
             {ng.nivel} - {ng.grado} "{ng.seccion}"
           </option>
@@ -333,6 +433,39 @@ const PersonalRegistro = () => {
       </select>
     </div>
   );
+
+  const MultiGradoSelector = ({ selected, onChange }: { selected: string[]; onChange: (ids: string[]) => void }) => {
+    const toggle = (id: string) => {
+      onChange(selected.includes(id) ? selected.filter(s => s !== id) : [...selected, id]);
+    };
+
+    return (
+      <div>
+        <Label>Grados y Secciones de Secundaria (seleccione varios)</Label>
+        <div className="border rounded-md p-3 max-h-48 overflow-y-auto space-y-3 mt-1">
+          {Array.from(secundariaByGrado.entries()).map(([grado, items]) => (
+            <div key={grado}>
+              <p className="text-xs font-semibold text-muted-foreground mb-1">{grado}</p>
+              <div className="flex flex-wrap gap-2">
+                {items.map(ng => (
+                  <label key={ng.id} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                    <Checkbox
+                      checked={selected.includes(ng.id)}
+                      onCheckedChange={() => toggle(ng.id)}
+                    />
+                    <span>{ng.grado} "{ng.seccion}"</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+          {secundariaByGrado.size === 0 && (
+            <p className="text-xs text-muted-foreground">No hay grados de Secundaria configurados.</p>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -354,7 +487,7 @@ const PersonalRegistro = () => {
                   <Label>Tipo de Personal</Label>
                   <select
                     value={rol}
-                    onChange={e => setRol(e.target.value)}
+                    onChange={e => { setRol(e.target.value); setSelectedGradoSeccion(''); setSelectedMultiGrados([]); setEspecialidad(''); }}
                     required
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
@@ -374,31 +507,81 @@ const PersonalRegistro = () => {
                   📧 Correo: <strong>{dni ? `${dni}@dia.ugel.local` : '{DNI}@dia.ugel.local'}</strong><br/>
                   🔑 Contraseña inicial: <strong>DNI</strong>. El usuario deberá cambiarla al ingresar por primera vez.
                 </p>
-                {rol !== 'docente_pip' && (
+
+                {/* Non-PIP, non-docente: single aula selector (Inicial/Primaria) */}
+                {rol && rol !== 'docente_pip' && rol !== 'docente' && (
                   <AulaSelector value={selectedGradoSeccion} onChange={setSelectedGradoSeccion} />
                 )}
+
+                {/* Docente (not PIP): show both options */}
+                {rol === 'docente' && (
+                  <>
+                    {/* Non-secundaria single selector */}
+                    <AulaSelector
+                      value={selectedGradoSeccion}
+                      onChange={(v) => { setSelectedGradoSeccion(v); if (v) setSelectedMultiGrados([]); }}
+                      label="Nivel / Grado / Sección (Inicial o Primaria)"
+                    />
+
+                    {secundariaNiveles.length > 0 && (
+                      <>
+                        <div className="relative">
+                          <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                          <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">o Secundaria (múltiples aulas)</span></div>
+                        </div>
+                        <MultiGradoSelector
+                          selected={selectedMultiGrados}
+                          onChange={(ids) => { setSelectedMultiGrados(ids); if (ids.length > 0) setSelectedGradoSeccion(''); }}
+                        />
+                      </>
+                    )}
+
+                    {/* Especialidad: show when secundaria is selected */}
+                    {(selectedMultiGrados.length > 0 || (() => {
+                      const ng = nivelesGrados.find(ng => ng.id === selectedGradoSeccion);
+                      return ng?.nivel === 'Secundaria';
+                    })()) && (
+                      <div>
+                        <Label>Especialidad (Secundaria) <span className="text-destructive">*</span></Label>
+                        <select
+                          value={especialidad}
+                          onChange={e => setEspecialidad(e.target.value)}
+                          required
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <option value="" disabled>Seleccione especialidad</option>
+                          {ESPECIALIDADES.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
+                        </select>
+                      </div>
+                    )}
+                  </>
+                )}
+
                 {rol === 'docente_pip' && (
                   <p className="text-xs text-muted-foreground bg-muted rounded p-2">
                     ℹ️ El Docente PIP tiene privilegios de Director y no requiere aula asignada. Solo se vinculará a la institución.
                   </p>
                 )}
-                {rol === 'docente' && (() => {
-                  const selectedNg = nivelesGrados.find(ng => ng.id === selectedGradoSeccion);
-                  return selectedNg?.nivel === 'Secundaria';
-                })() && (
+
+                {/* Estudiante: show all aulas including secundaria */}
+                {rol === 'estudiante' && (
                   <div>
-                    <Label>Especialidad (Secundaria)</Label>
+                    <Label>Nivel / Grado / Sección</Label>
                     <select
-                      value={especialidad}
-                      onChange={e => setEspecialidad(e.target.value)}
-                      required
+                      value={selectedGradoSeccion}
+                      onChange={e => setSelectedGradoSeccion(e.target.value)}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                      <option value="" disabled>Seleccione especialidad</option>
-                      {ESPECIALIDADES.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
+                      <option value="">Seleccione aula (opcional)</option>
+                      {nivelesGrados.map(ng => (
+                        <option key={ng.id} value={ng.id}>
+                          {ng.nivel} - {ng.grado} "{ng.seccion}"
+                        </option>
+                      ))}
                     </select>
                   </div>
                 )}
+
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Registrando…' : 'Registrar'}
                 </Button>
@@ -447,44 +630,54 @@ const PersonalRegistro = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedPersonal.map(p => (
-                    <TableRow key={p.id}>
-                      <TableCell className="font-mono">{p.dni}</TableCell>
-                      <TableCell>{p.nombre_completo}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-1 flex-wrap">
-                          {p.is_pip ? (
-                            <Badge variant="secondary">Docente PIP</Badge>
+                  {sortedPersonal.map(p => {
+                    const multiAulas = formatMultiAulas(p);
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell className="font-mono">{p.dni}</TableCell>
+                        <TableCell>{p.nombre_completo}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 flex-wrap">
+                            {p.is_pip ? (
+                              <Badge variant="secondary">Docente PIP</Badge>
+                            ) : (
+                              p.roles.map(r => (
+                                <Badge key={r} variant="secondary">{roleLabelMap[r] || r}</Badge>
+                              ))
+                            )}
+                            {p.especialidad && (
+                              <Badge variant="outline" className="text-xs">{p.especialidad}</Badge>
+                            )}
+                            {p.roles.length === 0 && !p.is_pip && <span className="text-muted-foreground text-xs">Sin rol</span>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {multiAulas && multiAulas.length > 0 ? (
+                            <div className="flex gap-1 flex-wrap">
+                              {multiAulas.map((aula, i) => (
+                                <Badge key={i} variant="outline" className="text-xs">{aula}</Badge>
+                              ))}
+                            </div>
                           ) : (
-                            p.roles.map(r => (
-                              <Badge key={r} variant="secondary">{roleLabelMap[r] || r}</Badge>
-                            ))
+                            <span className="text-muted-foreground text-xs">Sin asignar</span>
                           )}
-                          {p.roles.length === 0 && !p.is_pip && <span className="text-muted-foreground text-xs">Sin rol</span>}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {formatAula(p.grado_seccion_id) ? (
-                          <Badge variant="outline">{formatAula(p.grado_seccion_id)}</Badge>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">Sin asignar</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-1 justify-end">
-                          <Button variant="ghost" size="icon" title="Editar" onClick={() => openEdit(p)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" title="Resetear contraseña" onClick={() => setResetItem(p)}>
-                            <KeyRound className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" title="Eliminar" className="text-destructive hover:text-destructive" onClick={() => setDeleteItem(p)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-1 justify-end">
+                            <Button variant="ghost" size="icon" title="Editar" onClick={() => openEdit(p)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" title="Resetear contraseña" onClick={() => setResetItem(p)}>
+                              <KeyRound className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" title="Eliminar" className="text-destructive hover:text-destructive" onClick={() => setDeleteItem(p)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -519,7 +712,49 @@ const PersonalRegistro = () => {
               <Label>Apellidos y Nombres</Label>
               <Input value={editNombre} onChange={e => setEditNombre(e.target.value)} required />
             </div>
-            <AulaSelector value={editGradoSeccion} onChange={setEditGradoSeccion} />
+
+            {editRol === 'docente' && (
+              <>
+                <AulaSelector
+                  value={editGradoSeccion}
+                  onChange={(v) => { setEditGradoSeccion(v); if (v) setEditMultiGrados([]); }}
+                  label="Nivel / Grado / Sección (Inicial o Primaria)"
+                />
+                {secundariaNiveles.length > 0 && (
+                  <>
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                      <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">o Secundaria (múltiples aulas)</span></div>
+                    </div>
+                    <MultiGradoSelector
+                      selected={editMultiGrados}
+                      onChange={(ids) => { setEditMultiGrados(ids); if (ids.length > 0) setEditGradoSeccion(''); }}
+                    />
+                  </>
+                )}
+                {(editMultiGrados.length > 0 || (() => {
+                  const ng = nivelesGrados.find(ng => ng.id === editGradoSeccion);
+                  return ng?.nivel === 'Secundaria';
+                })()) && (
+                  <div>
+                    <Label>Especialidad (Secundaria)</Label>
+                    <select
+                      value={editEspecialidad}
+                      onChange={e => setEditEspecialidad(e.target.value)}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="" disabled>Seleccione especialidad</option>
+                      {ESPECIALIDADES.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
+                    </select>
+                  </div>
+                )}
+              </>
+            )}
+
+            {editRol !== 'docente' && editRol !== 'docente_pip' && (
+              <AulaSelector value={editGradoSeccion} onChange={setEditGradoSeccion} />
+            )}
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={editLoading}>

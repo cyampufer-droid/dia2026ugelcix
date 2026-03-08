@@ -391,6 +391,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
         <div class="dni">DNI: ${studentDni || '—'}</div>
       </div>
       ${areasHtml}
+      ${parentRecsHtml}
       <script>window.onload=function(){window.print();window.close();}<\/script></body></html>`);
     printWindow.document.close();
   };

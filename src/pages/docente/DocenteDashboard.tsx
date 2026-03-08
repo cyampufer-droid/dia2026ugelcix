@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import SortableTableHead, { useSort, sortData } from '@/components/SortableTableHead';
@@ -56,6 +57,7 @@ const DocenteDashboard = () => {
   const { profile, user } = useAuth();
   const [stats, setStats] = useState({ students: 0, evaluaciones: 0, digitados: 0, pendientes: 0 });
   const [aulas, setAulas] = useState<Aula[]>([]);
+  const [misAulas, setMisAulas] = useState<Aula[]>([]);
   const [selectedAula, setSelectedAula] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [institucionNombre, setInstitucionNombre] = useState<string>('');
@@ -92,11 +94,37 @@ const DocenteDashboard = () => {
     loadAulas();
   }, [profile?.institucion_id]);
 
+  // Load docente's assigned aulas (from docente_grados)
+  useEffect(() => {
+    const loadMisAulas = async () => {
+      if (!user?.id) return;
+      const { data: dg } = await supabase
+        .from('docente_grados')
+        .select('grado_seccion_id')
+        .eq('user_id', user.id);
+      
+      if (dg && dg.length > 0) {
+        const ids = dg.map(d => d.grado_seccion_id);
+        const { data: aulasData } = await supabase
+          .from('niveles_grados')
+          .select('id, nivel, grado, seccion')
+          .in('id', ids)
+          .order('nivel')
+          .order('grado')
+          .order('seccion');
+        setMisAulas(aulasData || []);
+      } else {
+        setMisAulas([]);
+      }
+    };
+    loadMisAulas();
+  }, [user?.id]);
+
   useEffect(() => {
     if (profile?.grado_seccion_id) setSelectedAula(profile.grado_seccion_id);
   }, [profile?.grado_seccion_id]);
 
-  // Load students for the docente's aula
+  // Load students for the docente's current aula
   const loadEstudiantes = async () => {
     if (!profile?.grado_seccion_id) { setEstudiantes([]); return; }
     setLoadingEstudiantes(true);
@@ -156,6 +184,7 @@ const DocenteDashboard = () => {
   }, [profile?.grado_seccion_id]);
 
   const aulaActual = aulas.find(a => a.id === profile?.grado_seccion_id);
+  const hasMultiAulas = misAulas.length > 1;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -189,17 +218,46 @@ const DocenteDashboard = () => {
           </div>
         </div>
 
+        {/* Show all assigned aulas for multi-grado teachers */}
+        {hasMultiAulas && (
+          <div className="mb-4 border-t pt-3">
+            <p className="text-xs text-muted-foreground mb-2">Mis aulas asignadas:</p>
+            <div className="flex flex-wrap gap-1.5">
+              {misAulas.map(a => (
+                <Badge
+                  key={a.id}
+                  variant={a.id === profile?.grado_seccion_id ? 'default' : 'outline'}
+                  className="cursor-pointer"
+                  onClick={() => setSelectedAula(a.id)}
+                >
+                  {a.nivel} — {a.grado} «{a.seccion}»
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Aula selector */}
         {aulas.length > 0 ? (
           <div className="flex items-end gap-3 flex-wrap border-t pt-4">
             <div className="flex-1 min-w-[200px]">
-              <p className="text-xs text-muted-foreground mb-1">{aulaActual ? 'Cambiar aula' : 'Seleccionar aula'}</p>
+              <p className="text-xs text-muted-foreground mb-1">{aulaActual ? 'Cambiar aula activa' : 'Seleccionar aula'}</p>
               <Select value={selectedAula} onValueChange={setSelectedAula}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccione un aula" />
                 </SelectTrigger>
                 <SelectContent>
-                  {aulas.map(a => (
+                  {/* Show assigned aulas first if multi-grado */}
+                  {hasMultiAulas && (
+                    <>
+                      {misAulas.map(a => (
+                        <SelectItem key={a.id} value={a.id}>
+                          ★ {a.nivel} — {a.grado} «{a.seccion}»
+                        </SelectItem>
+                      ))}
+                    </>
+                  )}
+                  {aulas.filter(a => !misAulas.some(m => m.id === a.id)).map(a => (
                     <SelectItem key={a.id} value={a.id}>
                       {a.nivel} — {a.grado} «{a.seccion}»
                     </SelectItem>

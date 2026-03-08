@@ -88,6 +88,7 @@ interface AggRow {
 }
 
 interface StudentRow {
+  profileId: string;
   nombre: string;
   dni: string;
   puntaje: number | null;

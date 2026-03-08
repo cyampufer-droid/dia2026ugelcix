@@ -534,29 +534,25 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
                       </Collapsible>
                     )}
 
-                    {/* AI Analysis - only for student/parent view */}
+                    {/* AI Analysis - auto-generated for student/parent view */}
                     {showAI && area.respuestas && area.respuestas.length > 0 && (() => {
                       const preguntas = getPreguntas(area.configPreguntas);
                       if (preguntas.length === 0) return null;
                       return (
-                        <Collapsible>
-                          <CollapsibleTrigger className="w-full flex items-center justify-between bg-accent/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-accent/20 transition-colors">
-                            <span>🤖 Análisis Personalizado</span>
-                            <ChevronDown className="h-4 w-4" />
-                          </CollapsibleTrigger>
-                          <CollapsibleContent className="mt-3">
-                            <AIConclusiones
-                              area={area.area}
-                              nivel={gradoInfo?.nivel}
-                              grado={gradoInfo?.grado}
-                              respuestas_dadas={area.respuestas!}
-                              respuestas_correctas={preguntas.map(p => p.correcta)}
-                              puntaje={area.puntaje}
-                              nivel_logro={area.nivel}
-                              nombre_estudiante={studentName}
-                            />
-                          </CollapsibleContent>
-                        </Collapsible>
+                        <div className="mt-3">
+                          <AIConclusiones
+                            area={area.area}
+                            nivel={gradoInfo?.nivel}
+                            grado={gradoInfo?.grado}
+                            respuestas_dadas={area.respuestas!}
+                            respuestas_correctas={preguntas.map(p => p.correcta)}
+                            puntaje={area.puntaje}
+                            nivel_logro={area.nivel}
+                            nombre_estudiante={studentName}
+                            autoGenerate
+                            onDataReady={handleAIDataReady}
+                          />
+                        </div>
                       );
                     })()}
                   </>
@@ -568,30 +564,24 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
           );
         })}
 
-        {/* Parent recommendations */}
+        {/* Parent recommendations - auto-generated */}
         {showAI && results.some(r => r.puntaje !== null) && (
           <Card className="shadow-card border-l-4 border-secondary">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Users className="h-5 w-5" />
-                Recomendaciones para Padres
+                Recomendaciones para Padres de Familia
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Collapsible>
-                <CollapsibleTrigger className="w-full flex items-center justify-between bg-secondary/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-secondary/20 transition-colors">
-                  <span>👨‍👩‍👧 Recomendaciones Personalizadas</span>
-                  <ChevronDown className="h-4 w-4" />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-3">
-                  <RecomendacionesPadres
-                    nombre_estudiante={studentName}
-                    resultados={results.map(r => ({ area: r.area, puntaje: r.puntaje, nivel_logro: r.nivel }))}
-                    nivel_educativo={gradoInfo?.nivel}
-                    grado={gradoInfo?.grado}
-                  />
-                </CollapsibleContent>
-              </Collapsible>
+              <RecomendacionesPadres
+                nombre_estudiante={studentName}
+                resultados={results.map(r => ({ area: r.area, puntaje: r.puntaje, nivel_logro: r.nivel }))}
+                nivel_educativo={gradoInfo?.nivel}
+                grado={gradoInfo?.grado}
+                autoGenerate
+                onDataReady={handleParentRecsReady}
+              />
             </CardContent>
           </Card>
         )}

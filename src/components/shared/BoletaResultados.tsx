@@ -145,9 +145,9 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
     'Matemática': true, 'Comprensión Lectora': true, 'Habilidades Socioemocionales': true
   });
   const [openRespuestas, setOpenRespuestas] = useState<Record<string, boolean>>({});
-  const [gradoInfo, setGradoInfo] = useState<{ nivel: string; grado: string } | null>(null);
-  const [institucionNombre, setInstitucionNombre] = useState('');
-  const [seccionLabel, setSeccionLabel] = useState('');
+  const [gradoInfo, setGradoInfo] = useState<{ nivel: string; grado: string; seccion: string } | null>(null);
+  const [institucionData, setInstitucionData] = useState<{ nombre: string; distrito: string; codigo_local: string | null }>({ nombre: '', distrito: '', codigo_local: null });
+  const [studentDni, setStudentDni] = useState('');
   const boletaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -157,9 +157,11 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('grado_seccion_id, institucion_id')
+        .select('grado_seccion_id, institucion_id, dni')
         .eq('id', studentProfileId)
         .single();
+
+      if (profileData?.dni) setStudentDni(profileData.dni);
 
       if (profileData?.grado_seccion_id) {
         const { data: gd } = await supabase
@@ -168,18 +170,17 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
           .eq('id', profileData.grado_seccion_id)
           .single();
         if (gd) {
-          setGradoInfo({ nivel: gd.nivel, grado: gd.grado });
-          setSeccionLabel(`${gd.grado} "${gd.seccion}"`);
+          setGradoInfo({ nivel: gd.nivel, grado: gd.grado, seccion: gd.seccion });
         }
       }
 
       if (profileData?.institucion_id) {
         const { data: inst } = await supabase
           .from('instituciones')
-          .select('nombre')
+          .select('nombre, distrito, codigo_local')
           .eq('id', profileData.institucion_id)
           .single();
-        if (inst) setInstitucionNombre(inst.nombre);
+        if (inst) setInstitucionData({ nombre: inst.nombre, distrito: inst.distrito, codigo_local: inst.codigo_local });
       }
 
       const { data: evaluaciones } = await supabase

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, Users, BookOpen, Heart, GraduationCap, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -27,7 +27,11 @@ interface Props {
   }[];
   nivel_educativo?: string;
   grado?: string;
+  autoGenerate?: boolean;
+  onDataReady?: (data: RecomendacionesPadresData) => void;
 }
+
+export type { RecomendacionesPadresData };
 
 const areaIcons: Record<string, typeof BookOpen> = {
   'Matemática': GraduationCap,
@@ -35,7 +39,7 @@ const areaIcons: Record<string, typeof BookOpen> = {
   'Habilidades Socioemocionales': Heart,
 };
 
-const RecomendacionesPadres = ({ nombre_estudiante, resultados, nivel_educativo, grado }: Props) => {
+const RecomendacionesPadres = ({ nombre_estudiante, resultados, nivel_educativo, grado, autoGenerate = false, onDataReady }: Props) => {
   const [recomendaciones, setRecomendaciones] = useState<RecomendacionesPadresData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +75,7 @@ const RecomendacionesPadres = ({ nombre_estudiante, resultados, nivel_educativo,
       }
 
       setRecomendaciones(data);
+      onDataReady?.(data);
     } catch (e: any) {
       const msg = e.message || 'Error al generar las recomendaciones';
       setError(msg);
@@ -79,6 +84,15 @@ const RecomendacionesPadres = ({ nombre_estudiante, resultados, nivel_educativo,
       setLoading(false);
     }
   };
+
+  // Auto-generate on mount if requested
+  const didAuto = useRef(false);
+  useEffect(() => {
+    if (autoGenerate && areasConResultados.length > 0 && !didAuto.current) {
+      didAuto.current = true;
+      handleGenerar();
+    }
+  }, [autoGenerate]);
 
   if (areasConResultados.length === 0) {
     return null;

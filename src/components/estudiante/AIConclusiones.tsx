@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, Sparkles, CheckCircle2, AlertTriangle, Lightbulb, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -31,7 +31,11 @@ interface Props {
   puntaje: number | null;
   nivel_logro: string | null;
   nombre_estudiante: string;
+  autoGenerate?: boolean;
+  onDataReady?: (area: string, data: ConclusionesIA) => void;
 }
+
+export type { ConclusionesIA };
 
 const nivelBadge: Record<string, string> = {
   'En Inicio': 'bg-nivel-inicio/20 text-destructive border-nivel-inicio',
@@ -40,7 +44,7 @@ const nivelBadge: Record<string, string> = {
   'Logro Destacado': 'bg-nivel-destacado/20 text-primary-foreground border-nivel-destacado',
 };
 
-const AIConclusiones = ({ area, nivel, grado, respuestas_dadas, respuestas_correctas, puntaje, nivel_logro, nombre_estudiante }: Props) => {
+const AIConclusiones = ({ area, nivel, grado, respuestas_dadas, respuestas_correctas, puntaje, nivel_logro, nombre_estudiante, autoGenerate = false, onDataReady }: Props) => {
   const [conclusiones, setConclusiones] = useState<ConclusionesIA | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +76,7 @@ const AIConclusiones = ({ area, nivel, grado, respuestas_dadas, respuestas_corre
       }
 
       setConclusiones(data);
+      onDataReady?.(area, data);
     } catch (e: any) {
       const msg = e.message || 'Error al generar el análisis';
       setError(msg);
@@ -80,6 +85,15 @@ const AIConclusiones = ({ area, nivel, grado, respuestas_dadas, respuestas_corre
       setLoading(false);
     }
   };
+
+  // Auto-generate on mount if requested
+  const didAuto = useRef(false);
+  useEffect(() => {
+    if (autoGenerate && !didAuto.current) {
+      didAuto.current = true;
+      handleGenerar();
+    }
+  }, [autoGenerate]);
 
   if (!conclusiones) {
     return (

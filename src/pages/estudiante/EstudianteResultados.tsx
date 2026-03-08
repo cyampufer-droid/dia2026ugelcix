@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calculator, BookOpen, Heart, ChevronDown, ChevronUp, CheckCircle2, XCircle } from 'lucide-react';
+import { Calculator, BookOpen, Heart, ChevronDown, ChevronUp, CheckCircle2, XCircle, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import AIConclusiones from '@/components/estudiante/AIConclusiones';
+import RecomendacionesPadres from '@/components/estudiante/RecomendacionesPadres';
+
 const AREAS = [
   { key: 'Matemática', label: 'Matemática', icon: Calculator },
   { key: 'Comprensión Lectora', label: 'Comprensión Lectora', icon: BookOpen },

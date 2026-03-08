@@ -1,12 +1,12 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calculator, BookOpen, Heart, ChevronDown, ChevronUp, CheckCircle2, XCircle, Users, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import AIConclusiones from '@/components/estudiante/AIConclusiones';
-import RecomendacionesPadres from '@/components/estudiante/RecomendacionesPadres';
+import AIConclusiones, { type ConclusionesIA } from '@/components/estudiante/AIConclusiones';
+import RecomendacionesPadres, { type RecomendacionesPadresData } from '@/components/estudiante/RecomendacionesPadres';
 
 const AREAS = [
   { key: 'Matemática', label: 'Matemática', icon: Calculator },

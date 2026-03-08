@@ -116,6 +116,7 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
   const [nivelesGrados, setNivelesGrados] = useState<NivelGrado[]>([]);
   const [instituciones, setInstituciones] = useState<Institucion[]>([]);
   const [evaluaciones, setEvaluaciones] = useState<{ id: string; area: string }[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<{ id: string; nombre: string } | null>(null);
 
   const viewOptions = scope === 'global' ? VIEWS_GLOBAL : scope === 'institucion' ? VIEWS_INSTITUCION : VIEWS_SECCION;
   const [viewMode, setViewMode] = useState<ViewMode>(viewOptions[0].value);

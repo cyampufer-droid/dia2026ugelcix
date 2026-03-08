@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, Sparkles, CheckCircle2, AlertTriangle, Lightbulb, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';

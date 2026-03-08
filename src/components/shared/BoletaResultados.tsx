@@ -33,93 +33,67 @@ interface Competencia {
   conclusiones: Record<string, { logros: string; dificultades: string; mejora: string }>;
 }
 
+// Condensed competencias - same structure as EstudianteResultados
 const COMPETENCIAS: Record<string, Competencia[]> = {
   'Matemática': [
-    {
-      nombre: 'Resuelve problemas de cantidad',
-      conclusiones: {
-        'En Inicio': { logros: 'Identifica cantidades en situaciones cotidianas sencillas y realiza conteo básico con apoyo de material concreto.', dificultades: 'Presenta dificultades para traducir problemas a expresiones numéricas, establecer relaciones entre números y aplicar estrategias de cálculo de manera autónoma.', mejora: 'Reforzar con material concreto (Base 10, regletas) y problemas contextualizados de su entorno.' },
-        'En Proceso': { logros: 'Traduce algunas situaciones a expresiones numéricas y emplea estrategias de cálculo con apoyo parcial.', dificultades: 'Aún requiere apoyo para resolver problemas de varias etapas y justificar sus procedimientos.', mejora: 'Proponer problemas de complejidad creciente con contextos variados.' },
-        'Logro Esperado': { logros: 'Traduce correctamente cantidades a expresiones numéricas, emplea estrategias de cálculo pertinentes con autonomía.', dificultades: 'Puede presentar imprecisiones al argumentar procedimientos con datos implícitos.', mejora: 'Plantear retos que exijan argumentación y problemas abiertos.' },
-        'Logro Destacado': { logros: 'Domina la traducción de situaciones complejas a expresiones numéricas con estrategias eficientes.', dificultades: 'Mínimas.', mejora: 'Ofrecer desafíos de mayor complejidad y promover la creación de problemas.' },
-      },
-    },
-    {
-      nombre: 'Resuelve problemas de regularidad, equivalencia y cambio',
-      conclusiones: {
-        'En Inicio': { logros: 'Reconoce patrones simples de repetición en secuencias.', dificultades: 'Tiene dificultades para identificar regularidades y equivalencias.', mejora: 'Trabajar con patrones visuales y concretos.' },
-        'En Proceso': { logros: 'Identifica patrones en secuencias numéricas y gráficas.', dificultades: 'Dificultades al generalizar patrones y resolver ecuaciones autónomamente.', mejora: 'Actividades con tablas de valores y gráficos.' },
-        'Logro Esperado': { logros: 'Traduce datos a patrones y expresiones algebraicas con pertinencia.', dificultades: 'Ocasional dificultad al generalizar a contextos abstractos.', mejora: 'Situaciones que requieran modelación algebraica.' },
-        'Logro Destacado': { logros: 'Domina la traducción a expresiones algebraicas y generaliza patrones complejos.', dificultades: 'Mínimas.', mejora: 'Investigaciones matemáticas y mentorías.' },
-      },
-    },
-    {
-      nombre: 'Resuelve problemas de forma, movimiento y localización',
-      conclusiones: {
-        'En Inicio': { logros: 'Reconoce formas geométricas básicas en su entorno.', dificultades: 'Dificultades para describir propiedades y transformaciones geométricas.', mejora: 'Usar material concreto (bloques, tangram).' },
-        'En Proceso': { logros: 'Describe algunas propiedades de formas geométricas.', dificultades: 'Requiere apoyo para transformaciones y cálculo de medidas.', mejora: 'Actividades de construcción y medición.' },
-        'Logro Esperado': { logros: 'Modela formas geométricas con propiedades y transformaciones autónomamente.', dificultades: 'Puede mejorar en argumentación formal.', mejora: 'Problemas de diseño que integren varias propiedades.' },
-        'Logro Destacado': { logros: 'Dominio en modelación geométrica y transformaciones complejas.', dificultades: 'Mínimas.', mejora: 'Proyectos de diseño y arquitectura.' },
-      },
-    },
-    {
-      nombre: 'Resuelve problemas de gestión de datos e incertidumbre',
-      conclusiones: {
-        'En Inicio': { logros: 'Recopila datos sencillos de su entorno.', dificultades: 'Dificultades para representar datos en tablas y gráficos.', mejora: 'Encuestas sencillas y gráficos con material concreto.' },
-        'En Proceso': { logros: 'Representa datos en tablas y gráficos básicos.', dificultades: 'Requiere apoyo para analizar datos y extraer conclusiones.', mejora: 'Proyectos de investigación sencillos.' },
-        'Logro Esperado': { logros: 'Recopila, organiza y representa datos pertinentemente.', dificultades: 'Puede fortalecer análisis de datos complejos.', mejora: 'Investigaciones estadísticas con datos reales.' },
-        'Logro Destacado': { logros: 'Domina la representación e interpretación de datos.', dificultades: 'Mínimas.', mejora: 'Análisis comparativos y proyectos interdisciplinarios.' },
-      },
-    },
+    { nombre: 'Resuelve problemas de cantidad', conclusiones: {
+      'En Inicio': { logros: 'Identifica cantidades en situaciones cotidianas sencillas y realiza conteo básico con apoyo de material concreto.', dificultades: 'Presenta dificultades para traducir problemas a expresiones numéricas y aplicar estrategias de cálculo de manera autónoma.', mejora: 'Reforzar con material concreto (Base 10, regletas) y problemas contextualizados de su entorno.' },
+      'En Proceso': { logros: 'Traduce algunas situaciones a expresiones numéricas y emplea estrategias de cálculo con apoyo parcial.', dificultades: 'Requiere apoyo para resolver problemas de varias etapas y justificar sus procedimientos.', mejora: 'Proponer problemas de complejidad creciente con contextos variados.' },
+      'Logro Esperado': { logros: 'Traduce correctamente cantidades a expresiones numéricas y emplea estrategias de cálculo pertinentes con autonomía.', dificultades: 'Puede presentar imprecisiones al argumentar procedimientos con datos implícitos.', mejora: 'Plantear retos que exijan argumentación y problemas abiertos.' },
+      'Logro Destacado': { logros: 'Domina la traducción de situaciones complejas a expresiones numéricas con estrategias eficientes.', dificultades: 'Mínimas.', mejora: 'Ofrecer desafíos de mayor complejidad y promover la creación de problemas.' },
+    }},
+    { nombre: 'Resuelve problemas de regularidad, equivalencia y cambio', conclusiones: {
+      'En Inicio': { logros: 'Reconoce patrones simples de repetición en secuencias.', dificultades: 'Dificultades para identificar regularidades y equivalencias.', mejora: 'Trabajar con patrones visuales y concretos.' },
+      'En Proceso': { logros: 'Identifica patrones en secuencias numéricas y gráficas.', dificultades: 'Dificultades al generalizar patrones y resolver ecuaciones autónomamente.', mejora: 'Actividades con tablas de valores y gráficos.' },
+      'Logro Esperado': { logros: 'Traduce datos a patrones y expresiones algebraicas con pertinencia.', dificultades: 'Ocasional dificultad al generalizar a contextos abstractos.', mejora: 'Situaciones que requieran modelación algebraica.' },
+      'Logro Destacado': { logros: 'Domina la traducción a expresiones algebraicas y generaliza patrones complejos.', dificultades: 'Mínimas.', mejora: 'Investigaciones matemáticas y mentorías.' },
+    }},
+    { nombre: 'Resuelve problemas de forma, movimiento y localización', conclusiones: {
+      'En Inicio': { logros: 'Reconoce formas geométricas básicas en su entorno.', dificultades: 'Dificultades para describir propiedades y transformaciones geométricas.', mejora: 'Usar material concreto (bloques, tangram).' },
+      'En Proceso': { logros: 'Describe algunas propiedades de formas geométricas.', dificultades: 'Requiere apoyo para transformaciones y cálculo de medidas.', mejora: 'Actividades de construcción y medición.' },
+      'Logro Esperado': { logros: 'Modela formas geométricas con propiedades y transformaciones autónomamente.', dificultades: 'Puede mejorar en argumentación formal.', mejora: 'Problemas de diseño que integren varias propiedades.' },
+      'Logro Destacado': { logros: 'Dominio en modelación geométrica y transformaciones complejas.', dificultades: 'Mínimas.', mejora: 'Proyectos de diseño y arquitectura.' },
+    }},
+    { nombre: 'Resuelve problemas de gestión de datos e incertidumbre', conclusiones: {
+      'En Inicio': { logros: 'Recopila datos sencillos de su entorno.', dificultades: 'Dificultades para representar datos en tablas y gráficos.', mejora: 'Encuestas sencillas y gráficos con material concreto.' },
+      'En Proceso': { logros: 'Representa datos en tablas y gráficos básicos.', dificultades: 'Requiere apoyo para analizar datos y extraer conclusiones.', mejora: 'Proyectos de investigación sencillos.' },
+      'Logro Esperado': { logros: 'Recopila, organiza y representa datos pertinentemente.', dificultades: 'Puede fortalecer análisis de datos complejos.', mejora: 'Investigaciones estadísticas con datos reales.' },
+      'Logro Destacado': { logros: 'Domina la representación e interpretación de datos.', dificultades: 'Mínimas.', mejora: 'Análisis comparativos y proyectos interdisciplinarios.' },
+    }},
   ],
   'Comprensión Lectora': [
-    {
-      nombre: 'Lee diversos tipos de textos escritos en su lengua materna',
-      conclusiones: {
-        'En Inicio': { logros: 'Obtiene información explícita ubicada en lugares evidentes del texto.', dificultades: 'Dificultades para inferir información e interpretar el sentido global.', mejora: 'Fomentar lectura diaria con textos de su interés.' },
-        'En Proceso': { logros: 'Obtiene información explícita y realiza inferencias sencillas.', dificultades: 'Requiere apoyo para inferencias complejas.', mejora: 'Diversificar tipos de textos.' },
-        'Logro Esperado': { logros: 'Obtiene e infiere información, interpreta el sentido global.', dificultades: 'Puede fortalecer evaluación crítica.', mejora: 'Lecturas argumentativas y comparativas.' },
-        'Logro Destacado': { logros: 'Comprensión profunda: obtiene información implícita y evalúa críticamente.', dificultades: 'Mínimas.', mejora: 'Lectura crítica de medios y producción de ensayos.' },
-      },
-    },
-    {
-      nombre: 'Se comunica oralmente en su lengua materna',
-      conclusiones: {
-        'En Inicio': { logros: 'Se expresa con vocabulario básico en situaciones familiares.', dificultades: 'Dificultades para organizar ideas y adecuar registro.', mejora: 'Espacios seguros de expresión oral.' },
-        'En Proceso': { logros: 'Expresa ideas con cierta coherencia.', dificultades: 'Requiere apoyo para argumentar.', mejora: 'Exposiciones breves y debates sencillos.' },
-        'Logro Esperado': { logros: 'Se comunica coherente y adecuadamente al propósito.', dificultades: 'Puede mejorar argumentación sostenida.', mejora: 'Debates y presentaciones formales.' },
-        'Logro Destacado': { logros: 'Domina la comunicación oral con fluidez y argumentación.', dificultades: 'Mínimas.', mejora: 'Liderazgo en proyectos y conducción de eventos.' },
-      },
-    },
-    {
-      nombre: 'Escribe diversos tipos de textos en su lengua materna',
-      conclusiones: {
-        'En Inicio': { logros: 'Escribe textos breves con ideas sencillas.', dificultades: 'Dificultades para organizar ideas coherentemente.', mejora: 'Escritura libre y guiada con temas de interés.' },
-        'En Proceso': { logros: 'Organiza algunas ideas en párrafos.', dificultades: 'Requiere apoyo para mantener coherencia en textos extensos.', mejora: 'Escritura en etapas y lectura entre pares.' },
-        'Logro Esperado': { logros: 'Escribe textos coherentes y cohesionados.', dificultades: 'Puede mejorar en textos argumentativos complejos.', mejora: 'Producción de ensayos y artículos.' },
-        'Logro Destacado': { logros: 'Produce textos de alta calidad con creatividad.', dificultades: 'Mínimas.', mejora: 'Concursos literarios y blogs escolares.' },
-      },
-    },
+    { nombre: 'Lee diversos tipos de textos escritos en su lengua materna', conclusiones: {
+      'En Inicio': { logros: 'Obtiene información explícita ubicada en lugares evidentes del texto.', dificultades: 'Dificultades para inferir información e interpretar el sentido global.', mejora: 'Fomentar lectura diaria con textos de su interés.' },
+      'En Proceso': { logros: 'Obtiene información explícita y realiza inferencias sencillas.', dificultades: 'Requiere apoyo para inferencias complejas.', mejora: 'Diversificar tipos de textos.' },
+      'Logro Esperado': { logros: 'Obtiene e infiere información, interpreta el sentido global.', dificultades: 'Puede fortalecer evaluación crítica.', mejora: 'Lecturas argumentativas y comparativas.' },
+      'Logro Destacado': { logros: 'Comprensión profunda: obtiene información implícita y evalúa críticamente.', dificultades: 'Mínimas.', mejora: 'Lectura crítica de medios y producción de ensayos.' },
+    }},
+    { nombre: 'Se comunica oralmente en su lengua materna', conclusiones: {
+      'En Inicio': { logros: 'Se expresa con vocabulario básico en situaciones familiares.', dificultades: 'Dificultades para organizar ideas y adecuar registro.', mejora: 'Espacios seguros de expresión oral.' },
+      'En Proceso': { logros: 'Expresa ideas con cierta coherencia.', dificultades: 'Requiere apoyo para argumentar.', mejora: 'Exposiciones breves y debates sencillos.' },
+      'Logro Esperado': { logros: 'Se comunica coherente y adecuadamente al propósito.', dificultades: 'Puede mejorar argumentación sostenida.', mejora: 'Debates y presentaciones formales.' },
+      'Logro Destacado': { logros: 'Domina la comunicación oral con fluidez y argumentación.', dificultades: 'Mínimas.', mejora: 'Liderazgo en proyectos y conducción de eventos.' },
+    }},
+    { nombre: 'Escribe diversos tipos de textos en su lengua materna', conclusiones: {
+      'En Inicio': { logros: 'Escribe textos breves con ideas sencillas.', dificultades: 'Dificultades para organizar ideas coherentemente.', mejora: 'Escritura libre y guiada con temas de interés.' },
+      'En Proceso': { logros: 'Organiza algunas ideas en párrafos.', dificultades: 'Requiere apoyo para mantener coherencia en textos extensos.', mejora: 'Escritura en etapas y lectura entre pares.' },
+      'Logro Esperado': { logros: 'Escribe textos coherentes y cohesionados.', dificultades: 'Puede mejorar en textos argumentativos complejos.', mejora: 'Producción de ensayos y artículos.' },
+      'Logro Destacado': { logros: 'Produce textos de alta calidad con creatividad.', dificultades: 'Mínimas.', mejora: 'Concursos literarios y blogs escolares.' },
+    }},
   ],
   'Habilidades Socioemocionales': [
-    {
-      nombre: 'Construye su identidad',
-      conclusiones: {
-        'En Inicio': { logros: 'Reconoce algunas características personales y emociones básicas.', dificultades: 'Dificultades para identificar y regular emociones.', mejora: 'Actividades de autoconocimiento y acompañamiento socioemocional.' },
-        'En Proceso': { logros: 'Identifica emociones propias y ajenas.', dificultades: 'Requiere apoyo para regular emociones en conflictos.', mejora: 'Técnicas de regulación emocional.' },
-        'Logro Esperado': { logros: 'Se valora, regula emociones y toma decisiones éticas.', dificultades: 'Puede fortalecer gestión en alta presión.', mejora: 'Proyectos de servicio comunitario y dilemas éticos.' },
-        'Logro Destacado': { logros: 'Sólida identidad, regulación eficaz y autonomía ética.', dificultades: 'Mínimas.', mejora: 'Roles de mediador y líder de proyectos sociales.' },
-      },
-    },
-    {
-      nombre: 'Convive y participa democráticamente en la búsqueda del bien común',
-      conclusiones: {
-        'En Inicio': { logros: 'Interactúa con compañeros y reconoce normas de convivencia.', dificultades: 'Dificultades para respetar acuerdos y manejar conflictos.', mejora: 'Acuerdos de convivencia participativos y juegos cooperativos.' },
-        'En Proceso': { logros: 'Respeta la mayoría de acuerdos y participa en actividades grupales.', dificultades: 'Requiere apoyo para asumir responsabilidades compartidas.', mejora: 'Responsabilidades rotativas y role-playing.' },
-        'Logro Esperado': { logros: 'Convive respetando derechos y normas, maneja conflictos constructivamente.', dificultades: 'Puede fortalecer liderazgo de iniciativas.', mejora: 'Participación en municipio escolar y ciudadanía activa.' },
-        'Logro Destacado': { logros: 'Ciudadanía activa: promueve respeto y lidera resolución de conflictos.', dificultades: 'Mínimas.', mejora: 'Liderazgo interinstitucional y voluntariado comunitario.' },
-      },
-    },
+    { nombre: 'Construye su identidad', conclusiones: {
+      'En Inicio': { logros: 'Reconoce algunas características personales y emociones básicas.', dificultades: 'Dificultades para identificar y regular emociones.', mejora: 'Actividades de autoconocimiento y acompañamiento socioemocional.' },
+      'En Proceso': { logros: 'Identifica emociones propias y ajenas.', dificultades: 'Requiere apoyo para regular emociones en conflictos.', mejora: 'Técnicas de regulación emocional.' },
+      'Logro Esperado': { logros: 'Se valora, regula emociones y toma decisiones éticas.', dificultades: 'Puede fortalecer gestión en alta presión.', mejora: 'Proyectos de servicio comunitario y dilemas éticos.' },
+      'Logro Destacado': { logros: 'Sólida identidad, regulación eficaz y autonomía ética.', dificultades: 'Mínimas.', mejora: 'Roles de mediador y líder de proyectos sociales.' },
+    }},
+    { nombre: 'Convive y participa democráticamente en la búsqueda del bien común', conclusiones: {
+      'En Inicio': { logros: 'Interactúa con compañeros y reconoce normas de convivencia.', dificultades: 'Dificultades para respetar acuerdos y manejar conflictos.', mejora: 'Acuerdos de convivencia participativos y juegos cooperativos.' },
+      'En Proceso': { logros: 'Respeta la mayoría de acuerdos y participa en actividades grupales.', dificultades: 'Requiere apoyo para asumir responsabilidades compartidas.', mejora: 'Responsabilidades rotativas y role-playing.' },
+      'Logro Esperado': { logros: 'Convive respetando derechos y normas, maneja conflictos constructivamente.', dificultades: 'Puede fortalecer liderazgo de iniciativas.', mejora: 'Participación en municipio escolar y ciudadanía activa.' },
+      'Logro Destacado': { logros: 'Ciudadanía activa: promueve respeto y lidera resolución de conflictos.', dificultades: 'Mínimas.', mejora: 'Liderazgo interinstitucional y voluntariado comunitario.' },
+    }},
   ],
 };
 
@@ -134,11 +108,8 @@ interface AreaResult {
 }
 
 interface Props {
-  /** Profile id (profiles.id) of the student */
   studentProfileId: string;
-  /** Student name to display */
   studentName: string;
-  /** If true, show AI analysis and parent recommendations (only for student/parent view) */
   showAI?: boolean;
 }
 
@@ -156,21 +127,12 @@ const ConclusionDescriptiva = ({ competencia, nivel }: { competencia: Competenci
   const data = competencia.conclusiones[nivel];
   if (!data) return null;
   return (
-    <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+    <div className="bg-card border border-border rounded-lg p-4 space-y-3 boleta-conclusion">
       <h4 className="text-sm font-semibold text-foreground">{competencia.nombre}</h4>
       <div className="space-y-2 text-sm">
-        <div>
-          <span className="font-medium text-accent">✅ Logros: </span>
-          <span className="text-muted-foreground">{data.logros}</span>
-        </div>
-        <div>
-          <span className="font-medium text-destructive">⚠️ Dificultades: </span>
-          <span className="text-muted-foreground">{data.dificultades}</span>
-        </div>
-        <div>
-          <span className="font-medium text-primary">💡 Sugerencias: </span>
-          <span className="text-muted-foreground">{data.mejora}</span>
-        </div>
+        <div><span className="font-medium text-accent">✅ Logros: </span><span className="text-muted-foreground">{data.logros}</span></div>
+        <div><span className="font-medium text-destructive">⚠️ Dificultades: </span><span className="text-muted-foreground">{data.dificultades}</span></div>
+        <div><span className="font-medium text-primary">💡 Sugerencias: </span><span className="text-muted-foreground">{data.mejora}</span></div>
       </div>
     </div>
   );
@@ -179,7 +141,9 @@ const ConclusionDescriptiva = ({ competencia, nivel }: { competencia: Competenci
 const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Props) => {
   const [results, setResults] = useState<AreaResult[]>([]);
   const [loading, setLoading] = useState(true);
-  const [openAreas, setOpenAreas] = useState<Record<string, boolean>>({ 'Matemática': true, 'Comprensión Lectora': true, 'Habilidades Socioemocionales': true });
+  const [openAreas, setOpenAreas] = useState<Record<string, boolean>>({
+    'Matemática': true, 'Comprensión Lectora': true, 'Habilidades Socioemocionales': true
+  });
   const [openRespuestas, setOpenRespuestas] = useState<Record<string, boolean>>({});
   const [gradoInfo, setGradoInfo] = useState<{ nivel: string; grado: string } | null>(null);
   const [institucionNombre, setInstitucionNombre] = useState('');
@@ -191,7 +155,6 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
     const fetchData = async () => {
       setLoading(true);
 
-      // Fetch student profile for grado_seccion_id and institucion_id
       const { data: profileData } = await supabase
         .from('profiles')
         .select('grado_seccion_id, institucion_id')
@@ -199,24 +162,24 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
         .single();
 
       if (profileData?.grado_seccion_id) {
-        const { data: gradoData } = await supabase
+        const { data: gd } = await supabase
           .from('niveles_grados')
           .select('nivel, grado, seccion')
           .eq('id', profileData.grado_seccion_id)
           .single();
-        if (gradoData) {
-          setGradoInfo({ nivel: gradoData.nivel, grado: gradoData.grado });
-          setSeccionLabel(`${gradoData.grado} "${gradoData.seccion}"`);
+        if (gd) {
+          setGradoInfo({ nivel: gd.nivel, grado: gd.grado });
+          setSeccionLabel(`${gd.grado} "${gd.seccion}"`);
         }
       }
 
       if (profileData?.institucion_id) {
-        const { data: instData } = await supabase
+        const { data: inst } = await supabase
           .from('instituciones')
           .select('nombre')
           .eq('id', profileData.institucion_id)
           .single();
-        if (instData) setInstitucionNombre(instData.nombre);
+        if (inst) setInstitucionNombre(inst.nombre);
       }
 
       const { data: evaluaciones } = await supabase
@@ -234,9 +197,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
         const res = (resultados || []).find(r => evalIds.includes(r.evaluacion_id));
         const evalMatch = res ? evals.find(e => e.id === res.evaluacion_id) : null;
         return {
-          area: a.key,
-          label: a.label,
-          icon: a.icon,
+          area: a.key, label: a.label, icon: a.icon,
           puntaje: res?.puntaje_total ?? null,
           nivel: res?.nivel_logro ?? null,
           respuestas: res?.respuestas_dadas ?? null,
@@ -254,65 +215,82 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
 
   const handleDownloadPDF = () => {
     if (!boletaRef.current) return;
+
+    // Build a clean printable HTML from the boleta data
+    const areasHtml = results.map(area => {
+      if (area.puntaje === null) return '';
+      const competencias = COMPETENCIAS[area.area] || [];
+      const preguntas = getPreguntas(area.configPreguntas);
+      const hasConfig = preguntas.length > 0;
+
+      const borderColor = area.nivel === 'En Inicio' ? '#ef4444' : area.nivel === 'En Proceso' ? '#f59e0b' : area.nivel === 'Logro Esperado' ? '#22c55e' : '#1e40af';
+      const badgeBg = area.nivel === 'En Inicio' ? '#fee2e2' : area.nivel === 'En Proceso' ? '#fef3c7' : area.nivel === 'Logro Esperado' ? '#dcfce7' : '#dbeafe';
+      const badgeColor = area.nivel === 'En Inicio' ? '#991b1b' : area.nivel === 'En Proceso' ? '#92400e' : area.nivel === 'Logro Esperado' ? '#166534' : '#1e3a5f';
+      const letter = nivelLetter[area.nivel || ''] || '—';
+
+      // Respuestas grid
+      let respuestasHtml = '';
+      if (area.respuestas && area.respuestas.length > 0 && hasConfig) {
+        const items = area.respuestas.map((resp, i) => {
+          const correcta = preguntas[i]?.correcta?.toUpperCase() || '';
+          const dada = resp?.toUpperCase() || '—';
+          const ok = correcta && dada === correcta;
+          const bg = ok ? '#f0fdf4' : '#fef2f2';
+          const bc = ok ? '#bbf7d0' : '#fecaca';
+          const symbol = ok ? '✓' : '✗';
+          const extra = !ok && correcta ? ` → ${correcta}` : '';
+          return `<div style="display:flex;align-items:center;gap:4px;padding:3px 6px;border-radius:4px;border:1px solid ${bc};background:${bg};font-size:10px;">
+            <span>${symbol}</span><b>P${i+1}:</b> ${dada}${extra}
+          </div>`;
+        }).join('');
+        const totalCorrectas = area.respuestas.filter((r, i) => {
+          const c = preguntas[i]?.correcta;
+          return c && r?.toUpperCase() === c.toUpperCase();
+        }).length;
+        respuestasHtml = `<div style="margin-top:8px;"><b style="font-size:11px;">📝 Detalle de Respuestas (${totalCorrectas}/${area.respuestas.length} correctas)</b>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px;">${items}</div></div>`;
+      }
+
+      // Conclusiones
+      const conclusionesHtml = area.nivel ? competencias.map(comp => {
+        const d = comp.conclusiones[area.nivel!];
+        if (!d) return '';
+        return `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px;margin-bottom:6px;">
+          <b style="font-size:11px;">${comp.nombre}</b>
+          <div style="font-size:10px;margin-top:4px;">
+            <div>✅ <b>Logros:</b> ${d.logros}</div>
+            <div style="margin-top:2px;">⚠️ <b>Dificultades:</b> ${d.dificultades}</div>
+            <div style="margin-top:2px;">💡 <b>Sugerencias:</b> ${d.mejora}</div>
+          </div>
+        </div>`;
+      }).join('') : '';
+
+      return `<div style="border-left:4px solid ${borderColor};border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:12px;page-break-inside:avoid;">
+        <h2 style="font-size:14px;margin-bottom:8px;">${area.label}</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div><span style="color:#666;font-size:11px;">Puntaje:</span> <b style="font-size:18px;">${area.puntaje}/20</b>
+            <span style="margin-left:12px;color:#666;font-size:11px;">Nivel:</span> <b>${area.nivel}</b></div>
+          <span style="background:${badgeBg};color:${badgeColor};padding:2px 10px;border-radius:12px;font-weight:bold;font-size:12px;">${letter}</span>
+        </div>
+        ${respuestasHtml}
+        ${conclusionesHtml ? `<div style="margin-top:8px;"><b style="font-size:11px;">📋 Conclusiones Descriptivas por Competencia</b><div style="margin-top:4px;">${conclusionesHtml}</div></div>` : ''}
+      </div>`;
+    }).join('');
+
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
-
-    const content = boletaRef.current.innerHTML;
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Boleta de Resultados - ${studentName}</title>
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: Arial, sans-serif; padding: 20px; font-size: 12px; color: #1a1a1a; }
-          h1 { font-size: 18px; text-align: center; margin-bottom: 4px; }
-          h2 { font-size: 14px; margin-bottom: 8px; }
-          h3 { font-size: 13px; margin-bottom: 6px; }
-          h4 { font-size: 12px; margin-bottom: 4px; }
-          p { margin-bottom: 4px; }
-          .text-center { text-align: center; }
-          .text-muted { color: #666; }
-          .text-xs { font-size: 10px; }
-          .font-bold { font-weight: bold; }
-          .font-semibold { font-weight: 600; }
-          .mt-2 { margin-top: 8px; }
-          .mt-4 { margin-top: 16px; }
-          .mb-2 { margin-bottom: 8px; }
-          .mb-4 { margin-bottom: 16px; }
-          .p-3 { padding: 12px; }
-          .p-4 { padding: 16px; }
-          .space-y-2 > * + * { margin-top: 8px; }
-          .space-y-3 > * + * { margin-top: 12px; }
-          .border { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
-          .border-l-4 { border-left: 4px solid #999; }
-          .border-inicio { border-left-color: #ef4444; }
-          .border-proceso { border-left-color: #f59e0b; }
-          .border-logro { border-left-color: #22c55e; }
-          .border-destacado { border-left-color: #1e40af; }
-          .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-weight: bold; font-size: 11px; }
-          .badge-inicio { background: #fee2e2; color: #991b1b; }
-          .badge-proceso { background: #fef3c7; color: #92400e; }
-          .badge-logro { background: #dcfce7; color: #166534; }
-          .badge-destacado { background: #dbeafe; color: #1e3a5f; }
-          .grid-respuestas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-          .resp-item { display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px; border: 1px solid #e5e7eb; font-size: 11px; }
-          .resp-correcta { background: #f0fdf4; border-color: #bbf7d0; }
-          .resp-incorrecta { background: #fef2f2; border-color: #fecaca; }
-          .conclusion-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
-          .hide-in-pdf { display: none !important; }
-          @media print {
-            body { padding: 10px; }
-            .page-break { page-break-before: always; }
-          }
-        </style>
-      </head>
-      <body>
-        ${content}
-        <script>window.onload = function() { window.print(); window.close(); }<\/script>
-      </body>
-      </html>
-    `);
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>Boleta - ${studentName}</title>
+      <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:20px;font-size:12px;color:#1a1a1a}
+      @media print{body{padding:10px}}</style></head><body>
+      <div style="text-align:center;margin-bottom:16px;">
+        <h1 style="font-size:18px;">Boleta de Resultados DIA 2026</h1>
+        <p style="color:#666;font-size:11px;">Diagnóstico Integral de Aprendizajes – UGEL Chiclayo</p>
+        <p style="font-weight:600;font-size:14px;margin-top:6px;">${studentName}</p>
+        ${institucionNombre ? `<p style="color:#666;font-size:11px;">I.E. ${institucionNombre}</p>` : ''}
+        ${seccionLabel ? `<p style="color:#666;font-size:11px;">${gradoInfo?.nivel || ''} – ${seccionLabel}</p>` : ''}
+      </div>
+      ${areasHtml}
+      <script>window.onload=function(){window.print();window.close();}<\/script></body></html>`);
     printWindow.document.close();
   };
 
@@ -330,53 +308,17 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
     );
   }
 
-  const getBorderClass = (nivel: string | null) => {
-    if (!nivel) return '';
-    if (nivel === 'En Inicio') return 'border-inicio';
-    if (nivel === 'En Proceso') return 'border-proceso';
-    if (nivel === 'Logro Esperado') return 'border-logro';
-    if (nivel === 'Logro Destacado') return 'border-destacado';
-    return '';
-  };
-
-  const getBadgeClass = (nivel: string | null) => {
-    if (!nivel) return '';
-    if (nivel === 'En Inicio') return 'badge badge-inicio';
-    if (nivel === 'En Proceso') return 'badge badge-proceso';
-    if (nivel === 'Logro Esperado') return 'badge badge-logro';
-    if (nivel === 'Logro Destacado') return 'badge badge-destacado';
-    return '';
-  };
-
   return (
     <div className="space-y-4">
-      {/* Download button */}
-      <div className="flex justify-end print:hidden">
+      <div className="flex justify-end">
         <Button onClick={handleDownloadPDF} variant="outline" size="sm" className="gap-2">
           <Download className="h-4 w-4" />
           Descargar PDF
         </Button>
       </div>
 
-      {/* Boleta content - both for screen and PDF */}
-      <div ref={boletaRef}>
-        {/* PDF-only header (hidden on screen, shown in print) */}
-        <div className="hidden" style={{ display: 'block' }}>
-          <div className="text-center mb-4">
-            <h1 className="text-xl font-bold text-foreground" style={{ fontSize: '18px', fontWeight: 'bold', textAlign: 'center', marginBottom: '4px' }}>
-              Boleta de Resultados DIA 2026
-            </h1>
-            <p className="text-muted-foreground" style={{ textAlign: 'center', color: '#666', marginBottom: '2px' }}>
-              Diagnóstico Integral de Aprendizajes – UGEL Chiclayo
-            </p>
-            <p style={{ textAlign: 'center', fontWeight: '600', fontSize: '14px', marginTop: '8px' }}>{studentName}</p>
-            {institucionNombre && <p className="text-xs text-muted" style={{ textAlign: 'center', color: '#666', fontSize: '11px' }}>I.E. {institucionNombre}</p>}
-            {seccionLabel && <p className="text-xs text-muted" style={{ textAlign: 'center', color: '#666', fontSize: '11px' }}>{gradoInfo?.nivel} – {seccionLabel}</p>}
-          </div>
-        </div>
-
-        {/* Screen header */}
-        <div className="text-center print:hidden">
+      <div ref={boletaRef} className="space-y-4">
+        <div className="text-center">
           <h2 className="text-xl font-bold text-foreground">Boleta de Resultados</h2>
           <p className="text-muted-foreground font-semibold">{studentName}</p>
           {institucionNombre && <p className="text-xs text-muted-foreground">I.E. {institucionNombre}</p>}
@@ -389,157 +331,147 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
           const isOpen = openAreas[area.area] ?? false;
 
           return (
-            <div key={area.area} className={`border border-l-4 ${getBorderClass(area.nivel)} mt-4`} style={{ borderLeft: `4px solid ${area.nivel === 'En Inicio' ? '#ef4444' : area.nivel === 'En Proceso' ? '#f59e0b' : area.nivel === 'Logro Esperado' ? '#22c55e' : area.nivel === 'Logro Destacado' ? '#1e40af' : '#999'}`, border: '1px solid #ddd', borderRadius: '8px', padding: '12px', marginBottom: '12px' }}>
-              <Card className={cn('shadow-card border-l-4 print:shadow-none print:border', area.nivel ? nivelStyle[area.nivel] : 'border-muted')}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <area.icon className="h-5 w-5" />
-                    {area.label}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {area.puntaje !== null ? (
-                    <>
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <div className="flex items-center gap-4">
-                          <div>
-                            <span className="text-sm text-muted-foreground">Puntaje:</span>
-                            <span className="text-2xl font-bold ml-2">{area.puntaje}/20</span>
-                          </div>
-                          <div>
-                            <span className="text-sm text-muted-foreground">Nivel:</span>
-                            <span className="font-semibold ml-2">{area.nivel}</span>
-                          </div>
+            <Card key={area.area} className={cn('shadow-card border-l-4', area.nivel ? nivelStyle[area.nivel] : 'border-muted')}>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <area.icon className="h-5 w-5" />
+                  {area.label}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {area.puntaje !== null ? (
+                  <>
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-4">
+                        <div>
+                          <span className="text-sm text-muted-foreground">Puntaje:</span>
+                          <span className="text-2xl font-bold ml-2">{area.puntaje}/20</span>
                         </div>
-                        <div className={cn(
-                          'px-3 py-1 rounded-full text-sm font-bold',
-                          area.nivel === 'En Inicio' && 'bg-nivel-inicio text-destructive-foreground',
-                          area.nivel === 'En Proceso' && 'bg-nivel-proceso text-secondary-foreground',
-                          area.nivel === 'Logro Esperado' && 'bg-nivel-logro text-accent-foreground',
-                          area.nivel === 'Logro Destacado' && 'bg-nivel-destacado text-primary-foreground',
-                        )}>
-                          {nivelLetter[area.nivel || ''] || '—'}
+                        <div>
+                          <span className="text-sm text-muted-foreground">Nivel:</span>
+                          <span className="font-semibold ml-2">{area.nivel}</span>
                         </div>
                       </div>
+                      <div className={cn(
+                        'px-3 py-1 rounded-full text-sm font-bold',
+                        area.nivel === 'En Inicio' && 'bg-nivel-inicio text-destructive-foreground',
+                        area.nivel === 'En Proceso' && 'bg-nivel-proceso text-secondary-foreground',
+                        area.nivel === 'Logro Esperado' && 'bg-nivel-logro text-accent-foreground',
+                        area.nivel === 'Logro Destacado' && 'bg-nivel-destacado text-primary-foreground',
+                      )}>
+                        {nivelLetter[area.nivel || ''] || '—'}
+                      </div>
+                    </div>
 
-                      {/* Detalle de Respuestas */}
-                      {area.respuestas && area.respuestas.length > 0 && (() => {
-                        const preguntas = getPreguntas(area.configPreguntas);
-                        const isRespOpen = openRespuestas[area.area] ?? false;
-                        const hasConfig = preguntas.length > 0;
-                        const totalCorrectas = hasConfig
-                          ? area.respuestas.filter((r, i) => {
-                              const correcta = preguntas[i]?.correcta;
-                              return correcta && r?.toUpperCase() === correcta.toUpperCase();
-                            }).length
-                          : (area.puntaje ?? 0);
-                        return (
-                          <Collapsible open={isRespOpen} onOpenChange={() => toggleRespuestas(area.area)}>
-                            <CollapsibleTrigger className="w-full flex items-center justify-between bg-muted/50 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
-                              <span>📝 Detalle de Respuestas ({totalCorrectas}/{area.respuestas.length} correctas)</span>
-                              {isRespOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="mt-3">
-                              {!hasConfig && (
-                                <div className="mb-3 p-3 rounded-lg bg-muted/30 border border-border text-sm text-muted-foreground">
-                                  ℹ️ Las claves de respuesta aún no han sido cargadas.
-                                </div>
-                              )}
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {area.respuestas.map((resp, i) => {
-                                  const pregunta = preguntas[i];
-                                  const correcta = pregunta?.correcta?.toUpperCase() || null;
-                                  const dada = resp?.toUpperCase() || '—';
-                                  const esCorrecta = correcta !== null && dada === correcta;
-                                  const esIncorrecta = correcta !== null && dada !== correcta;
-                                  return (
-                                    <div
-                                      key={i}
-                                      className={cn(
-                                        'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm',
-                                        hasConfig
-                                          ? esCorrecta ? 'border-nivel-logro/50 bg-nivel-logro/10' : 'border-nivel-inicio/50 bg-nivel-inicio/10'
-                                          : 'border-border bg-muted/20'
-                                      )}
-                                    >
-                                      {hasConfig ? (
-                                        esCorrecta ? <CheckCircle2 className="h-4 w-4 text-nivel-logro shrink-0" /> : <XCircle className="h-4 w-4 text-nivel-inicio shrink-0" />
-                                      ) : (
-                                        <span className="h-4 w-4 shrink-0 text-center text-xs text-muted-foreground">{i + 1}</span>
-                                      )}
-                                      <span className="font-medium">P{i + 1}:</span>
-                                      <span className={cn(
-                                        hasConfig && esCorrecta && 'text-nivel-logro font-semibold',
-                                        hasConfig && esIncorrecta && 'line-through text-muted-foreground',
-                                      )}>{dada}</span>
-                                      {hasConfig && esCorrecta && <span className="text-nivel-logro text-xs">✓ Correcta</span>}
-                                      {hasConfig && esIncorrecta && <span className="text-nivel-logro font-medium ml-1">→ {correcta}</span>}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </CollapsibleContent>
-                          </Collapsible>
-                        );
-                      })()}
-
-                      {/* Conclusiones Descriptivas */}
-                      {area.nivel && competencias.length > 0 && (
-                        <Collapsible open={isOpen ?? true} onOpenChange={() => toggleArea(area.area)}>
-                          <CollapsibleTrigger className="w-full flex items-center justify-between bg-primary/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-primary/20 transition-colors">
-                            <span>📋 Conclusiones Descriptivas por Competencia</span>
-                            {(isOpen ?? true) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    {/* Detalle de Respuestas */}
+                    {area.respuestas && area.respuestas.length > 0 && (() => {
+                      const preguntas = getPreguntas(area.configPreguntas);
+                      const isRespOpen = openRespuestas[area.area] ?? false;
+                      const hasConfig = preguntas.length > 0;
+                      const totalCorrectas = hasConfig
+                        ? area.respuestas.filter((r, i) => {
+                            const correcta = preguntas[i]?.correcta;
+                            return correcta && r?.toUpperCase() === correcta.toUpperCase();
+                          }).length
+                        : (area.puntaje ?? 0);
+                      return (
+                        <Collapsible open={isRespOpen} onOpenChange={() => toggleRespuestas(area.area)}>
+                          <CollapsibleTrigger className="w-full flex items-center justify-between bg-muted/50 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
+                            <span>📝 Detalle ({totalCorrectas}/{area.respuestas.length} correctas)</span>
+                            {isRespOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                           </CollapsibleTrigger>
-                          <CollapsibleContent className="mt-3 space-y-3">
-                            {competencias.map((comp, i) => (
-                              <ConclusionDescriptiva key={i} competencia={comp} nivel={area.nivel!} />
-                            ))}
+                          <CollapsibleContent className="mt-3">
+                            {!hasConfig && (
+                              <div className="mb-3 p-3 rounded-lg bg-muted/30 border border-border text-sm text-muted-foreground">
+                                ℹ️ Las claves de respuesta aún no han sido cargadas.
+                              </div>
+                            )}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {area.respuestas.map((resp, i) => {
+                                const pregunta = preguntas[i];
+                                const correcta = pregunta?.correcta?.toUpperCase() || null;
+                                const dada = resp?.toUpperCase() || '—';
+                                const esCorrecta = correcta !== null && dada === correcta;
+                                const esIncorrecta = correcta !== null && dada !== correcta;
+                                return (
+                                  <div key={i} className={cn(
+                                    'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm',
+                                    hasConfig ? esCorrecta ? 'border-nivel-logro/50 bg-nivel-logro/10' : 'border-nivel-inicio/50 bg-nivel-inicio/10' : 'border-border bg-muted/20'
+                                  )}>
+                                    {hasConfig ? (
+                                      esCorrecta ? <CheckCircle2 className="h-4 w-4 text-nivel-logro shrink-0" /> : <XCircle className="h-4 w-4 text-nivel-inicio shrink-0" />
+                                    ) : (
+                                      <span className="h-4 w-4 shrink-0 text-center text-xs text-muted-foreground">{i + 1}</span>
+                                    )}
+                                    <span className="font-medium">P{i + 1}:</span>
+                                    <span className={cn(hasConfig && esCorrecta && 'text-nivel-logro font-semibold', hasConfig && esIncorrecta && 'line-through text-muted-foreground')}>{dada}</span>
+                                    {hasConfig && esCorrecta && <span className="text-nivel-logro text-xs">✓</span>}
+                                    {hasConfig && esIncorrecta && <span className="text-nivel-logro font-medium ml-1">→ {correcta}</span>}
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </CollapsibleContent>
                         </Collapsible>
-                      )}
+                      );
+                    })()}
 
-                      {/* AI Analysis - only when showAI is true */}
-                      {showAI && area.respuestas && area.respuestas.length > 0 && (() => {
-                        const preguntas = getPreguntas(area.configPreguntas);
-                        if (preguntas.length === 0) return null;
-                        return (
-                          <Collapsible>
-                            <CollapsibleTrigger className="w-full flex items-center justify-between bg-accent/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-accent/20 transition-colors hide-in-pdf">
-                              <span>🤖 Análisis Personalizado</span>
-                              <ChevronDown className="h-4 w-4" />
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="mt-3">
-                              <AIConclusiones
-                                area={area.area}
-                                nivel={gradoInfo?.nivel}
-                                grado={gradoInfo?.grado}
-                                respuestas_dadas={area.respuestas!}
-                                respuestas_correctas={preguntas.map(p => p.correcta)}
-                                puntaje={area.puntaje}
-                                nivel_logro={area.nivel}
-                                nombre_estudiante={studentName}
-                              />
-                            </CollapsibleContent>
-                          </Collapsible>
-                        );
-                      })()}
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Sin evaluar aún.</p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                    {/* Conclusiones Descriptivas */}
+                    {area.nivel && competencias.length > 0 && (
+                      <Collapsible open={isOpen ?? true} onOpenChange={() => toggleArea(area.area)}>
+                        <CollapsibleTrigger className="w-full flex items-center justify-between bg-primary/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-primary/20 transition-colors">
+                          <span>📋 Conclusiones por Competencia</span>
+                          {(isOpen ?? true) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-3 space-y-3">
+                          {competencias.map((comp, i) => (
+                            <ConclusionDescriptiva key={i} competencia={comp} nivel={area.nivel!} />
+                          ))}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    )}
+
+                    {/* AI Analysis - only for student/parent view */}
+                    {showAI && area.respuestas && area.respuestas.length > 0 && (() => {
+                      const preguntas = getPreguntas(area.configPreguntas);
+                      if (preguntas.length === 0) return null;
+                      return (
+                        <Collapsible>
+                          <CollapsibleTrigger className="w-full flex items-center justify-between bg-accent/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-accent/20 transition-colors">
+                            <span>🤖 Análisis Personalizado</span>
+                            <ChevronDown className="h-4 w-4" />
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-3">
+                            <AIConclusiones
+                              area={area.area}
+                              nivel={gradoInfo?.nivel}
+                              grado={gradoInfo?.grado}
+                              respuestas_dadas={area.respuestas!}
+                              respuestas_correctas={preguntas.map(p => p.correcta)}
+                              puntaje={area.puntaje}
+                              nivel_logro={area.nivel}
+                              nombre_estudiante={studentName}
+                            />
+                          </CollapsibleContent>
+                        </Collapsible>
+                      );
+                    })()}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Sin evaluar aún.</p>
+                )}
+              </CardContent>
+            </Card>
           );
         })}
 
-        {/* Parent recommendations - only when showAI is true */}
+        {/* Parent recommendations */}
         {showAI && results.some(r => r.puntaje !== null) && (
-          <Card className="shadow-card border-l-4 border-secondary mt-4 hide-in-pdf">
+          <Card className="shadow-card border-l-4 border-secondary">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Users className="h-5 w-5" />
-                Recomendaciones para Padres de Familia
+                Recomendaciones para Padres
               </CardTitle>
             </CardHeader>
             <CardContent>

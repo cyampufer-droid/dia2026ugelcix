@@ -52,33 +52,62 @@ Deno.serve(async (req) => {
       .eq("user_id", caller.id)
       .single();
 
-    if (!callerProfile?.grado_seccion_id) {
+    // Check for multi-grado assignments (secondary teachers)
+    const { data: docenteGrados } = await adminClient
+      .from("docente_grados")
+      .select("grado_seccion_id")
+      .eq("user_id", caller.id);
+
+    const multiGradoIds = (docenteGrados || []).map((dg: any) => dg.grado_seccion_id);
+
+    // Determine which grado_seccion_ids to use
+    let gradoSeccionIds: string[] = [];
+    if (multiGradoIds.length > 0) {
+      gradoSeccionIds = multiGradoIds;
+    } else if (callerProfile?.grado_seccion_id) {
+      gradoSeccionIds = [callerProfile.grado_seccion_id];
+    }
+
+    // Optionally filter by a specific grado_seccion_id from request body
+    let filterGradoId: string | null = null;
+    if (req.method === "POST") {
+      try {
+        const body = await req.json();
+        if (body?.grado_seccion_id) {
+          filterGradoId = body.grado_seccion_id;
+        }
+      } catch { /* no body */ }
+    }
+
+    const activeIds = filterGradoId ? [filterGradoId] : gradoSeccionIds;
+
+    if (activeIds.length === 0) {
       return jsonResponse({ students: [], message: "No tiene aula asignada" }, 200);
     }
 
-    // Get aula info
-    const { data: aulaInfo } = await adminClient
+    // Get aula info for all assigned grados
+    const { data: aulasInfo } = await adminClient
       .from("niveles_grados")
       .select("id, nivel, grado, seccion, institucion_id")
-      .eq("id", callerProfile.grado_seccion_id)
-      .single();
+      .in("id", activeIds);
 
     // Get institution name
     let institucionNombre = "";
-    if (aulaInfo?.institucion_id) {
+    const instId = aulasInfo?.[0]?.institucion_id || callerProfile?.institucion_id;
+    if (instId) {
       const { data: inst } = await adminClient
         .from("instituciones")
         .select("nombre")
-        .eq("id", aulaInfo.institucion_id)
+        .eq("id", instId)
         .single();
       if (inst) institucionNombre = inst.nombre;
     }
 
-    // Get student profiles in this grado_seccion
+    // Get student profiles in these grado_secciones
     const { data: studentProfiles } = await adminClient
       .from("profiles")
-      .select("id, user_id, dni, nombre_completo")
-      .eq("grado_seccion_id", callerProfile.grado_seccion_id)
+      .select("id, user_id, dni, nombre_completo, grado_seccion_id")
+      .in("grado_seccion_id", activeIds)
       .order("nombre_completo", { ascending: true });
 
     // Filter only students by checking user_roles
@@ -97,7 +126,7 @@ Deno.serve(async (req) => {
         .map((r: any) => r.user_id)
     );
 
-    // Get emails from auth for student users - fetch individually instead of listing all users
+    // Get emails from auth for student users
     const emailMap = new Map<string, string>();
     if (studentUserIdSet.size > 0) {
       const emailPromises = Array.from(studentUserIdSet).map(async (uid) => {
@@ -113,20 +142,34 @@ Deno.serve(async (req) => {
       await Promise.all(emailPromises);
     }
 
+    // Build aula lookup
+    const aulaMap = new Map<string, any>();
+    for (const a of aulasInfo || []) {
+      aulaMap.set(a.id, a);
+    }
+
     const students = (studentProfiles || [])
       .filter((p: any) => p.user_id && studentUserIdSet.has(p.user_id))
-      .map((p: any) => ({
-        id: p.id,
-        dni: p.dni,
-        nombre_completo: p.nombre_completo,
-        email: emailMap.get(p.user_id) || "",
-        institucion: institucionNombre,
-        nivel: aulaInfo?.nivel || "",
-        grado: aulaInfo?.grado || "",
-        seccion: aulaInfo?.seccion || "",
-      }));
+      .map((p: any) => {
+        const aula = aulaMap.get(p.grado_seccion_id);
+        return {
+          id: p.id,
+          dni: p.dni,
+          nombre_completo: p.nombre_completo,
+          email: emailMap.get(p.user_id) || "",
+          institucion: institucionNombre,
+          nivel: aula?.nivel || "",
+          grado: aula?.grado || "",
+          seccion: aula?.seccion || "",
+        };
+      });
 
-    return jsonResponse({ students }, 200);
+    return jsonResponse({
+      students,
+      aulas: (aulasInfo || []).map((a: any) => ({
+        id: a.id, nivel: a.nivel, grado: a.grado, seccion: a.seccion,
+      })),
+    }, 200);
   } catch (err) {
     console.error("Error:", err.message);
     return jsonResponse({ error: "Error interno del servidor" }, 500);

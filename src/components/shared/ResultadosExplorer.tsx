@@ -296,75 +296,80 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
 
   // Aggregate data by area and view mode
   const aggregatedData = useMemo(() => {
-    const result: Record<string, AggRow[] | StudentRow[]> = {};
+    try {
+      const result: Record<string, AggRow[] | StudentRow[]> = {};
 
-    for (const area of areas) {
-      const areaEvalIds = new Set(evaluaciones.filter(e => e.area === area.key).map(e => e.id));
-      const areaResults = filteredResultados.filter(r => areaEvalIds.has(r.evaluacion_id));
+      for (const area of areas) {
+        const areaEvalIds = new Set(evaluaciones.filter(e => e.area === area.key).map(e => e.id));
+        const areaResults = filteredResultados.filter(r => areaEvalIds.has(r.evaluacion_id));
 
-      if (viewMode === 'estudiante') {
-        // Student table
-        const rows: StudentRow[] = filteredProfiles.map(p => {
-          const res = areaResults.find(r => r.estudiante_id === p.id);
-          return {
-            profileId: p.id,
-            nombre: p.nombre_completo,
-            dni: p.dni,
-            puntaje: res?.puntaje_total ?? null,
-            nivel_logro: res?.nivel_logro ?? null,
+        if (viewMode === 'estudiante') {
+          // Student table
+          const rows: StudentRow[] = filteredProfiles.map(p => {
+            const res = areaResults.find(r => r.estudiante_id === p.id);
+            return {
+              profileId: p.id,
+              nombre: p.nombre_completo,
+              dni: p.dni,
+              puntaje: res?.puntaje_total ?? null,
+              nivel_logro: res?.nivel_logro ?? null,
+            };
+          });
+          // Apply search
+          const searchLower = search.toLowerCase();
+          result[area.key] = searchLower
+            ? rows.filter(r => r.nombre.toLowerCase().includes(searchLower) || r.dni.includes(searchLower))
+            : rows;
+        } else {
+          // Aggregated bar chart
+          const groups: Record<string, { inicio: number; proceso: number; logro: number; destacado: number }> = {};
+
+          const getGroupKey = (r: RawResult): string | null => {
+            const p = profileMap[r.estudiante_id];
+            if (!p) return null;
+            const ng = p.grado_seccion_id ? ngMap[p.grado_seccion_id] : null;
+            const inst = p.institucion_id ? instMap[p.institucion_id] : null;
+
+            switch (viewMode) {
+              case 'provincia': return inst?.provincia || 'Sin provincia';
+              case 'distrito': return inst?.distrito || 'Sin distrito';
+              case 'institucion': return inst?.nombre || 'Sin institución';
+              case 'nivel': return ng?.nivel || 'Sin nivel';
+              case 'grado': return ng ? `${ng.nivel} - ${ng.grado}` : 'Sin grado';
+              case 'seccion': return ng ? `${ng.grado} "${ng.seccion}"` : 'Sin sección';
+              default: return null;
+            }
           };
-        });
-        // Apply search
-        const searchLower = search.toLowerCase();
-        result[area.key] = searchLower
-          ? rows.filter(r => r.nombre.toLowerCase().includes(searchLower) || r.dni.includes(searchLower))
-          : rows;
-      } else {
-        // Aggregated bar chart
-        const groups: Record<string, { inicio: number; proceso: number; logro: number; destacado: number }> = {};
 
-        const getGroupKey = (r: RawResult): string | null => {
-          const p = profileMap[r.estudiante_id];
-          if (!p) return null;
-          const ng = p.grado_seccion_id ? ngMap[p.grado_seccion_id] : null;
-          const inst = p.institucion_id ? instMap[p.institucion_id] : null;
-
-          switch (viewMode) {
-            case 'provincia': return inst?.provincia || 'Sin provincia';
-            case 'distrito': return inst?.distrito || 'Sin distrito';
-            case 'institucion': return inst?.nombre || 'Sin institución';
-            case 'nivel': return ng?.nivel || 'Sin nivel';
-            case 'grado': return ng ? `${ng.nivel} - ${ng.grado}` : 'Sin grado';
-            case 'seccion': return ng ? `${ng.grado} "${ng.seccion}"` : 'Sin sección';
-            default: return null;
+          for (const r of areaResults) {
+            const key = getGroupKey(r);
+            if (!key) continue;
+            if (!groups[key]) groups[key] = { inicio: 0, proceso: 0, logro: 0, destacado: 0 };
+            if (r.nivel_logro === 'En Inicio') groups[key].inicio++;
+            else if (r.nivel_logro === 'En Proceso') groups[key].proceso++;
+            else if (r.nivel_logro === 'Logro Esperado') groups[key].logro++;
+            else if (r.nivel_logro === 'Logro Destacado') groups[key].destacado++;
           }
-        };
 
-        for (const r of areaResults) {
-          const key = getGroupKey(r);
-          if (!key) continue;
-          if (!groups[key]) groups[key] = { inicio: 0, proceso: 0, logro: 0, destacado: 0 };
-          if (r.nivel_logro === 'En Inicio') groups[key].inicio++;
-          else if (r.nivel_logro === 'En Proceso') groups[key].proceso++;
-          else if (r.nivel_logro === 'Logro Esperado') groups[key].logro++;
-          else if (r.nivel_logro === 'Logro Destacado') groups[key].destacado++;
+          let rows: AggRow[] = Object.entries(groups).map(([label, counts]) => ({ label, ...counts }));
+          rows.sort((a, b) => a.label.localeCompare(b.label));
+
+          // Apply search
+          const searchLower = search.toLowerCase();
+          if (searchLower) {
+            rows = rows.filter(r => r.label.toLowerCase().includes(searchLower));
+          }
+
+          // Filter out empty rows
+          rows = rows.filter(r => r.inicio + r.proceso + r.logro + r.destacado > 0);
+          result[area.key] = rows;
         }
-
-        let rows: AggRow[] = Object.entries(groups).map(([label, counts]) => ({ label, ...counts }));
-        rows.sort((a, b) => a.label.localeCompare(b.label));
-
-        // Apply search
-        const searchLower = search.toLowerCase();
-        if (searchLower) {
-          rows = rows.filter(r => r.label.toLowerCase().includes(searchLower));
-        }
-
-        // Filter out empty rows
-        rows = rows.filter(r => r.inicio + r.proceso + r.logro + r.destacado > 0);
-        result[area.key] = rows;
       }
+      return result;
+    } catch (err) {
+      console.error('Error calculating aggregatedData:', err);
+      return {};
     }
-    return result;
   }, [areas, evaluaciones, filteredResultados, filteredProfiles, viewMode, search, profileMap, ngMap, instMap]);
 
   // Determine which filters to show

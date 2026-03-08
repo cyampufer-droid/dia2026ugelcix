@@ -30,6 +30,8 @@ interface UserInput {
   password: string;
   institucion_id?: string;
   grado_seccion_id?: string;
+  grado_seccion_ids?: string[];
+  especialidad?: string;
   is_pip?: boolean;
 }
 

@@ -88,17 +88,13 @@ const AIConclusiones = ({ area, nivel, grado, respuestas_dadas, respuestas_corre
   };
 
   // Auto-generate on mount if requested
-  useState(() => {
-    if (autoGenerate && !autoTriggered && !conclusiones && !loading) {
-      setAutoTriggered(true);
+  const didAuto = useRef(false);
+  useEffect(() => {
+    if (autoGenerate && !didAuto.current) {
+      didAuto.current = true;
       handleGenerar();
     }
-  });
-
-  if (autoGenerate && !autoTriggered && !conclusiones && !loading) {
-    setAutoTriggered(true);
-    setTimeout(() => handleGenerar(), 100);
-  }
+  }, [autoGenerate]);
 
   if (!conclusiones) {
     return (

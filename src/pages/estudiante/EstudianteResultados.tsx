@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calculator, BookOpen, Heart, ChevronDown, ChevronUp, CheckCircle2, XCircle } from 'lucide-react';
+import { Calculator, BookOpen, Heart, ChevronDown, ChevronUp, CheckCircle2, XCircle, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import AIConclusiones from '@/components/estudiante/AIConclusiones';
+import RecomendacionesPadres from '@/components/estudiante/RecomendacionesPadres';
+
 const AREAS = [
   { key: 'Matemática', label: 'Matemática', icon: Calculator },
   { key: 'Comprensión Lectora', label: 'Comprensión Lectora', icon: BookOpen },
@@ -307,13 +309,28 @@ const EstudianteResultados = () => {
   const [loading, setLoading] = useState(true);
   const [openAreas, setOpenAreas] = useState<Record<string, boolean>>({ 'Matemática': true, 'Comprensión Lectora': true, 'Habilidades Socioemocionales': true });
   const [openRespuestas, setOpenRespuestas] = useState<Record<string, boolean>>({});
+  const [gradoInfo, setGradoInfo] = useState<{ nivel: string; grado: string } | null>(null);
+
   useEffect(() => {
     if (!profile?.id) return;
     const fetchData = async () => {
       setLoading(true);
+
+      // Fetch student's grado info if available
+      if (profile.grado_seccion_id) {
+        const { data: gradoData } = await supabase
+          .from('niveles_grados')
+          .select('nivel, grado')
+          .eq('id', profile.grado_seccion_id)
+          .single();
+        if (gradoData) {
+          setGradoInfo({ nivel: gradoData.nivel, grado: gradoData.grado });
+        }
+      }
+
       const { data: evaluaciones } = await supabase
         .from('evaluaciones')
-        .select('id, area, config_preguntas');
+        .select('id, area, config_preguntas, nivel, grado');
 
       const { data: resultados } = await supabase
         .from('resultados')
@@ -339,7 +356,7 @@ const EstudianteResultados = () => {
       setLoading(false);
     };
     fetchData();
-  }, [profile?.id]);
+  }, [profile?.id, profile?.grado_seccion_id]);
 
   const toggleArea = (area: string) => {
     setOpenAreas(prev => ({ ...prev, [area]: !prev[area] }));
@@ -508,12 +525,14 @@ const EstudianteResultados = () => {
                       return (
                         <Collapsible>
                           <CollapsibleTrigger className="w-full flex items-center justify-between bg-accent/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-accent/20 transition-colors">
-                            <span>🤖 Análisis Personalizado con IA</span>
+                            <span>🤖 Análisis Personalizado</span>
                             <ChevronDown className="h-4 w-4" />
                           </CollapsibleTrigger>
                           <CollapsibleContent className="mt-3">
                             <AIConclusiones
                               area={area.area}
+                              nivel={gradoInfo?.nivel}
+                              grado={gradoInfo?.grado}
                               respuestas_dadas={area.respuestas!}
                               respuestas_correctas={preguntas.map(p => p.correcta)}
                               puntaje={area.puntaje}
@@ -532,6 +551,34 @@ const EstudianteResultados = () => {
             </Card>
           );
         })
+      )}
+
+      {/* Recomendaciones para Padres de Familia */}
+      {!loading && results.some(r => r.puntaje !== null) && (
+        <Card className="shadow-card border-l-4 border-secondary">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Users className="h-5 w-5" />
+              Recomendaciones para Padres de Familia
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Collapsible>
+              <CollapsibleTrigger className="w-full flex items-center justify-between bg-secondary/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-secondary/20 transition-colors">
+                <span>👨‍👩‍👧 Recomendaciones Personalizadas para Apoyar el Aprendizaje</span>
+                <ChevronDown className="h-4 w-4" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3">
+                <RecomendacionesPadres
+                  nombre_estudiante={profile?.nombre_completo || ''}
+                  resultados={results.map(r => ({ area: r.area, puntaje: r.puntaje, nivel_logro: r.nivel }))}
+                  nivel_educativo={gradoInfo?.nivel}
+                  grado={gradoInfo?.grado}
+                />
+              </CollapsibleContent>
+            </Collapsible>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

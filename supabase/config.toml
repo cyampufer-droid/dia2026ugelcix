@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.analyze-results]
 verify_jwt = false
+
+[functions.parent-recommendations]
+verify_jwt = false

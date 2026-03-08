@@ -278,17 +278,41 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
       </div>`;
     }).join('');
 
+    const logoUrl = window.location.origin + '/images/logo-dia-boleta.png';
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
     printWindow.document.write(`<!DOCTYPE html><html><head><title>Boleta - ${studentName}</title>
       <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:20px;font-size:12px;color:#1a1a1a}
+      .header{display:flex;align-items:flex-start;gap:16px;margin-bottom:16px;border-bottom:2px solid #1e3a5f;padding-bottom:12px;}
+      .header img{width:90px;height:auto;}
+      .header-info{flex:1;}
+      .header-info h1{font-size:16px;color:#1e3a5f;margin-bottom:4px;}
+      .header-info p{font-size:10px;color:#444;line-height:1.5;}
+      .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;margin-top:6px;font-size:10px;}
+      .info-grid .label{color:#666;font-weight:normal;} .info-grid .value{font-weight:600;color:#1a1a1a;}
+      .student-box{background:#f0f4f8;border:1px solid #c8d6e5;border-radius:6px;padding:8px 12px;margin:10px 0 16px;display:flex;justify-content:space-between;align-items:center;}
+      .student-box .name{font-size:13px;font-weight:700;color:#1e3a5f;} .student-box .dni{font-size:11px;color:#555;}
       @media print{body{padding:10px}}</style></head><body>
-      <div style="text-align:center;margin-bottom:16px;">
-        <h1 style="font-size:18px;">Boleta de Resultados DIA 2026</h1>
-        <p style="color:#666;font-size:11px;">Diagnóstico Integral de Aprendizajes – UGEL Chiclayo</p>
-        <p style="font-weight:600;font-size:14px;margin-top:6px;">${studentName}</p>
-        ${institucionNombre ? `<p style="color:#666;font-size:11px;">I.E. ${institucionNombre}</p>` : ''}
-        ${seccionLabel ? `<p style="color:#666;font-size:11px;">${gradoInfo?.nivel || ''} – ${seccionLabel}</p>` : ''}
+      <div class="header">
+        <img src="${logoUrl}" alt="DIA UGEL Chiclayo" />
+        <div class="header-info">
+          <h1>BOLETA DE RESULTADOS – DIA 2026</h1>
+          <p>Diagnóstico Integral de Aprendizajes – UGEL Chiclayo</p>
+          <div class="info-grid">
+            <div><span class="label">Región:</span> <span class="value">Lambayeque</span></div>
+            <div><span class="label">UGEL:</span> <span class="value">Chiclayo</span></div>
+            <div><span class="label">Distrito:</span> <span class="value">${institucionData.distrito || '—'}</span></div>
+            <div><span class="label">Código de Local:</span> <span class="value">${institucionData.codigo_local || '—'}</span></div>
+            <div><span class="label">Institución Educativa:</span> <span class="value">${institucionData.nombre || '—'}</span></div>
+            <div><span class="label">Nivel:</span> <span class="value">${gradoInfo?.nivel || '—'}</span></div>
+            <div><span class="label">Grado:</span> <span class="value">${gradoInfo?.grado || '—'}</span></div>
+            <div><span class="label">Sección:</span> <span class="value">${gradoInfo?.seccion || '—'}</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="student-box">
+        <div class="name">${studentName}</div>
+        <div class="dni">DNI: ${studentDni || '—'}</div>
       </div>
       ${areasHtml}
       <script>window.onload=function(){window.print();window.close();}<\/script></body></html>`);

@@ -87,6 +87,19 @@ const AIConclusiones = ({ area, nivel, grado, respuestas_dadas, respuestas_corre
     }
   };
 
+  // Auto-generate on mount if requested
+  useState(() => {
+    if (autoGenerate && !autoTriggered && !conclusiones && !loading) {
+      setAutoTriggered(true);
+      handleGenerar();
+    }
+  });
+
+  if (autoGenerate && !autoTriggered && !conclusiones && !loading) {
+    setAutoTriggered(true);
+    setTimeout(() => handleGenerar(), 100);
+  }
+
   if (!conclusiones) {
     return (
       <div className="flex flex-col items-center gap-3 py-4">

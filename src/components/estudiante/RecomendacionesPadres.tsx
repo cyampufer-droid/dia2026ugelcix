@@ -27,7 +27,11 @@ interface Props {
   }[];
   nivel_educativo?: string;
   grado?: string;
+  autoGenerate?: boolean;
+  onDataReady?: (data: RecomendacionesPadresData) => void;
 }
+
+export type { RecomendacionesPadresData };
 
 const areaIcons: Record<string, typeof BookOpen> = {
   'Matemática': GraduationCap,

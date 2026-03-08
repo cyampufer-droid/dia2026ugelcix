@@ -39,7 +39,7 @@ const areaIcons: Record<string, typeof BookOpen> = {
   'Habilidades Socioemocionales': Heart,
 };
 
-const RecomendacionesPadres = ({ nombre_estudiante, resultados, nivel_educativo, grado }: Props) => {
+const RecomendacionesPadres = ({ nombre_estudiante, resultados, nivel_educativo, grado, autoGenerate = false, onDataReady }: Props) => {
   const [recomendaciones, setRecomendaciones] = useState<RecomendacionesPadresData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -31,7 +31,11 @@ interface Props {
   puntaje: number | null;
   nivel_logro: string | null;
   nombre_estudiante: string;
+  autoGenerate?: boolean;
+  onDataReady?: (area: string, data: ConclusionesIA) => void;
 }
+
+export type { ConclusionesIA };
 
 const nivelBadge: Record<string, string> = {
   'En Inicio': 'bg-nivel-inicio/20 text-destructive border-nivel-inicio',

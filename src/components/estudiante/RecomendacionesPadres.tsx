@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, Users, BookOpen, Heart, GraduationCap, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';

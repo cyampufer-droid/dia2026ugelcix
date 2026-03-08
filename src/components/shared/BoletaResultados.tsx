@@ -149,6 +149,16 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
   const [institucionData, setInstitucionData] = useState<{ nombre: string; distrito: string; codigo_local: string | null }>({ nombre: '', distrito: '', codigo_local: null });
   const [studentDni, setStudentDni] = useState('');
   const boletaRef = useRef<HTMLDivElement>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<Record<string, ConclusionesIA>>({});
+  const [parentRecs, setParentRecs] = useState<RecomendacionesPadresData | null>(null);
+
+  const handleAIDataReady = useCallback((area: string, data: ConclusionesIA) => {
+    setAiAnalysis(prev => ({ ...prev, [area]: data }));
+  }, []);
+
+  const handleParentRecsReady = useCallback((data: RecomendacionesPadresData) => {
+    setParentRecs(data);
+  }, []);
 
   useEffect(() => {
     if (!studentProfileId) return;

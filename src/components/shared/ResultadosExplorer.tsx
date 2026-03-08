@@ -578,6 +578,21 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
           );
         })}
       </Tabs>
+
+      {/* Boleta Dialog */}
+      <Dialog open={!!selectedStudent} onOpenChange={(open) => { if (!open) setSelectedStudent(null); }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Boleta de Resultados – {selectedStudent?.nombre}</DialogTitle>
+          </DialogHeader>
+          {selectedStudent && (
+            <BoletaResultados
+              studentProfileId={selectedStudent.id}
+              studentName={selectedStudent.nombre}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

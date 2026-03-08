@@ -48,7 +48,6 @@ const AIConclusiones = ({ area, nivel, grado, respuestas_dadas, respuestas_corre
   const [conclusiones, setConclusiones] = useState<ConclusionesIA | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [autoTriggered, setAutoTriggered] = useState(false);
   const { toast } = useToast();
 
   const handleGenerar = async () => {

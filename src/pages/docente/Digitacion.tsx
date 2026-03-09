@@ -64,6 +64,11 @@ const Digitacion = () => {
         .single();
       if (!ng) return;
 
+      setNivelDocente(ng.nivel);
+
+      // If Inicial, no evaluaciones grid needed - use DigitacionInicial
+      if (ng.nivel === 'Inicial') return;
+
       // Map grado name (e.g. "Primero") to evaluaciones format (e.g. "1°")
       const gradoEval = GRADO_TO_ORDINAL[ng.grado] || ng.grado;
 

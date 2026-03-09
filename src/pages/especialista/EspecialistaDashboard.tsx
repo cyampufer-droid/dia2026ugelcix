@@ -46,50 +46,40 @@ const EspecialistaDashboard = () => {
     const load = async () => {
       setLoading(true);
 
-      // Parallel queries
-      const [instRes, profilesRes, evalsRes, resultadosRes, instituciones, evaluaciones] = await Promise.all([
+      // Parallel queries: counts + aggregated stats in single RPC
+      const [instRes, evalsRes, statsRes] = await Promise.all([
         supabase.from('instituciones').select('id', { count: 'exact', head: true }),
-        supabase.from('profiles').select('id', { count: 'exact', head: true }),
         supabase.from('evaluaciones').select('id', { count: 'exact', head: true }),
-        supabase.from('resultados').select('estudiante_id, evaluacion_id, nivel_logro'),
-        supabase.from('instituciones').select('id, distrito'),
-        supabase.from('evaluaciones').select('id, area'),
+        supabase.rpc('get_especialista_stats'),
       ]);
 
       setTotalInst(instRes.count ?? 0);
-      setTotalEstudiantes(profilesRes.count ?? 0);
       setTotalEvals(evalsRes.count ?? 0);
-      setTotalResultados(resultadosRes.data?.length ?? 0);
 
-      const resultados = resultadosRes.data || [];
-      const instList = instituciones.data || [];
-      const evalList = evaluaciones.data || [];
+      const rawStats = statsRes.data || [];
 
-      if (!resultados.length) {
+      // Count total resultados and estudiantes from aggregated data
+      let totalR = 0;
+      let totalEst = 0;
+      const countedEstudiantes = new Set<string>();
+      for (const row of rawStats) {
+        totalR += Number(row.total);
+      }
+      setTotalResultados(totalR);
+
+      // Count distinct estudiantes via a separate optimized query
+      const { count: estCount } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .not('grado_seccion_id', 'is', null);
+      setTotalEstudiantes(estCount ?? 0);
+
+      if (!rawStats.length) {
         setLoading(false);
         return;
       }
 
-      // Build maps
-      const instDistritoMap = Object.fromEntries(instList.map(i => [i.id, i.distrito]));
-      const evalAreaMap = Object.fromEntries(evalList.map(e => [e.id, e.area]));
-
-      // Get student→institution mapping
-      const studentIds = [...new Set(resultados.map(r => r.estudiante_id))];
-      // Batch query in chunks of 500
-      const studentInstMap: Record<string, string | null> = {};
-      for (let i = 0; i < studentIds.length; i += 500) {
-        const chunk = studentIds.slice(i, i + 500);
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, institucion_id')
-          .in('id', chunk);
-        for (const p of profiles || []) {
-          studentInstMap[p.id] = p.institucion_id;
-        }
-      }
-
-      // Aggregate by area → distrito
+      // Build grouped data from aggregated RPC results
       const grouped: Record<string, Record<string, { inicio: number; proceso: number; logro: number; destacado: number }>> = {};
       for (const area of AREAS) {
         grouped[area.key] = {};
@@ -98,17 +88,15 @@ const EspecialistaDashboard = () => {
         }
       }
 
-      for (const r of resultados) {
-        const area = evalAreaMap[r.evaluacion_id];
-        const instId = studentInstMap[r.estudiante_id];
-        const distrito = instId ? instDistritoMap[instId] : null;
+      for (const row of rawStats) {
+        const { area, distrito, nivel_logro, total } = row;
         if (!area || !distrito || !grouped[area]?.[distrito]) continue;
-
+        const count = Number(total);
         const target = grouped[area][distrito];
-        if (r.nivel_logro === 'En Inicio') target.inicio++;
-        else if (r.nivel_logro === 'En Proceso') target.proceso++;
-        else if (r.nivel_logro === 'Logro Esperado') target.logro++;
-        else if (r.nivel_logro === 'Logro Destacado') target.destacado++;
+        if (nivel_logro === 'En Inicio') target.inicio += count;
+        else if (nivel_logro === 'En Proceso') target.proceso += count;
+        else if (nivel_logro === 'Logro Esperado') target.logro += count;
+        else if (nivel_logro === 'Logro Destacado') target.destacado += count;
       }
 
       const result: Record<string, DistritoData[]> = {};

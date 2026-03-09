@@ -232,6 +232,22 @@ const Digitacion = () => {
     return Math.round((filled / total) * 100);
   };
 
+  // Inicial level: show descriptive conclusions UI
+  if (nivelDocente === 'Inicial') {
+    const displayStudentsInicial = students.length > 0 ? students : [];
+    if (displayStudentsInicial.length === 0) {
+      return (
+        <div className="space-y-4 animate-fade-in">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Conclusiones Descriptivas – Inicial</h1>
+          <p className="text-muted-foreground text-sm">
+            No se encontraron estudiantes registrados en su aula. Registre estudiantes primero.
+          </p>
+        </div>
+      );
+    }
+    return <DigitacionInicial students={displayStudentsInicial} />;
+  }
+
   if (!evaluaciones.length) {
     return (
       <div className="space-y-4 animate-fade-in">

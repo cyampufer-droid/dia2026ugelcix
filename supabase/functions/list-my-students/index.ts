@@ -20,17 +20,21 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return jsonResponse({ error: "No autorizado" }, 401);
+    if (!authHeader?.startsWith("Bearer ")) return jsonResponse({ error: "No autorizado" }, 401);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify caller
-    const callerClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    // Verify caller using getClaims (validates JWT without requiring active session)
+    const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user: caller }, error: authError } = await callerClient.auth.getUser();
-    if (authError || !caller) return jsonResponse({ error: "No autorizado" }, 401);
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) return jsonResponse({ error: "No autorizado" }, 401);
+    
+    const callerId = claimsData.claims.sub as string;
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
@@ -38,7 +42,7 @@ Deno.serve(async (req) => {
     const { data: callerRoles } = await adminClient
       .from("user_roles")
       .select("role")
-      .eq("user_id", caller.id);
+      .eq("user_id", callerId);
 
     const isDocente = (callerRoles || []).some((r: { role: string }) =>
       ["docente", "director", "subdirector", "administrador", "especialista"].includes(r.role)
@@ -49,14 +53,14 @@ Deno.serve(async (req) => {
     const { data: callerProfile } = await adminClient
       .from("profiles")
       .select("institucion_id, grado_seccion_id")
-      .eq("user_id", caller.id)
+      .eq("user_id", callerId)
       .single();
 
     // Check for multi-grado assignments (secondary teachers)
     const { data: docenteGrados } = await adminClient
       .from("docente_grados")
       .select("grado_seccion_id")
-      .eq("user_id", caller.id);
+      .eq("user_id", callerId);
 
     const multiGradoIds = (docenteGrados || []).map((dg: any) => dg.grado_seccion_id);
 

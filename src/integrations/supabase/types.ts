@@ -330,6 +330,15 @@ export type Database = {
           subdirectores_count: number
         }[]
       }
+      get_especialista_stats: {
+        Args: never
+        Returns: {
+          area: string
+          distrito: string
+          nivel_logro: string
+          total: number
+        }[]
+      }
       get_user_grado_seccion: { Args: { _user_id: string }; Returns: string }
       get_user_institucion: { Args: { _user_id: string }; Returns: string }
       has_role: {

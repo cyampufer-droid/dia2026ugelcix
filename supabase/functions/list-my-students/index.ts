@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     const { data: callerRoles } = await adminClient
       .from("user_roles")
       .select("role")
-      .eq("user_id", caller.id);
+      .eq("user_id", callerId);
 
     const isDocente = (callerRoles || []).some((r: { role: string }) =>
       ["docente", "director", "subdirector", "administrador", "especialista"].includes(r.role)

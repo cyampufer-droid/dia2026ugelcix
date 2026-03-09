@@ -523,7 +523,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
                     {area.nivel && competencias.length > 0 && (
                       <Collapsible open={isOpen ?? true} onOpenChange={() => toggleArea(area.area)}>
                         <CollapsibleTrigger className="w-full flex items-center justify-between bg-primary/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-primary/20 transition-colors">
-                          <span>📋 Conclusiones por Competencia</span>
+                          <span>{area.area === 'Comprensión Lectora' ? '📖 Conclusiones por Nivel de Lectura' : '📋 Conclusiones por Competencia'}</span>
                           {(isOpen ?? true) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </CollapsibleTrigger>
                         <CollapsibleContent className="mt-3 space-y-3">

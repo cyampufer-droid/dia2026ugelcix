@@ -62,23 +62,23 @@ const COMPETENCIAS: Record<string, Competencia[]> = {
     }},
   ],
   'Comprensión Lectora': [
-    { nombre: 'Nivel Literal', conclusiones: {
-      'En Inicio': { logros: 'Identifica información explícita muy evidente con apoyo.', dificultades: 'Dificultades para localizar información en textos extensos.', mejora: 'Practicar lectura de textos cortos y subrayar ideas principales.' },
-      'En Proceso': { logros: 'Obtiene información explícita y relevante del texto.', dificultades: 'Dificultades al localizar detalles dispersos.', mejora: 'Ejercicios de búsqueda de información específica.' },
-      'Logro Esperado': { logros: 'Localiza y selecciona información explícita en diversas partes del texto.', dificultades: 'Puede omitir detalles secundarios sutiles.', mejora: 'Lectura de textos con estructura compleja.' },
-      'Logro Destacado': { logros: 'Excelente dominio para ubicar, seleccionar y organizar información explícita.', dificultades: 'Mínimas.', mejora: 'Análisis de textos especializados.' },
+    { nombre: 'Nivel Literal (Lee diversos tipos de textos escritos en su lengua materna)', conclusiones: {
+      'En Inicio': { logros: 'Identifica información explícita muy evidente (nombres, lugares, hechos) cuando está claramente resaltada en el texto, con apoyo del docente.', dificultades: 'Presenta dificultades para localizar información dispersa en párrafos extensos, distinguir datos relevantes de secundarios y seguir secuencias de hechos.', mejora: 'Practicar lectura de textos cortos con preguntas dirigidas, subrayar ideas principales y elaborar organizadores gráficos sencillos.' },
+      'En Proceso': { logros: 'Obtiene información explícita y relevante del texto, reconoce la secuencia de hechos y localiza datos específicos solicitados.', dificultades: 'Requiere apoyo para localizar detalles dispersos en textos largos y distinguir información principal de complementaria.', mejora: 'Realizar ejercicios de búsqueda de información específica con textos de complejidad creciente y fichas de comprensión literal.' },
+      'Logro Esperado': { logros: 'Localiza y selecciona información explícita en diversas partes del texto, distingue hechos de opiniones y reconoce la estructura textual.', dificultades: 'Ocasionalmente puede omitir detalles secundarios sutiles o confundir información similar.', mejora: 'Lectura de textos con estructura compleja (discontinuos, múltiples fuentes) y elaboración de resúmenes estructurados.' },
+      'Logro Destacado': { logros: 'Excelente dominio para ubicar, seleccionar y organizar información explícita de múltiples fuentes, integrando datos de forma sistemática.', dificultades: 'Mínimas; ocasionalmente puede acelerar la lectura perdiendo algún detalle menor.', mejora: 'Análisis de textos especializados y académicos, con elaboración de fichas bibliográficas y síntesis comparativas.' },
     }},
-    { nombre: 'Nivel Inferencial', conclusiones: {
-      'En Inicio': { logros: 'Realiza deducciones muy básicas guiadas.', dificultades: 'Dificultades para deducir el tema y propósito del texto.', mejora: 'Hacer preguntas de qué pasaría sí o por qué.' },
-      'En Proceso': { logros: 'Deduce relaciones lógicas sencillas y el tema central.', dificultades: 'Requiere apoyo para inferencias complejas de causa-efecto.', mejora: 'Trabajar predicciones antes y durante la lectura.' },
-      'Logro Esperado': { logros: 'Infiere el tema, propósito y relaciones lógicas complejas.', dificultades: 'Puede dudar en inferencias de doble sentido.', mejora: 'Lecturas con lenguaje figurado e ironía.' },
-      'Logro Destacado': { logros: 'Deduce información implícita sutil y propósito comunicativo con precisión.', dificultades: 'Mínimas.', mejora: 'Lectura de textos literarios e históricos profundos.' },
+    { nombre: 'Nivel Inferencial (Lee diversos tipos de textos escritos en su lengua materna)', conclusiones: {
+      'En Inicio': { logros: 'Realiza deducciones muy básicas guiadas por el docente, como identificar el tema general cuando es muy evidente.', dificultades: 'Presenta dificultades significativas para deducir el tema central, el propósito del texto, relaciones de causa-efecto y el significado de palabras por contexto.', mejora: 'Practicar preguntas de "qué pasaría si...", "por qué crees que...", y anticipar el contenido a partir de títulos e imágenes.' },
+      'En Proceso': { logros: 'Deduce relaciones lógicas sencillas (causa-efecto evidentes), identifica el tema central y algunos propósitos comunicativos del texto.', dificultades: 'Requiere apoyo para realizar inferencias complejas, interpretar lenguaje figurado y establecer relaciones entre ideas distantes en el texto.', mejora: 'Trabajar predicciones antes, durante y después de la lectura; usar organizadores de causa-efecto y mapas de ideas.' },
+      'Logro Esperado': { logros: 'Infiere con autonomía el tema, propósito comunicativo, relaciones lógicas complejas y el significado de expresiones con sentido figurado.', dificultades: 'Puede presentar dudas en inferencias de doble sentido, ironía sutil o textos con información implícita muy compleja.', mejora: 'Lecturas con lenguaje figurado, ironía y textos literarios que requieran interpretación profunda.' },
+      'Logro Destacado': { logros: 'Deduce con precisión información implícita sutil, propósitos comunicativos complejos, intenciones del autor y significados en contextos ambiguos.', dificultades: 'Mínimas; domina ampliamente las estrategias inferenciales.', mejora: 'Lectura de textos literarios clásicos, históricos y filosóficos que requieran análisis profundo de significados.' },
     }},
-    { nombre: 'Nivel Crítico Reflexivo', conclusiones: {
-      'En Inicio': { logros: 'Emite opiniones simples sobre lo leído.', dificultades: 'Dificultades para justificar su postura.', mejora: 'Fomentar la expresión de opiniones sobre cuentos.' },
-      'En Proceso': { logros: 'Opina sobre el contenido y justifica brevemente.', dificultades: 'Dificulta evaluar la forma y el contexto del texto.', mejora: 'Debatir sobre noticias y artículos breves.' },
-      'Logro Esperado': { logros: 'Evalúa el contenido, la forma y el contexto del texto, justificando su postura.', dificultades: 'Puede fortalecer contraargumentación.', mejora: 'Lecturas de opinión y ensayos cortos.' },
-      'Logro Destacado': { logros: 'Juicio crítico profundo, sustenta argumentos contrastando fuentes.', dificultades: 'Mínimas.', mejora: 'Análisis crítico de ensayos y medios de comunicación.' },
+    { nombre: 'Nivel Crítico Reflexivo (Lee diversos tipos de textos escritos en su lengua materna)', conclusiones: {
+      'En Inicio': { logros: 'Emite opiniones simples sobre lo leído basándose en gustos personales ("me gustó", "no me gustó").', dificultades: 'Presenta dificultades para justificar su postura con argumentos del texto, evaluar la forma del texto y reflexionar sobre su contexto de producción.', mejora: 'Fomentar la expresión de opiniones sobre cuentos y noticias con preguntas como "¿qué opinas?", "¿estás de acuerdo? ¿por qué?".' },
+      'En Proceso': { logros: 'Opina sobre el contenido del texto y justifica brevemente su postura usando algunos elementos del texto como respaldo.', dificultades: 'Presenta dificultades para evaluar la forma, el estilo del autor y el contexto sociocultural del texto.', mejora: 'Debatir sobre noticias y artículos breves, comparar diferentes puntos de vista sobre un mismo tema.' },
+      'Logro Esperado': { logros: 'Evalúa el contenido, la forma y el contexto del texto, justificando su postura con argumentos sólidos y evidencias textuales.', dificultades: 'Puede fortalecer la contraargumentación y el análisis de la intencionalidad del autor en textos complejos.', mejora: 'Lecturas de artículos de opinión, editoriales y ensayos cortos con análisis de argumentos y falacias.' },
+      'Logro Destacado': { logros: 'Demuestra juicio crítico profundo, sustenta argumentos contrastando múltiples fuentes, evalúa la validez y confiabilidad de la información.', dificultades: 'Mínimas; demuestra pensamiento crítico sólido y fundamentado.', mejora: 'Análisis crítico de ensayos académicos, medios de comunicación y producción de textos argumentativos propios.' },
     }},
   ],
   'Habilidades Socioemocionales': [
@@ -284,7 +284,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
           <span style="background:${badgeBg};color:${badgeColor};padding:2px 10px;border-radius:12px;font-weight:bold;font-size:12px;">${letter}</span>
         </div>
         ${respuestasHtml}
-        ${conclusionesHtml ? `<div style="margin-top:8px;"><b style="font-size:11px;">📋 Conclusiones Descriptivas por Competencia</b><div style="margin-top:4px;">${conclusionesHtml}</div></div>` : ''}
+        ${conclusionesHtml ? `<div style="margin-top:8px;"><b style="font-size:11px;">${area.area === 'Comprensión Lectora' ? '📖 Conclusiones por Nivel de Lectura (Competencia: Lee diversos tipos de textos escritos en su lengua materna)' : '📋 Conclusiones Descriptivas por Competencia'}</b><div style="margin-top:4px;">${conclusionesHtml}</div></div>` : ''}
         ${(() => {
           const ai = aiAnalysis[area.area];
           if (!ai) return '';
@@ -523,7 +523,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
                     {area.nivel && competencias.length > 0 && (
                       <Collapsible open={isOpen ?? true} onOpenChange={() => toggleArea(area.area)}>
                         <CollapsibleTrigger className="w-full flex items-center justify-between bg-primary/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-primary/20 transition-colors">
-                          <span>📋 Conclusiones por Competencia</span>
+                          <span>{area.area === 'Comprensión Lectora' ? '📖 Conclusiones por Nivel de Lectura' : '📋 Conclusiones por Competencia'}</span>
                           {(isOpen ?? true) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </CollapsibleTrigger>
                         <CollapsibleContent className="mt-3 space-y-3">

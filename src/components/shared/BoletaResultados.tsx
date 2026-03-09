@@ -212,6 +212,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
 
       if (profileData?.dni) setStudentDni(profileData.dni);
 
+      let fetchedNivel: string | null = null;
       if (profileData?.grado_seccion_id) {
         const { data: gd } = await supabase
           .from('niveles_grados')
@@ -220,6 +221,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
           .single();
         if (gd) {
           setGradoInfo({ nivel: gd.nivel, grado: gd.grado, seccion: gd.seccion });
+          fetchedNivel = gd.nivel;
         }
       }
 

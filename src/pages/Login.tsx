@@ -103,6 +103,7 @@ const Login = () => {
               Manual de Usuario DIA 2026
             </a>
           </div>
+          <p className="text-xs opacity-60 mt-8">DIA 2026 Creado por Carlos A. Yampufé Requejo - 979915310</p>
         </div>
       </div>
 

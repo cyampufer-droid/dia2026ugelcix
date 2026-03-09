@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     const { data: callerProfile } = await adminClient
       .from("profiles")
       .select("institucion_id, grado_seccion_id")
-      .eq("user_id", caller.id)
+      .eq("user_id", callerId)
       .single();
 
     // Check for multi-grado assignments (secondary teachers)

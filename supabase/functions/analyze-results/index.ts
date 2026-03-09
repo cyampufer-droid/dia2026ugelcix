@@ -55,7 +55,7 @@ CONTEXTO EDUCATIVO:
 
 COMPETENCIAS POR ÁREA:
 - Matemática: "Resuelve problemas de cantidad", "Resuelve problemas de regularidad, equivalencia y cambio", "Resuelve problemas de forma, movimiento y localización", "Resuelve problemas de gestión de datos e incertidumbre"
-- Comprensión Lectora: "Lee diversos tipos de textos escritos", "Se comunica oralmente", "Escribe diversos tipos de textos"
+- Comprensión Lectora: "Nivel Literal", "Nivel Inferencial", "Nivel Crítico Reflexivo"
 - Habilidades Socioemocionales: "Construye su identidad", "Convive y participa democráticamente"
 
 INSTRUCCIONES:

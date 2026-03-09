@@ -255,6 +255,16 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
         };
       });
       setResults(mapped);
+
+      // For Inicial level, load teacher-written conclusions
+      if (gd?.nivel === 'Inicial') {
+        const { data: concData } = await supabase
+          .from('conclusiones_inicial')
+          .select('area, competencia, logros, dificultades, mejora, nivel_logro')
+          .eq('estudiante_id', studentProfileId);
+        if (concData) setConclusionesInicial(concData as ConclusionInicialData[]);
+      }
+
       setLoading(false);
     };
     fetchData();

@@ -35,7 +35,7 @@ const Login = () => {
         docente: '/docente',
         especialista: '/especialista',
         estudiante: '/estudiante',
-        padre: '/estudiante/resultados',
+        padre: '/estudiante/resultados'
       };
       navigate(roleRoutes[primaryRole] || '/admin', { replace: true });
     }
@@ -50,9 +50,9 @@ const Login = () => {
     setIsLoading(true);
     try {
       // If user enters 8-digit DNI, convert to auto-generated email
-      const loginEmail = /^\d{8}$/.test(usuario.trim())
-        ? `${usuario.trim()}@dia.ugel.local`
-        : usuario.trim();
+      const loginEmail = /^\d{8}$/.test(usuario.trim()) ?
+      `${usuario.trim()}@dia.ugel.local` :
+      usuario.trim();
       await signIn(loginEmail, password);
     } catch (err: any) {
       toast({ title: 'Error de acceso', description: getUserFriendlyError(err), variant: 'destructive' });
@@ -103,7 +103,7 @@ const Login = () => {
               Manual de Usuario DIA 2026
             </a>
           </div>
-          <p className="text-xs opacity-60 mt-8">DIA 2026 Creado por Carlos A. Yampufé Requejo - 979915310</p>
+          <p className="text-xs opacity-60 mt-8">DIA 2026 - Creado por Carlos A. Yampufé Requejo - 979915310</p>
         </div>
       </div>
 
@@ -125,11 +125,11 @@ const Login = () => {
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
                   <Label htmlFor="login-usuario">DNI o Correo electrónico</Label>
-                  <Input id="login-usuario" type="text" value={usuario} onChange={e => setUsuario(e.target.value)} required placeholder="12345678 o correo@ejemplo.com" />
+                  <Input id="login-usuario" type="text" value={usuario} onChange={(e) => setUsuario(e.target.value)} required placeholder="12345678 o correo@ejemplo.com" />
                 </div>
                 <div>
                   <Label htmlFor="login-pass">Contraseña</Label>
-                  <Input id="login-pass" type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••" />
+                  <Input id="login-pass" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="••••••••" />
                 </div>
                 <div className="flex items-start gap-2">
                   <Checkbox id="privacy-consent" checked={acceptPrivacy} onCheckedChange={(v) => setAcceptPrivacy(!!v)} className="mt-0.5" />
@@ -148,8 +148,8 @@ const Login = () => {
           </Card>
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default Login;

@@ -294,7 +294,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
             'Logro Esperado': 'background:#dcfce7;color:#166534;border:1px solid #86efac;',
             'Logro Destacado': 'background:#dbeafe;color:#1e3a5f;border:1px solid #93c5fd;',
           };
-          return `<div style="margin-top:10px;page-break-inside:avoid;">
+          return `<div style="margin-top:10px;">
             <b style="font-size:11px;color:#6d28d9;">🤖 Análisis Personalizado</b>
             <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:6px;padding:8px;margin-top:4px;font-size:10px;">
               <p>${ai.resumen}</p>

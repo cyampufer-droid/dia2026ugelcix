@@ -305,6 +305,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_admin_stats: {
+        Args: never
+        Returns: {
+          directores_count: number
+          docentes_count: number
+          especialistas_count: number
+          estudiantes_count: number
+          evaluaciones_count: number
+          instituciones_count: number
+          pip_count: number
+          subdirectores_count: number
+        }[]
+      }
+      get_director_stats: {
+        Args: { _institucion_id: string }
+        Returns: {
+          aulas_count: number
+          directores_count: number
+          docentes_count: number
+          estudiantes_count: number
+          evaluaciones_count: number
+          pip_count: number
+          subdirectores_count: number
+        }[]
+      }
       get_user_grado_seccion: { Args: { _user_id: string }; Returns: string }
       get_user_institucion: { Args: { _user_id: string }; Returns: string }
       has_role: {

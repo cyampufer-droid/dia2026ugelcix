@@ -13,26 +13,44 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const load = async () => {
-      const [instRes, docentesRes, estudiantesRes, evalsRes, espRes, dirRes, subdirRes, pipRes] = await Promise.all([
-        supabase.from('instituciones').select('id', { count: 'exact', head: true }),
-        supabase.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'docente'),
-        supabase.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'estudiante'),
-        supabase.from('evaluaciones').select('id', { count: 'exact', head: true }),
-        supabase.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'especialista'),
-        supabase.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'director'),
-        supabase.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'subdirector'),
-        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('is_pip', true),
-      ]);
-      setStats({
-        instituciones: instRes.count ?? 0,
-        docentes: docentesRes.count ?? 0,
-        estudiantes: estudiantesRes.count ?? 0,
-        evaluaciones: evalsRes.count ?? 0,
-        especialistas: espRes.count ?? 0,
-        directores: dirRes.count ?? 0,
-        subdirectores: subdirRes.count ?? 0,
-        pip: pipRes.count ?? 0,
-      });
+      // Optimized: Single query to get all role counts using SQL aggregation
+      const { data: roleCountsData } = await supabase.rpc('get_admin_stats');
+      
+      if (roleCountsData && roleCountsData.length > 0) {
+        const roleCounts = roleCountsData[0];
+        setStats({
+          instituciones: roleCounts.instituciones_count || 0,
+          docentes: roleCounts.docentes_count || 0,
+          estudiantes: roleCounts.estudiantes_count || 0,
+          evaluaciones: roleCounts.evaluaciones_count || 0,
+          especialistas: roleCounts.especialistas_count || 0,
+          directores: roleCounts.directores_count || 0,
+          subdirectores: roleCounts.subdirectores_count || 0,
+          pip: roleCounts.pip_count || 0,
+        });
+      } else {
+        // Fallback to individual queries if RPC fails
+        const [instRes, docentesRes, estudiantesRes, evalsRes, espRes, dirRes, subdirRes, pipRes] = await Promise.all([
+          supabase.from('instituciones').select('id', { count: 'exact', head: true }),
+          supabase.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'docente'),
+          supabase.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'estudiante'),
+          supabase.from('evaluaciones').select('id', { count: 'exact', head: true }),
+          supabase.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'especialista'),
+          supabase.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'director'),
+          supabase.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'subdirector'),
+          supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('is_pip', true),
+        ]);
+        setStats({
+          instituciones: instRes.count ?? 0,
+          docentes: docentesRes.count ?? 0,
+          estudiantes: estudiantesRes.count ?? 0,
+          evaluaciones: evalsRes.count ?? 0,
+          especialistas: espRes.count ?? 0,
+          directores: dirRes.count ?? 0,
+          subdirectores: subdirRes.count ?? 0,
+          pip: pipRes.count ?? 0,
+        });
+      }
     };
     load();
   }, []);

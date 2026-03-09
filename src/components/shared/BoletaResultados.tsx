@@ -276,7 +276,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
         </div>`;
       }).join('') : '';
 
-      return `<div style="border-left:4px solid ${borderColor};border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:12px;page-break-inside:avoid;">
+      return `<div style="border-left:4px solid ${borderColor};border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:12px;">
         <h2 style="font-size:14px;margin-bottom:8px;">${area.label}</h2>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <div><span style="color:#666;font-size:11px;">Puntaje:</span> <b style="font-size:18px;">${area.puntaje}/20</b>

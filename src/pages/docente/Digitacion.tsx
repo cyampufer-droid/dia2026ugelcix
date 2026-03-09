@@ -48,6 +48,7 @@ const Digitacion = () => {
   const [evaluaciones, setEvaluaciones] = useState<EvalInfo[]>([]);
   const [activeTab, setActiveTab] = useState('');
   const [saving, setSaving] = useState(false);
+  const [nivelDocente, setNivelDocente] = useState<string | null>(null);
   const { toast } = useToast();
   const { profile } = useAuth();
   const { isOnline, pendingCount, isSyncing, syncToCloud, refreshPendingCount } = useOfflineSync();

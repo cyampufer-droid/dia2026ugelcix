@@ -284,7 +284,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
           <span style="background:${badgeBg};color:${badgeColor};padding:2px 10px;border-radius:12px;font-weight:bold;font-size:12px;">${letter}</span>
         </div>
         ${respuestasHtml}
-        ${conclusionesHtml ? `<div style="margin-top:8px;"><b style="font-size:11px;">📋 Conclusiones Descriptivas por Competencia</b><div style="margin-top:4px;">${conclusionesHtml}</div></div>` : ''}
+        ${conclusionesHtml ? `<div style="margin-top:8px;"><b style="font-size:11px;">${area.area === 'Comprensión Lectora' ? '📖 Conclusiones por Nivel de Lectura (Competencia: Lee diversos tipos de textos escritos en su lengua materna)' : '📋 Conclusiones Descriptivas por Competencia'}</b><div style="margin-top:4px;">${conclusionesHtml}</div></div>` : ''}
         ${(() => {
           const ai = aiAnalysis[area.area];
           if (!ai) return '';

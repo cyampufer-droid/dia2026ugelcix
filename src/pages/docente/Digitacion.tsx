@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Save, Wifi, WifiOff, CloudUpload, Loader2, BookOpen, Calculator, Heart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import DigitacionGrid, { type Student } from '@/components/docente/DigitacionGrid';
+import DigitacionInicial from '@/components/docente/DigitacionInicial';
 
 const AREA_ICONS: Record<string, typeof Calculator> = {
   'Matemática': Calculator,
@@ -47,6 +48,7 @@ const Digitacion = () => {
   const [evaluaciones, setEvaluaciones] = useState<EvalInfo[]>([]);
   const [activeTab, setActiveTab] = useState('');
   const [saving, setSaving] = useState(false);
+  const [nivelDocente, setNivelDocente] = useState<string | null>(null);
   const { toast } = useToast();
   const { profile } = useAuth();
   const { isOnline, pendingCount, isSyncing, syncToCloud, refreshPendingCount } = useOfflineSync();
@@ -61,6 +63,11 @@ const Digitacion = () => {
         .eq('id', profile.grado_seccion_id)
         .single();
       if (!ng) return;
+
+      setNivelDocente(ng.nivel);
+
+      // If Inicial, no evaluaciones grid needed - use DigitacionInicial
+      if (ng.nivel === 'Inicial') return;
 
       // Map grado name (e.g. "Primero") to evaluaciones format (e.g. "1°")
       const gradoEval = GRADO_TO_ORDINAL[ng.grado] || ng.grado;
@@ -224,6 +231,22 @@ const Digitacion = () => {
     }
     return Math.round((filled / total) * 100);
   };
+
+  // Inicial level: show descriptive conclusions UI
+  if (nivelDocente === 'Inicial') {
+    const displayStudentsInicial = students.length > 0 ? students : [];
+    if (displayStudentsInicial.length === 0) {
+      return (
+        <div className="space-y-4 animate-fade-in">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Conclusiones Descriptivas – Inicial</h1>
+          <p className="text-muted-foreground text-sm">
+            No se encontraron estudiantes registrados en su aula. Registre estudiantes primero.
+          </p>
+        </div>
+      );
+    }
+    return <DigitacionInicial students={displayStudentsInicial} />;
+  }
 
   if (!evaluaciones.length) {
     return (

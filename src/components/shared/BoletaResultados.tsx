@@ -138,6 +138,44 @@ const ConclusionDescriptiva = ({ competencia, nivel }: { competencia: Competenci
   );
 };
 
+const AREAS_INICIAL = [
+  {
+    area: 'Matemática',
+    icon: Calculator,
+    competencias: [
+      'Resuelve problemas de cantidad',
+      'Resuelve problemas de forma, movimiento y localización',
+    ],
+  },
+  {
+    area: 'Comunicación',
+    icon: BookOpen,
+    competencias: [
+      'Se comunica oralmente en su lengua materna',
+      'Lee diversos tipos de textos en su lengua materna',
+      'Escribe diversos tipos de textos en su lengua materna',
+      'Crea proyectos desde los lenguajes artísticos',
+    ],
+  },
+  {
+    area: 'Personal Social - Habilidades Socioemocionales',
+    icon: Heart,
+    competencias: [
+      'Construye su identidad',
+      'Convive y participa democráticamente en la búsqueda del bien común',
+    ],
+  },
+];
+
+interface ConclusionInicialData {
+  area: string;
+  competencia: string;
+  logros: string;
+  dificultades: string;
+  mejora: string;
+  nivel_logro: string;
+}
+
 const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Props) => {
   const [results, setResults] = useState<AreaResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -151,6 +189,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
   const boletaRef = useRef<HTMLDivElement>(null);
   const [aiAnalysis, setAiAnalysis] = useState<Record<string, ConclusionesIA>>({});
   const [parentRecs, setParentRecs] = useState<RecomendacionesPadresData | null>(null);
+  const [conclusionesInicial, setConclusionesInicial] = useState<ConclusionInicialData[]>([]);
 
   const handleAIDataReady = useCallback((area: string, data: ConclusionesIA) => {
     setAiAnalysis(prev => ({ ...prev, [area]: data }));
@@ -173,6 +212,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
 
       if (profileData?.dni) setStudentDni(profileData.dni);
 
+      let fetchedNivel: string | null = null;
       if (profileData?.grado_seccion_id) {
         const { data: gd } = await supabase
           .from('niveles_grados')
@@ -181,6 +221,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
           .single();
         if (gd) {
           setGradoInfo({ nivel: gd.nivel, grado: gd.grado, seccion: gd.seccion });
+          fetchedNivel = gd.nivel;
         }
       }
 
@@ -216,6 +257,16 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
         };
       });
       setResults(mapped);
+
+      // For Inicial level, load teacher-written conclusions
+      if (fetchedNivel === 'Inicial') {
+        const { data: concData } = await supabase
+          .from('conclusiones_inicial')
+          .select('area, competencia, logros, dificultades, mejora, nivel_logro')
+          .eq('estudiante_id', studentProfileId);
+        if (concData) setConclusionesInicial(concData as ConclusionInicialData[]);
+      }
+
       setLoading(false);
     };
     fetchData();
@@ -400,7 +451,9 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
     return <p className="text-center text-muted-foreground py-8">Cargando boleta...</p>;
   }
 
-  if (results.every(r => r.puntaje === null)) {
+  const isInicial = gradoInfo?.nivel === 'Inicial';
+
+  if (!isInicial && results.every(r => r.puntaje === null) && conclusionesInicial.length === 0) {
     return (
       <Card className="shadow-card">
         <CardContent className="py-8 text-center text-muted-foreground">
@@ -429,143 +482,215 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
           <p className="text-xs text-muted-foreground mt-1">Diagnóstico Integral de Aprendizajes 2026 – UGEL Chiclayo</p>
         </div>
 
-        {results.map((area) => {
-          const competencias = COMPETENCIAS[area.area] || [];
-          const isOpen = openAreas[area.area] ?? false;
+        {isInicial ? (
+          /* ===== INICIAL: Show teacher-written descriptive conclusions ===== */
+          <>
+            {conclusionesInicial.length === 0 ? (
+              <Card className="shadow-card">
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  Aún no se han registrado conclusiones descriptivas para este estudiante.
+                </CardContent>
+              </Card>
+            ) : (
+              AREAS_INICIAL.map(areaInfo => {
+                const AreaIcon = areaInfo.icon;
+                const areaConcs = conclusionesInicial.filter(c => c.area === areaInfo.area);
+                if (areaConcs.length === 0) return null;
+                const isOpen = openAreas[areaInfo.area] ?? true;
 
-          return (
-            <Card key={area.area} className={cn('shadow-card border-l-4', area.nivel ? nivelStyle[area.nivel] : 'border-muted')}>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <area.icon className="h-5 w-5" />
-                  {area.label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {area.puntaje !== null ? (
-                  <>
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <div className="flex items-center gap-4">
-                        <div>
-                          <span className="text-sm text-muted-foreground">Puntaje:</span>
-                          <span className="text-2xl font-bold ml-2">{area.puntaje}/20</span>
-                        </div>
-                        <div>
-                          <span className="text-sm text-muted-foreground">Nivel:</span>
-                          <span className="font-semibold ml-2">{area.nivel}</span>
-                        </div>
-                      </div>
-                      <div className={cn(
-                        'px-3 py-1 rounded-full text-sm font-bold',
-                        area.nivel === 'En Inicio' && 'bg-nivel-inicio text-destructive-foreground',
-                        area.nivel === 'En Proceso' && 'bg-nivel-proceso text-secondary-foreground',
-                        area.nivel === 'Logro Esperado' && 'bg-nivel-logro text-accent-foreground',
-                        area.nivel === 'Logro Destacado' && 'bg-nivel-destacado text-primary-foreground',
-                      )}>
-                        {nivelLetter[area.nivel || ''] || '—'}
-                      </div>
-                    </div>
-
-                    {/* Detalle de Respuestas */}
-                    {area.respuestas && area.respuestas.length > 0 && (() => {
-                      const preguntas = getPreguntas(area.configPreguntas);
-                      const isRespOpen = openRespuestas[area.area] ?? false;
-                      const hasConfig = preguntas.length > 0;
-                      const totalCorrectas = hasConfig
-                        ? area.respuestas.filter((r, i) => {
-                            const correcta = preguntas[i]?.correcta;
-                            return correcta && r?.toUpperCase() === correcta.toUpperCase();
-                          }).length
-                        : (area.puntaje ?? 0);
-                      return (
-                        <Collapsible open={isRespOpen} onOpenChange={() => toggleRespuestas(area.area)}>
-                          <CollapsibleTrigger className="w-full flex items-center justify-between bg-muted/50 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
-                            <span>📝 Detalle ({totalCorrectas}/{area.respuestas.length} correctas)</span>
-                            {isRespOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                          </CollapsibleTrigger>
-                          <CollapsibleContent className="mt-3">
-                            {!hasConfig && (
-                              <div className="mb-3 p-3 rounded-lg bg-muted/30 border border-border text-sm text-muted-foreground">
-                                ℹ️ Las claves de respuesta aún no han sido cargadas.
-                              </div>
-                            )}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              {area.respuestas.map((resp, i) => {
-                                const pregunta = preguntas[i];
-                                const correcta = pregunta?.correcta?.toUpperCase() || null;
-                                const dada = resp?.toUpperCase() || '—';
-                                const esCorrecta = correcta !== null && dada === correcta;
-                                const esIncorrecta = correcta !== null && dada !== correcta;
-                                return (
-                                  <div key={i} className={cn(
-                                    'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm',
-                                    hasConfig ? esCorrecta ? 'border-nivel-logro/50 bg-nivel-logro/10' : 'border-nivel-inicio/50 bg-nivel-inicio/10' : 'border-border bg-muted/20'
-                                  )}>
-                                    {hasConfig ? (
-                                      esCorrecta ? <CheckCircle2 className="h-4 w-4 text-nivel-logro shrink-0" /> : <XCircle className="h-4 w-4 text-nivel-inicio shrink-0" />
-                                    ) : (
-                                      <span className="h-4 w-4 shrink-0 text-center text-xs text-muted-foreground">{i + 1}</span>
-                                    )}
-                                    <span className="font-medium">P{i + 1}:</span>
-                                    <span className={cn(hasConfig && esCorrecta && 'text-nivel-logro font-semibold', hasConfig && esIncorrecta && 'line-through text-muted-foreground')}>{dada}</span>
-                                    {hasConfig && esCorrecta && <span className="text-nivel-logro text-xs">✓</span>}
-                                    {hasConfig && esIncorrecta && <span className="text-nivel-logro font-medium ml-1">→ {correcta}</span>}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      );
-                    })()}
-
-                    {/* Conclusiones Descriptivas */}
-                    {area.nivel && competencias.length > 0 && (
-                      <Collapsible open={isOpen ?? true} onOpenChange={() => toggleArea(area.area)}>
+                return (
+                  <Card key={areaInfo.area} className="shadow-card border-l-4 border-primary">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <AreaIcon className="h-5 w-5" />
+                        {areaInfo.area}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <Collapsible open={isOpen} onOpenChange={() => toggleArea(areaInfo.area)}>
                         <CollapsibleTrigger className="w-full flex items-center justify-between bg-primary/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-primary/20 transition-colors">
-                          <span>{area.area === 'Comprensión Lectora' ? '📖 Conclusiones por Nivel de Lectura' : '📋 Conclusiones por Competencia'}</span>
-                          {(isOpen ?? true) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          <span>📋 Conclusiones Descriptivas por Competencia</span>
+                          {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </CollapsibleTrigger>
                         <CollapsibleContent className="mt-3 space-y-3">
-                          {competencias.map((comp, i) => (
-                            <ConclusionDescriptiva key={i} competencia={comp} nivel={area.nivel!} />
-                          ))}
+                          {areaConcs.map((conc, i) => {
+                            const nivelLtr = nivelLetter[conc.nivel_logro] || '—';
+                            return (
+                              <div key={i} className={cn('bg-card border rounded-lg p-4 space-y-3', conc.nivel_logro ? nivelStyle[conc.nivel_logro] : 'border-border')}>
+                                <div className="flex items-center justify-between flex-wrap gap-2">
+                                  <h4 className="text-sm font-semibold text-foreground">{conc.competencia}</h4>
+                                  <div className={cn(
+                                    'px-3 py-1 rounded-full text-xs font-bold',
+                                    conc.nivel_logro === 'En Inicio' && 'bg-nivel-inicio text-destructive-foreground',
+                                    conc.nivel_logro === 'En Proceso' && 'bg-nivel-proceso text-secondary-foreground',
+                                    conc.nivel_logro === 'Logro Esperado' && 'bg-nivel-logro text-accent-foreground',
+                                    conc.nivel_logro === 'Logro Destacado' && 'bg-nivel-destacado text-primary-foreground',
+                                  )}>
+                                    {nivelLtr} – {conc.nivel_logro}
+                                  </div>
+                                </div>
+                                <div className="space-y-2 text-sm">
+                                  {conc.logros && (
+                                    <div><span className="font-medium text-accent">✅ Logros: </span><span className="text-muted-foreground">{conc.logros}</span></div>
+                                  )}
+                                  {conc.dificultades && (
+                                    <div><span className="font-medium text-destructive">⚠️ Dificultades: </span><span className="text-muted-foreground">{conc.dificultades}</span></div>
+                                  )}
+                                  {conc.mejora && (
+                                    <div><span className="font-medium text-primary">💡 Sugerencias: </span><span className="text-muted-foreground">{conc.mejora}</span></div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </CollapsibleContent>
                       </Collapsible>
-                    )}
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </>
+        ) : (
+          /* ===== PRIMARIA/SECUNDARIA: Normal results ===== */
+          results.map((area) => {
+            const competencias = COMPETENCIAS[area.area] || [];
+            const isOpen = openAreas[area.area] ?? false;
 
-                    {/* AI Analysis - auto-generated for student/parent view */}
-                    {showAI && area.respuestas && area.respuestas.length > 0 && (() => {
-                      const preguntas = getPreguntas(area.configPreguntas);
-                      if (preguntas.length === 0) return null;
-                      return (
-                        <div className="mt-3">
-                          <AIConclusiones
-                            area={area.area}
-                            nivel={gradoInfo?.nivel}
-                            grado={gradoInfo?.grado}
-                            respuestas_dadas={area.respuestas!}
-                            respuestas_correctas={preguntas.map(p => p.correcta)}
-                            puntaje={area.puntaje}
-                            nivel_logro={area.nivel}
-                            nombre_estudiante={studentName}
-                            autoGenerate
-                            onDataReady={handleAIDataReady}
-                          />
+            return (
+              <Card key={area.area} className={cn('shadow-card border-l-4', area.nivel ? nivelStyle[area.nivel] : 'border-muted')}>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <area.icon className="h-5 w-5" />
+                    {area.label}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {area.puntaje !== null ? (
+                    <>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-4">
+                          <div>
+                            <span className="text-sm text-muted-foreground">Puntaje:</span>
+                            <span className="text-2xl font-bold ml-2">{area.puntaje}/20</span>
+                          </div>
+                          <div>
+                            <span className="text-sm text-muted-foreground">Nivel:</span>
+                            <span className="font-semibold ml-2">{area.nivel}</span>
+                          </div>
                         </div>
-                      );
-                    })()}
-                  </>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Sin evaluar aún.</p>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
+                        <div className={cn(
+                          'px-3 py-1 rounded-full text-sm font-bold',
+                          area.nivel === 'En Inicio' && 'bg-nivel-inicio text-destructive-foreground',
+                          area.nivel === 'En Proceso' && 'bg-nivel-proceso text-secondary-foreground',
+                          area.nivel === 'Logro Esperado' && 'bg-nivel-logro text-accent-foreground',
+                          area.nivel === 'Logro Destacado' && 'bg-nivel-destacado text-primary-foreground',
+                        )}>
+                          {nivelLetter[area.nivel || ''] || '—'}
+                        </div>
+                      </div>
+
+                      {/* Detalle de Respuestas */}
+                      {area.respuestas && area.respuestas.length > 0 && (() => {
+                        const preguntas = getPreguntas(area.configPreguntas);
+                        const isRespOpen = openRespuestas[area.area] ?? false;
+                        const hasConfig = preguntas.length > 0;
+                        const totalCorrectas = hasConfig
+                          ? area.respuestas.filter((r, i) => {
+                              const correcta = preguntas[i]?.correcta;
+                              return correcta && r?.toUpperCase() === correcta.toUpperCase();
+                            }).length
+                          : (area.puntaje ?? 0);
+                        return (
+                          <Collapsible open={isRespOpen} onOpenChange={() => toggleRespuestas(area.area)}>
+                            <CollapsibleTrigger className="w-full flex items-center justify-between bg-muted/50 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
+                              <span>📝 Detalle ({totalCorrectas}/{area.respuestas.length} correctas)</span>
+                              {isRespOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="mt-3">
+                              {!hasConfig && (
+                                <div className="mb-3 p-3 rounded-lg bg-muted/30 border border-border text-sm text-muted-foreground">
+                                  ℹ️ Las claves de respuesta aún no han sido cargadas.
+                                </div>
+                              )}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {area.respuestas.map((resp, i) => {
+                                  const pregunta = preguntas[i];
+                                  const correcta = pregunta?.correcta?.toUpperCase() || null;
+                                  const dada = resp?.toUpperCase() || '—';
+                                  const esCorrecta = correcta !== null && dada === correcta;
+                                  const esIncorrecta = correcta !== null && dada !== correcta;
+                                  return (
+                                    <div key={i} className={cn(
+                                      'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm',
+                                      hasConfig ? esCorrecta ? 'border-nivel-logro/50 bg-nivel-logro/10' : 'border-nivel-inicio/50 bg-nivel-inicio/10' : 'border-border bg-muted/20'
+                                    )}>
+                                      {hasConfig ? (
+                                        esCorrecta ? <CheckCircle2 className="h-4 w-4 text-nivel-logro shrink-0" /> : <XCircle className="h-4 w-4 text-nivel-inicio shrink-0" />
+                                      ) : (
+                                        <span className="h-4 w-4 shrink-0 text-center text-xs text-muted-foreground">{i + 1}</span>
+                                      )}
+                                      <span className="font-medium">P{i + 1}:</span>
+                                      <span className={cn(hasConfig && esCorrecta && 'text-nivel-logro font-semibold', hasConfig && esIncorrecta && 'line-through text-muted-foreground')}>{dada}</span>
+                                      {hasConfig && esCorrecta && <span className="text-nivel-logro text-xs">✓</span>}
+                                      {hasConfig && esIncorrecta && <span className="text-nivel-logro font-medium ml-1">→ {correcta}</span>}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </CollapsibleContent>
+                          </Collapsible>
+                        );
+                      })()}
+
+                      {/* Conclusiones Descriptivas */}
+                      {area.nivel && competencias.length > 0 && (
+                        <Collapsible open={isOpen ?? true} onOpenChange={() => toggleArea(area.area)}>
+                          <CollapsibleTrigger className="w-full flex items-center justify-between bg-primary/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-primary/20 transition-colors">
+                            <span>{area.area === 'Comprensión Lectora' ? '📖 Conclusiones por Nivel de Lectura' : '📋 Conclusiones por Competencia'}</span>
+                            {(isOpen ?? true) ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-3 space-y-3">
+                            {competencias.map((comp, i) => (
+                              <ConclusionDescriptiva key={i} competencia={comp} nivel={area.nivel!} />
+                            ))}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      )}
+
+                      {/* AI Analysis */}
+                      {showAI && area.respuestas && area.respuestas.length > 0 && (() => {
+                        const preguntas = getPreguntas(area.configPreguntas);
+                        if (preguntas.length === 0) return null;
+                        return (
+                          <div className="mt-3">
+                            <AIConclusiones
+                              area={area.area}
+                              nivel={gradoInfo?.nivel}
+                              grado={gradoInfo?.grado}
+                              respuestas_dadas={area.respuestas!}
+                              respuestas_correctas={preguntas.map(p => p.correcta)}
+                              puntaje={area.puntaje}
+                              nivel_logro={area.nivel}
+                              nombre_estudiante={studentName}
+                              autoGenerate
+                              onDataReady={handleAIDataReady}
+                            />
+                          </div>
+                        );
+                      })()}
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Sin evaluar aún.</p>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
 
         {/* Parent recommendations - auto-generated */}
-        {showAI && results.some(r => r.puntaje !== null) && (
+        {showAI && (results.some(r => r.puntaje !== null) || conclusionesInicial.length > 0) && (
           <Card className="shadow-card border-l-4 border-secondary">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">

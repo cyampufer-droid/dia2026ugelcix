@@ -176,19 +176,20 @@ const steps: TutorialStep[] = [
   {
     id: 'director',
     title: 'Guía para el Director',
-    subtitle: 'Configura tu Institución Educativa',
+    subtitle: 'Configura tu Institución Educativa paso a paso',
     icon: School,
     color: 'primary',
     content: (
       <div className="space-y-5">
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-base text-muted-foreground">
-          ¡Director, directora! Tu rol es clave. Tú configuras la IE y registras a tus docentes. Aquí va tu flujo completo:
+          ¡Director, directora! Tu rol es clave. Tú configuras la IE, registras docentes y supervisas los resultados. Aquí va tu flujo completo:
         </motion.p>
         {[
-          { n: '1', icon: School, title: 'Verifica tu IE', text: 'Al ingresar, revisa que los datos de tu institución educativa estén correctos (nombre, código modular, distrito).' },
-          { n: '2', icon: Layers, title: 'Configura Niveles y Secciones', text: 'Ve a "Niveles/Grados/Secciones" y agrega los niveles (Inicial, Primaria, Secundaria), grados y secciones que tiene tu IE.' },
-          { n: '3', icon: UserPlus, title: 'Registra a tus Docentes', text: 'Ve a "Personal" y registra a cada docente con su DNI, nombre completo y asígnale su grado y sección.' },
-          { n: '4', icon: BarChart3, title: 'Consulta Resultados', text: 'Una vez que los docentes digiten las respuestas, podrás ver los resultados consolidados de toda tu IE.' },
+          { n: '1', icon: School, title: '🏫 Verifica tu Institución', text: 'Al ingresar verás tu Dashboard con estadísticas. Ve a "Institución" y revisa nombre, código modular, distrito y dirección. Corrige lo necesario y guarda.' },
+          { n: '2', icon: Layers, title: '📚 Configura Niveles, Grados y Secciones', text: 'Ve a "Niveles y Grados". Selecciona nivel (Inicial/Primaria/Secundaria), grado y agrega secciones. En Inicial: texto libre (ej: "Ositos"). En Primaria/Secundaria: opciones estandarizadas (PIP, A, B, C…). ¡Sin esto no podrás asignar docentes!' },
+          { n: '3', icon: UserPlus, title: '👨‍🏫 Registra a tus Docentes y Subdirectores', text: 'Ve a "Personal". Puedes registrar uno a uno (DNI + nombre + cargo + grado/sección) o hacer carga masiva CSV. El sistema crea su cuenta automáticamente con DNI como usuario y contraseña.' },
+          { n: '4', icon: FileText, title: '📥 Descarga Evaluaciones de Entrada', text: 'Si tienes Primaria, en tu Dashboard encontrarás los cuadernillos de Matemática y Comunicación por grado. Descarga, imprime y distribuye a tus docentes para aplicar en aula.' },
+          { n: '5', icon: BarChart3, title: '📊 Supervisa los Resultados', text: 'En "Resultados" verás los datos de toda tu IE: por estudiante, por sección, por grado y por nivel. Filtra por área (Matemática/Lectura). Identifica qué aulas o grados necesitan más acompañamiento.' },
         ].map((step, i) => (
           <motion.div
             key={step.n}
@@ -204,25 +205,43 @@ const steps: TutorialStep[] = [
             </div>
           </motion.div>
         ))}
+
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.1 }}
+          className="rounded-2xl border-2 border-secondary/30 bg-secondary/5 p-5"
+        >
+          <p className="font-bold text-sm mb-2">🗂️ Resumen de Menú del Director:</p>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            {['🏫 Institución', '📚 Niveles y Grados', '👨‍🏫 Personal', '📊 Resultados', '📥 Evaluaciones', '👤 Mi Perfil'].map(m => (
+              <span key={m} className="px-3 py-1.5 rounded-lg bg-card border border-border font-semibold">{m}</span>
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3 }}
+          className="bg-destructive/10 border-l-4 border-destructive rounded-r-xl p-4"
+        >
+          <p className="text-sm">⚠️ <strong>Importante:</strong> Configura primero los Niveles y Grados ANTES de registrar personal. Sin estructura académica no se pueden asignar docentes a secciones.</p>
+        </motion.div>
       </div>
     ),
   },
   {
     id: 'docente',
     title: 'Guía para el Docente',
-    subtitle: 'Registra estudiantes y digita respuestas',
+    subtitle: 'Registra estudiantes, digita respuestas y consulta resultados',
     icon: GraduationCap,
     color: 'primary',
     content: (
       <div className="space-y-5">
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-base text-muted-foreground">
-          ¡Profe! Tu trabajo es fundamental. Tú registras a tus estudiantes y digitas sus respuestas. ¡Es más fácil de lo que crees!
+          ¡Profe! Tu trabajo es fundamental. Tú registras a tus estudiantes, aplicas la evaluación, digitas las respuestas y consultas los resultados. ¡Es más fácil de lo que crees!
         </motion.p>
         {[
-          { n: '1', icon: UserPlus, title: 'Registra Estudiantes', text: 'Ve a "Estudiantes" y agrega a cada uno con su DNI y nombre completo. También puedes cargar una lista Excel.' },
-          { n: '2', icon: FileText, title: 'Aplica la Evaluación', text: 'Imprime o proyecta la prueba y que tus estudiantes la desarrollen en el aula. Las pruebas están disponibles en la sección de descarga.' },
-          { n: '3', icon: PenTool, title: 'Digita las Respuestas', text: 'Ve a "Digitación", selecciona el área (Matemática o Lectura), y marca la respuesta de cada estudiante. El sistema calcula el puntaje automáticamente.' },
-          { n: '4', icon: Eye, title: 'Revisa los Resultados', text: 'En "Resultados" verás el nivel de logro de cada estudiante (C, B, A, AD) y gráficos de tu aula.' },
+          { n: '1', icon: UserPlus, title: '📋 Registra a tus Estudiantes', text: 'Ve a "Estudiantes" y agrega a cada uno con su DNI y nombre completo. También puedes cargar una lista Excel/CSV. Cada estudiante queda vinculado automáticamente a tu grado y sección. ¡Se crea su cuenta con DNI como usuario y contraseña!' },
+          { n: '2', icon: FileText, title: '📄 Aplica la Evaluación en Aula', text: 'Descarga e imprime los cuadernillos de evaluación desde tu Dashboard (Primaria). Distribuye a los estudiantes. Ellos marcan sus respuestas en papel. Puedes aplicar Matemática, Lectura y Socioemocional en distintos momentos.' },
+          { n: '3', icon: PenTool, title: '✏️ Digita las Respuestas', text: 'Ve a "Digitación", selecciona el área (Matemática, Lectura o Socioemocional). Verás una grilla con todos tus estudiantes y las preguntas. Marca la respuesta de cada uno (A, B, C o D). El sistema calcula puntaje y nivel de logro automáticamente: C (0-10), B (11-14), A (15-18), AD (19-20).' },
+          { n: '4', icon: Eye, title: '📊 Consulta los Resultados', text: 'En "Resultados" verás la tabla con nombre, puntaje y nivel de logro de cada estudiante. Gráficos de distribución por nivel de logro. Filtra por área para analizar Matemática o Lectura por separado.' },
+          { n: '5', icon: Award, title: '📑 Boletas y Conclusiones', text: 'Cada estudiante tiene su Boleta de Resultados con conclusiones descriptivas por competencia: qué logros tiene, qué dificultades presenta y cómo puede mejorar. ¡Comparte las credenciales (DNI) con los padres para que vean los resultados!' },
         ].map((step, i) => (
           <motion.div
             key={step.n}
@@ -238,10 +257,85 @@ const steps: TutorialStep[] = [
             </div>
           </motion.div>
         ))}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
+
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.1 }}
+          className="rounded-2xl border-2 border-accent/30 bg-accent/5 p-5"
+        >
+          <p className="font-bold text-sm mb-2">🗂️ Resumen de Menú del Docente:</p>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            {['👩‍🎓 Estudiantes', '✏️ Digitación', '📊 Resultados', '📥 Evaluaciones', '👤 Mi Perfil'].map(m => (
+              <span key={m} className="px-3 py-1.5 rounded-lg bg-card border border-border font-semibold">{m}</span>
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3 }}
           className="bg-accent/10 border-l-4 border-accent rounded-r-xl p-4"
         >
           <p className="text-sm">💡 <strong>Tip:</strong> Si no tienes internet al momento de digitar, ¡no te preocupes! La plataforma guarda los datos localmente y los sincroniza cuando vuelvas a estar conectado. 📶</p>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}
+          className="bg-destructive/10 border-l-4 border-destructive rounded-r-xl p-4"
+        >
+          <p className="text-sm">⚠️ <strong>Importante:</strong> Verifica cuidadosamente las respuestas antes de guardar. Una alternativa incorrecta afecta el puntaje total del estudiante.</p>
+        </motion.div>
+      </div>
+    ),
+  },
+  {
+    id: 'padres',
+    title: 'Guía para Padres de Familia',
+    subtitle: 'Consulta los resultados de tu hijo/a',
+    icon: Users,
+    color: 'primary',
+    content: (
+      <div className="space-y-5">
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-lg text-foreground font-semibold">
+          ¡Estimado padre, madre o apoderado! 👨‍👩‍👧 La plataforma DIA 2026 le permite conocer los resultados de aprendizaje de su hijo/a de manera clara y sencilla.
+        </motion.p>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+          className="rounded-2xl border-2 border-secondary/30 bg-secondary/5 p-5"
+        >
+          <p className="font-bold text-sm mb-3">🔐 ¿Cómo obtener acceso?</p>
+          <p className="text-sm text-muted-foreground">El <strong>docente de aula</strong> o el <strong>director de la IE</strong> le proporcionará las credenciales de acceso de su hijo/a. El usuario y contraseña es el <strong>DNI del estudiante</strong> (8 dígitos).</p>
+        </motion.div>
+
+        {[
+          { n: '1', icon: Monitor, title: '🌐 Ingrese a la Plataforma', text: 'Abra el navegador en su celular, tablet o computadora e ingrese a: dia2026ugelcix.lovable.app. Escriba el DNI de su hijo/a como usuario y contraseña. Acepte el aviso de privacidad y presione "Ingresar".' },
+          { n: '2', icon: Eye, title: '📊 Vea la Boleta de Resultados', text: 'Al ingresar, encontrará la boleta con los puntajes en cada área evaluada: Matemática, Comprensión Lectora y Socioemocional. Cada área muestra el puntaje obtenido y el nivel de logro alcanzado con colores claros.' },
+          { n: '3', icon: Award, title: '📋 Entienda los Niveles de Logro', text: 'C (Rojo) = En Inicio: necesita mucho apoyo. B (Amarillo) = En Proceso: va avanzando pero necesita refuerzo. A (Verde) = Logro Esperado: alcanzó lo esperado para su grado. AD (Azul) = Destacado: supera lo esperado. ¡Excelente!' },
+          { n: '4', icon: BookOpen, title: '📖 Lea las Conclusiones Descriptivas', text: 'Para cada área, la boleta incluye conclusiones que le explican: ¿Qué logros demuestra? ¿Qué dificultades tiene? ¿Cómo puede mejorar? Estas conclusiones son específicas según el nivel alcanzado por su hijo/a.' },
+          { n: '5', icon: Star, title: '💡 Recomendaciones para el Hogar', text: 'La plataforma genera recomendaciones personalizadas para que usted apoye el aprendizaje desde casa. Actividades prácticas, lectura compartida, juegos matemáticos y estrategias para fortalecer la autoestima y motivación de su hijo/a.' },
+        ].map((step, i) => (
+          <motion.div
+            key={step.n}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 + i * 0.15 }}
+            className="flex gap-4 items-start"
+          >
+            <AnimatedNumber n={step.n} />
+            <div>
+              <p className="font-bold flex items-center gap-2"><step.icon className="h-4 w-4 text-secondary" /> {step.title}</p>
+              <p className="text-sm text-muted-foreground mt-1">{step.text}</p>
+            </div>
+          </motion.div>
+        ))}
+
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}
+          className="rounded-2xl gradient-primary text-primary-foreground p-5 text-center"
+        >
+          <Users className="h-8 w-8 mx-auto text-secondary mb-2" />
+          <p className="font-bold">¡Su participación es fundamental!</p>
+          <p className="text-sm opacity-90 mt-1">Los estudiantes que cuentan con el apoyo de su familia tienen mejores resultados de aprendizaje. Revise los resultados junto a su hijo/a y motívelo a seguir mejorando.</p>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4 }}
+          className="bg-accent/10 border-l-4 border-accent rounded-r-xl p-4"
+        >
+          <p className="text-sm">💡 <strong>Tip:</strong> Si tiene dificultades para ingresar, comuníquese con el docente de aula o con la dirección de la IE. También puede llamar al soporte técnico: <strong>979 915 310</strong>.</p>
         </motion.div>
       </div>
     ),

@@ -77,9 +77,9 @@ Deno.serve(async (req) => {
     }
 
     // Create evaluation lookup map
-    const evalMap = new Map();
-    evaluaciones.forEach(eval => {
-      evalMap.set(eval.id, eval.config_preguntas?.respuestas_correctas || []);
+    const evaluationMap = new Map();
+    evaluaciones.forEach(evaluation => {
+      evaluationMap.set(evaluation.id, evaluation.config_preguntas?.respuestas_correctas || []);
     });
 
     const updates = [];

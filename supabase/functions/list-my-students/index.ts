@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     const { data: docenteGrados } = await adminClient
       .from("docente_grados")
       .select("grado_seccion_id")
-      .eq("user_id", caller.id);
+      .eq("user_id", callerId);
 
     const multiGradoIds = (docenteGrados || []).map((dg: any) => dg.grado_seccion_id);
 

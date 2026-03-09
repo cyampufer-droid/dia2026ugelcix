@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      conclusiones_inicial: {
+        Row: {
+          area: string
+          competencia: string
+          created_at: string
+          dificultades: string
+          docente_user_id: string | null
+          estudiante_id: string
+          id: string
+          logros: string
+          mejora: string
+          nivel_logro: string
+          updated_at: string
+        }
+        Insert: {
+          area: string
+          competencia: string
+          created_at?: string
+          dificultades?: string
+          docente_user_id?: string | null
+          estudiante_id: string
+          id?: string
+          logros?: string
+          mejora?: string
+          nivel_logro?: string
+          updated_at?: string
+        }
+        Update: {
+          area?: string
+          competencia?: string
+          created_at?: string
+          dificultades?: string
+          docente_user_id?: string | null
+          estudiante_id?: string
+          id?: string
+          logros?: string
+          mejora?: string
+          nivel_logro?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conclusiones_inicial_estudiante_id_fkey"
+            columns: ["estudiante_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       docente_grados: {
         Row: {
           created_at: string

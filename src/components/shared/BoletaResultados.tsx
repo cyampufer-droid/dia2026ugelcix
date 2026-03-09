@@ -690,7 +690,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
         )}
 
         {/* Parent recommendations - auto-generated */}
-        {showAI && results.some(r => r.puntaje !== null) && (
+        {showAI && (results.some(r => r.puntaje !== null) || conclusionesInicial.length > 0) && (
           <Card className="shadow-card border-l-4 border-secondary">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">

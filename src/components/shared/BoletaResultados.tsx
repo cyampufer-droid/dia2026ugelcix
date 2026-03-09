@@ -329,7 +329,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
     }).join('');
 
     // Parent recommendations HTML for PDF
-    const parentRecsHtml = parentRecs ? `<div style="border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:12px;page-break-inside:avoid;border-left:4px solid #f59e0b;">
+    const parentRecsHtml = parentRecs ? `<div style="border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:12px;border-left:4px solid #f59e0b;">
       <h2 style="font-size:14px;margin-bottom:8px;">👨‍👩‍👧 Recomendaciones para Padres de Familia</h2>
       <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;padding:8px;font-size:10px;margin-bottom:8px;">
         <p>${parentRecs.introduccion}</p>

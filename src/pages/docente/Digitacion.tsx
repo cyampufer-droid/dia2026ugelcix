@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Save, Wifi, WifiOff, CloudUpload, Loader2, BookOpen, Calculator, Heart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import DigitacionGrid, { type Student } from '@/components/docente/DigitacionGrid';
+import DigitacionInicial from '@/components/docente/DigitacionInicial';
 
 const AREA_ICONS: Record<string, typeof Calculator> = {
   'Matemática': Calculator,

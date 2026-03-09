@@ -936,15 +936,137 @@ const GuiaUsuario = () => {
         {/* ════════════════════════════════════════════════════════════ */}
         <SectionTitle id="padre" icon={Users} number="11" title="MÓDULO DEL PADRE DE FAMILIA" />
 
-        <p>Los padres de familia pueden consultar los resultados de sus hijos accediendo con las credenciales proporcionadas por la IE.</p>
+        <p className="mb-4">Los padres, madres y apoderados son actores fundamentales en el proceso educativo. La plataforma DIA 2026 les permite conocer los resultados de aprendizaje de sus hijos/as y recibir orientaciones para apoyarlos desde el hogar.</p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
-          <FeatureBox icon={Eye} title="Funciones disponibles" items={[
-            'Ver la boleta de resultados del estudiante',
-            'Consultar recomendaciones pedagógicas',
-            'Apoyar el aprendizaje desde el hogar',
+        <div className="rounded-2xl border-2 border-secondary/20 bg-secondary/5 p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center">
+              <Users className="h-6 w-6 text-secondary" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg">¿Cómo obtiene acceso el Padre de Familia?</h3>
+              <p className="text-sm text-muted-foreground">Credenciales proporcionadas por la IE</p>
+            </div>
+          </div>
+          <p className="text-sm mb-3">
+            El <strong>docente de aula</strong> o el <strong>director de la institución educativa</strong> entrega las credenciales de acceso del estudiante al padre de familia. El usuario y contraseña son el <strong>DNI del estudiante</strong> (8 dígitos).
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="rounded-xl bg-card border border-border p-4 text-center">
+              <UserCog className="h-6 w-6 text-accent mx-auto mb-2" />
+              <p className="font-bold text-sm">Usuario</p>
+              <p className="text-xl font-black text-accent">DNI del estudiante</p>
+              <p className="text-xs text-muted-foreground">8 dígitos</p>
+            </div>
+            <div className="rounded-xl bg-card border border-border p-4 text-center">
+              <Lock className="h-6 w-6 text-secondary mx-auto mb-2" />
+              <p className="font-bold text-sm">Contraseña</p>
+              <p className="text-xl font-black text-secondary">DNI del estudiante</p>
+              <p className="text-xs text-muted-foreground">8 dígitos (primera vez)</p>
+            </div>
+          </div>
+        </div>
+
+        <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
+          <KeyRound className="h-5 w-5 text-secondary" /> 11.1 Cómo ingresar a la plataforma
+        </h3>
+        <p className="mb-2">Siga estos pasos desde su celular, tablet o computadora:</p>
+
+        <div className="space-y-3 pl-2 mb-4">
+          <StepCard step={1} title="Abra su navegador" description="Ingrese a dia2026ugelcix.lovable.app desde Chrome, Firefox, Edge o Safari" />
+          <StepCard step={2} title="Escriba el DNI de su hijo/a como usuario" description="Los 8 dígitos del Documento Nacional de Identidad del estudiante" />
+          <StepCard step={3} title="Escriba el mismo DNI como contraseña" description="La primera vez, la contraseña es el mismo DNI" />
+          <StepCard step={4} title="Acepte el aviso de privacidad" description="Marque la casilla de aceptación del tratamiento de datos personales (Ley N.° 29733)" />
+          <StepCard step={5} title='Presione "Ingresar"' description="El sistema lo llevará a la boleta de resultados del estudiante" />
+        </div>
+
+        <Tip emoji="📱" title="Acceso desde celular">
+          <p>La plataforma funciona perfectamente desde cualquier celular con internet. Puede instalarla como aplicación: en Chrome, busque el ícono <strong>"Instalar"</strong> en la barra de direcciones para tener acceso directo desde su pantalla de inicio.</p>
+        </Tip>
+
+        <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
+          <Eye className="h-5 w-5 text-secondary" /> 11.2 Boleta de Resultados
+        </h3>
+        <p className="mb-3">Al ingresar, encontrará la <strong>Boleta de Resultados</strong> con información detallada del rendimiento de su hijo/a:</p>
+
+        <div className="rounded-xl border-2 border-secondary/10 bg-card p-5 mb-4">
+          <h4 className="font-bold text-sm mb-3">📋 ¿Qué información contiene la Boleta?</h4>
+          <ul className="text-sm space-y-2">
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Puntaje por área:</strong> resultado numérico en Matemática, Comprensión Lectora y Socioemocional</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Nivel de logro:</strong> <span className="text-destructive font-bold">C (En Inicio)</span>, <span className="text-warning font-bold">B (En Proceso)</span>, <span className="text-accent font-bold">A (Logro Esperado)</span>, <span className="text-primary font-bold">AD (Destacado)</span></span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Conclusiones descriptivas:</strong> explicación detallada de logros, dificultades y sugerencias de mejora</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span><strong>Niveles de lectura:</strong> en Comprensión Lectora se desagregan los resultados por nivel Literal, Inferencial y Crítico Reflexivo</span></li>
+          </ul>
+        </div>
+
+        <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
+          <Award className="h-5 w-5 text-secondary" /> 11.3 Entender los Niveles de Logro
+        </h3>
+        <p className="mb-3">Los niveles de logro indican el avance del estudiante respecto a las competencias de su grado:</p>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
+          <div className="rounded-xl p-4 text-center border-2 border-destructive/30 bg-destructive/5">
+            <div className="w-10 h-10 rounded-full bg-destructive/20 mx-auto mb-2 flex items-center justify-center text-lg font-black text-destructive">C</div>
+            <p className="font-bold text-xs text-destructive">En Inicio</p>
+            <p className="text-xs text-muted-foreground mt-1">Necesita mucho apoyo y acompañamiento</p>
+          </div>
+          <div className="rounded-xl p-4 text-center border-2 border-warning/30 bg-warning/5">
+            <div className="w-10 h-10 rounded-full bg-warning/20 mx-auto mb-2 flex items-center justify-center text-lg font-black text-warning">B</div>
+            <p className="font-bold text-xs text-warning">En Proceso</p>
+            <p className="text-xs text-muted-foreground mt-1">Avanza, pero requiere refuerzo en casa</p>
+          </div>
+          <div className="rounded-xl p-4 text-center border-2 border-accent/30 bg-accent/5">
+            <div className="w-10 h-10 rounded-full bg-accent/20 mx-auto mb-2 flex items-center justify-center text-lg font-black text-accent">A</div>
+            <p className="font-bold text-xs text-accent">Logro Esperado</p>
+            <p className="text-xs text-muted-foreground mt-1">Alcanzó el nivel esperado para su grado</p>
+          </div>
+          <div className="rounded-xl p-4 text-center border-2 border-primary/30 bg-primary/5">
+            <div className="w-10 h-10 rounded-full bg-primary/20 mx-auto mb-2 flex items-center justify-center text-sm font-black text-primary">AD</div>
+            <p className="font-bold text-xs text-primary">Destacado</p>
+            <p className="text-xs text-muted-foreground mt-1">¡Supera lo esperado! Excelente</p>
+          </div>
+        </div>
+
+        <h3 className="font-bold text-lg mt-6 mb-3 flex items-center gap-2">
+          <BookOpen className="h-5 w-5 text-secondary" /> 11.4 Recomendaciones para el Hogar
+        </h3>
+        <p className="mb-3">La plataforma genera <strong>recomendaciones personalizadas</strong> según el nivel de logro alcanzado. Estas le ayudarán a apoyar el aprendizaje desde casa:</p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <FeatureBox icon={ClipboardList} title="Matemática" items={[
+            'Juegos con números y operaciones en casa',
+            'Resolución de problemas cotidianos',
+            'Uso de materiales concretos (semillas, tapas)',
+            'Práctica con situaciones de compra/venta',
+          ]} />
+          <FeatureBox icon={BookOpen} title="Comprensión Lectora" color="secondary" items={[
+            'Lectura compartida diaria (cuentos, noticias)',
+            'Hacer preguntas sobre lo leído',
+            'Visitar la biblioteca o intercambiar libros',
+            'Inventar historias juntos',
           ]} />
         </div>
+
+        <div className="rounded-xl border-2 border-accent/20 bg-accent/5 p-5 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Star className="h-5 w-5 text-accent" />
+            <h4 className="font-bold text-sm">Apoyo Socioemocional</h4>
+          </div>
+          <ul className="text-sm space-y-1.5">
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span>Converse diariamente con su hijo/a sobre cómo se siente</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span>Celebre sus logros, por pequeños que sean</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span>Establezca rutinas y horarios de estudio</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="h-4 w-4 text-accent shrink-0 mt-0.5" /><span>Fomente la autonomía y la responsabilidad</span></li>
+          </ul>
+        </div>
+
+        <Warning>
+          <ul className="space-y-1.5">
+            <li>Si no puede ingresar, comuníquese con el <strong>docente de aula</strong> o con la <strong>dirección de la IE</strong> para verificar las credenciales.</li>
+            <li>Los resultados son <strong>confidenciales</strong>. No los comparta con personas ajenas al proceso educativo.</li>
+            <li>Para soporte técnico puede llamar al <strong>979 915 310</strong> o escribir a <strong>cyampufer@ugelchiclayo.edu.pe</strong>.</li>
+          </ul>
+        </Warning>
 
         {/* ════════════════════════════════════════════════════════════ */}
         {/*  12. MI PERFIL                                             */}

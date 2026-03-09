@@ -451,7 +451,9 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
     return <p className="text-center text-muted-foreground py-8">Cargando boleta...</p>;
   }
 
-  if (results.every(r => r.puntaje === null)) {
+  const isInicial = gradoInfo?.nivel === 'Inicial';
+
+  if (!isInicial && results.every(r => r.puntaje === null) && conclusionesInicial.length === 0) {
     return (
       <Card className="shadow-card">
         <CardContent className="py-8 text-center text-muted-foreground">

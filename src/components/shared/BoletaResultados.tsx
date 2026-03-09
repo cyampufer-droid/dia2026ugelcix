@@ -138,6 +138,44 @@ const ConclusionDescriptiva = ({ competencia, nivel }: { competencia: Competenci
   );
 };
 
+const AREAS_INICIAL = [
+  {
+    area: 'Matemática',
+    icon: Calculator,
+    competencias: [
+      'Resuelve problemas de cantidad',
+      'Resuelve problemas de forma, movimiento y localización',
+    ],
+  },
+  {
+    area: 'Comunicación',
+    icon: BookOpen,
+    competencias: [
+      'Se comunica oralmente en su lengua materna',
+      'Lee diversos tipos de textos en su lengua materna',
+      'Escribe diversos tipos de textos en su lengua materna',
+      'Crea proyectos desde los lenguajes artísticos',
+    ],
+  },
+  {
+    area: 'Personal Social - Habilidades Socioemocionales',
+    icon: Heart,
+    competencias: [
+      'Construye su identidad',
+      'Convive y participa democráticamente en la búsqueda del bien común',
+    ],
+  },
+];
+
+interface ConclusionInicialData {
+  area: string;
+  competencia: string;
+  logros: string;
+  dificultades: string;
+  mejora: string;
+  nivel_logro: string;
+}
+
 const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Props) => {
   const [results, setResults] = useState<AreaResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -151,6 +189,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
   const boletaRef = useRef<HTMLDivElement>(null);
   const [aiAnalysis, setAiAnalysis] = useState<Record<string, ConclusionesIA>>({});
   const [parentRecs, setParentRecs] = useState<RecomendacionesPadresData | null>(null);
+  const [conclusionesInicial, setConclusionesInicial] = useState<ConclusionInicialData[]>([]);
 
   const handleAIDataReady = useCallback((area: string, data: ConclusionesIA) => {
     setAiAnalysis(prev => ({ ...prev, [area]: data }));

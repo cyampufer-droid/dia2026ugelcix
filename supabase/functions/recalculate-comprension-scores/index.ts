@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
 
     // Process each result
     for (const resultado of resultados) {
-      const correctAnswers = evalMap.get(resultado.evaluacion_id);
+      const correctAnswers = evaluationMap.get(resultado.evaluacion_id);
       
       if (!correctAnswers || correctAnswers.length === 0) {
         console.log(`No correct answers found for evaluation ${resultado.evaluacion_id}`);

@@ -16,44 +16,71 @@ const DirectorDashboard = () => {
     const load = async () => {
       if (!profile?.institucion_id) return;
 
-      const instId = profile.institucion_id;
+      try {
+        // Get institution levels first
+        const { data: nivelesRes } = await supabase
+          .from('niveles_grados')
+          .select('id, nivel')
+          .eq('institucion_id', profile.institucion_id);
+        
+        const nivelesData = nivelesRes || [];
+        setTienePrimaria(nivelesData.some(n => n.nivel === 'Primaria'));
 
-      // Get all profiles in institution with their roles
-      const [nivelesRes, rolesRes, estudiantesRes, evalsRes, pipRes] = await Promise.all([
-        supabase.from('niveles_grados').select('id, nivel', { count: 'exact' }).eq('institucion_id', instId),
-        supabase.from('profiles').select('id, user_id').eq('institucion_id', instId).not('user_id', 'is', null),
-        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('institucion_id', instId).not('grado_seccion_id', 'is', null),
-        supabase.from('evaluaciones').select('id', { count: 'exact', head: true }),
-        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('institucion_id', instId).eq('is_pip', true),
-      ]);
+        // Optimized: Use RPC for director stats
+        const { data: statsData, error } = await supabase.rpc('get_director_stats', { 
+          _institucion_id: profile.institucion_id 
+        });
 
-      const nivelesData = nivelesRes.data ?? [];
-      setTienePrimaria(nivelesData.some(n => n.nivel === 'Primaria'));
+        if (!error && statsData && statsData.length > 0) {
+          const stats = statsData[0];
+          setStats({
+            aulas: Number(stats.aulas_count) || nivelesData.length,
+            directores: Number(stats.directores_count) || 0,
+            subdirectores: Number(stats.subdirectores_count) || 0,
+            docentes: Number(stats.docentes_count) || 0,
+            docentesPip: Number(stats.pip_count) || 0,
+            estudiantes: Number(stats.estudiantes_count) || 0,
+            evaluaciones: Number(stats.evaluaciones_count) || 0,
+          });
+        } else {
+          console.warn('Director RPC failed, using fallback:', error);
+          // Fallback to original method
+          const instId = profile.institucion_id;
+          const [rolesRes, estudiantesRes, evalsRes, pipRes] = await Promise.all([
+            supabase.from('profiles').select('id, user_id').eq('institucion_id', instId).not('user_id', 'is', null),
+            supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('institucion_id', instId).not('grado_seccion_id', 'is', null),
+            supabase.from('evaluaciones').select('id', { count: 'exact', head: true }),
+            supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('institucion_id', instId).eq('is_pip', true),
+          ]);
 
-      // Get roles for institution users
-      const userIds = (rolesRes.data ?? []).map(p => p.user_id).filter(Boolean) as string[];
-      let dirCount = 0, subdirCount = 0, docCount = 0;
-      if (userIds.length > 0) {
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('user_id, role')
-          .in('user_id', userIds);
-        if (roleData) {
-          dirCount = roleData.filter(r => r.role === 'director').length;
-          subdirCount = roleData.filter(r => r.role === 'subdirector').length;
-          docCount = roleData.filter(r => r.role === 'docente').length;
+          // Get roles for institution users
+          const userIds = (rolesRes.data ?? []).map(p => p.user_id).filter(Boolean) as string[];
+          let dirCount = 0, subdirCount = 0, docCount = 0;
+          if (userIds.length > 0) {
+            const { data: roleData } = await supabase
+              .from('user_roles')
+              .select('user_id, role')
+              .in('user_id', userIds);
+            if (roleData) {
+              dirCount = roleData.filter(r => r.role === 'director').length;
+              subdirCount = roleData.filter(r => r.role === 'subdirector').length;
+              docCount = roleData.filter(r => r.role === 'docente').length;
+            }
+          }
+
+          setStats({
+            aulas: nivelesData.length,
+            directores: dirCount,
+            subdirectores: subdirCount,
+            docentes: docCount,
+            docentesPip: pipRes.count ?? 0,
+            estudiantes: estudiantesRes.count ?? 0,
+            evaluaciones: evalsRes.count ?? 0,
+          });
         }
+      } catch (err) {
+        console.error('Error loading director stats:', err);
       }
-
-      setStats({
-        aulas: nivelesRes.count ?? nivelesData.length,
-        directores: dirCount,
-        subdirectores: subdirCount,
-        docentes: docCount,
-        docentesPip: pipRes.count ?? 0,
-        estudiantes: estudiantesRes.count ?? 0,
-        evaluaciones: evalsRes.count ?? 0,
-      });
     };
     load();
   }, [profile?.institucion_id]);

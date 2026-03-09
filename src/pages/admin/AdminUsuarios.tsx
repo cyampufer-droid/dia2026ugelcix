@@ -91,7 +91,11 @@ const AdminUsuarios = () => {
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
-      const data = await invokeEdgeFunction('list-users', {});
+      // Usar la versión optimizada de la Edge Function
+      const data = await invokeEdgeFunction('list-users-optimized', { 
+        limit: 1000, 
+        offset: 0 
+      });
       setUsers(data.users || []);
     } catch (err: any) {
       const msg = err.message || '';

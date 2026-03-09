@@ -62,23 +62,23 @@ const COMPETENCIAS: Record<string, Competencia[]> = {
     }},
   ],
   'Comprensión Lectora': [
-    { nombre: 'Lee diversos tipos de textos escritos en su lengua materna', conclusiones: {
-      'En Inicio': { logros: 'Obtiene información explícita ubicada en lugares evidentes del texto.', dificultades: 'Dificultades para inferir información e interpretar el sentido global.', mejora: 'Fomentar lectura diaria con textos de su interés.' },
-      'En Proceso': { logros: 'Obtiene información explícita y realiza inferencias sencillas.', dificultades: 'Requiere apoyo para inferencias complejas.', mejora: 'Diversificar tipos de textos.' },
-      'Logro Esperado': { logros: 'Obtiene e infiere información, interpreta el sentido global.', dificultades: 'Puede fortalecer evaluación crítica.', mejora: 'Lecturas argumentativas y comparativas.' },
-      'Logro Destacado': { logros: 'Comprensión profunda: obtiene información implícita y evalúa críticamente.', dificultades: 'Mínimas.', mejora: 'Lectura crítica de medios y producción de ensayos.' },
+    { nombre: 'Nivel Literal', conclusiones: {
+      'En Inicio': { logros: 'Identifica información explícita muy evidente con apoyo.', dificultades: 'Dificultades para localizar información en textos extensos.', mejora: 'Practicar lectura de textos cortos y subrayar ideas principales.' },
+      'En Proceso': { logros: 'Obtiene información explícita y relevante del texto.', dificultades: 'Dificultades al localizar detalles dispersos.', mejora: 'Ejercicios de búsqueda de información específica.' },
+      'Logro Esperado': { logros: 'Localiza y selecciona información explícita en diversas partes del texto.', dificultades: 'Puede omitir detalles secundarios sutiles.', mejora: 'Lectura de textos con estructura compleja.' },
+      'Logro Destacado': { logros: 'Excelente dominio para ubicar, seleccionar y organizar información explícita.', dificultades: 'Mínimas.', mejora: 'Análisis de textos especializados.' },
     }},
-    { nombre: 'Se comunica oralmente en su lengua materna', conclusiones: {
-      'En Inicio': { logros: 'Se expresa con vocabulario básico en situaciones familiares.', dificultades: 'Dificultades para organizar ideas y adecuar registro.', mejora: 'Espacios seguros de expresión oral.' },
-      'En Proceso': { logros: 'Expresa ideas con cierta coherencia.', dificultades: 'Requiere apoyo para argumentar.', mejora: 'Exposiciones breves y debates sencillos.' },
-      'Logro Esperado': { logros: 'Se comunica coherente y adecuadamente al propósito.', dificultades: 'Puede mejorar argumentación sostenida.', mejora: 'Debates y presentaciones formales.' },
-      'Logro Destacado': { logros: 'Domina la comunicación oral con fluidez y argumentación.', dificultades: 'Mínimas.', mejora: 'Liderazgo en proyectos y conducción de eventos.' },
+    { nombre: 'Nivel Inferencial', conclusiones: {
+      'En Inicio': { logros: 'Realiza deducciones muy básicas guiadas.', dificultades: 'Dificultades para deducir el tema y propósito del texto.', mejora: 'Hacer preguntas de qué pasaría sí o por qué.' },
+      'En Proceso': { logros: 'Deduce relaciones lógicas sencillas y el tema central.', dificultades: 'Requiere apoyo para inferencias complejas de causa-efecto.', mejora: 'Trabajar predicciones antes y durante la lectura.' },
+      'Logro Esperado': { logros: 'Infiere el tema, propósito y relaciones lógicas complejas.', dificultades: 'Puede dudar en inferencias de doble sentido.', mejora: 'Lecturas con lenguaje figurado e ironía.' },
+      'Logro Destacado': { logros: 'Deduce información implícita sutil y propósito comunicativo con precisión.', dificultades: 'Mínimas.', mejora: 'Lectura de textos literarios e históricos profundos.' },
     }},
-    { nombre: 'Escribe diversos tipos de textos en su lengua materna', conclusiones: {
-      'En Inicio': { logros: 'Escribe textos breves con ideas sencillas.', dificultades: 'Dificultades para organizar ideas coherentemente.', mejora: 'Escritura libre y guiada con temas de interés.' },
-      'En Proceso': { logros: 'Organiza algunas ideas en párrafos.', dificultades: 'Requiere apoyo para mantener coherencia en textos extensos.', mejora: 'Escritura en etapas y lectura entre pares.' },
-      'Logro Esperado': { logros: 'Escribe textos coherentes y cohesionados.', dificultades: 'Puede mejorar en textos argumentativos complejos.', mejora: 'Producción de ensayos y artículos.' },
-      'Logro Destacado': { logros: 'Produce textos de alta calidad con creatividad.', dificultades: 'Mínimas.', mejora: 'Concursos literarios y blogs escolares.' },
+    { nombre: 'Nivel Crítico Reflexivo', conclusiones: {
+      'En Inicio': { logros: 'Emite opiniones simples sobre lo leído.', dificultades: 'Dificultades para justificar su postura.', mejora: 'Fomentar la expresión de opiniones sobre cuentos.' },
+      'En Proceso': { logros: 'Opina sobre el contenido y justifica brevemente.', dificultades: 'Dificulta evaluar la forma y el contexto del texto.', mejora: 'Debatir sobre noticias y artículos breves.' },
+      'Logro Esperado': { logros: 'Evalúa el contenido, la forma y el contexto del texto, justificando su postura.', dificultades: 'Puede fortalecer contraargumentación.', mejora: 'Lecturas de opinión y ensayos cortos.' },
+      'Logro Destacado': { logros: 'Juicio crítico profundo, sustenta argumentos contrastando fuentes.', dificultades: 'Mínimas.', mejora: 'Análisis crítico de ensayos y medios de comunicación.' },
     }},
   ],
   'Habilidades Socioemocionales': [
@@ -276,7 +276,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
         </div>`;
       }).join('') : '';
 
-      return `<div style="border-left:4px solid ${borderColor};border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:12px;page-break-inside:avoid;">
+      return `<div style="border-left:4px solid ${borderColor};border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:12px;">
         <h2 style="font-size:14px;margin-bottom:8px;">${area.label}</h2>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <div><span style="color:#666;font-size:11px;">Puntaje:</span> <b style="font-size:18px;">${area.puntaje}/20</b>
@@ -294,7 +294,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
             'Logro Esperado': 'background:#dcfce7;color:#166534;border:1px solid #86efac;',
             'Logro Destacado': 'background:#dbeafe;color:#1e3a5f;border:1px solid #93c5fd;',
           };
-          return `<div style="margin-top:10px;page-break-inside:avoid;">
+          return `<div style="margin-top:10px;">
             <b style="font-size:11px;color:#6d28d9;">🤖 Análisis Personalizado</b>
             <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:6px;padding:8px;margin-top:4px;font-size:10px;">
               <p>${ai.resumen}</p>
@@ -329,7 +329,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
     }).join('');
 
     // Parent recommendations HTML for PDF
-    const parentRecsHtml = parentRecs ? `<div style="border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:12px;page-break-inside:avoid;border-left:4px solid #f59e0b;">
+    const parentRecsHtml = parentRecs ? `<div style="border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:12px;border-left:4px solid #f59e0b;">
       <h2 style="font-size:14px;margin-bottom:8px;">👨‍👩‍👧 Recomendaciones para Padres de Familia</h2>
       <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;padding:8px;font-size:10px;margin-bottom:8px;">
         <p>${parentRecs.introduccion}</p>

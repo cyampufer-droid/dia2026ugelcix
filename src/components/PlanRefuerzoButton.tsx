@@ -296,10 +296,14 @@ ${wordMeta}
                 </div>
               </section>
 
-              <div className="flex justify-center pt-4 border-t">
-                <Button onClick={handleDownloadHTML} className="gap-2">
+              <div className="flex flex-wrap justify-center gap-3 pt-4 border-t">
+                <Button onClick={handleDownloadWord} className="gap-2">
                   <Download className="h-4 w-4" />
-                  Descargar Plan (HTML/PDF)
+                  Descargar Word (editable)
+                </Button>
+                <Button onClick={handleDownloadHTML} variant="outline" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Descargar HTML/PDF
                 </Button>
               </div>
             </div>

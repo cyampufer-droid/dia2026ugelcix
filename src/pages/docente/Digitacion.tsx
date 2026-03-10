@@ -121,11 +121,28 @@ const Digitacion = () => {
   // Load students (only role=estudiante, exclude docentes)
   useEffect(() => {
     const loadStudents = async () => {
-      if (!profile?.grado_seccion_id) return;
+      if (!profile) return;
+
+      let gradoSeccionId = profile.grado_seccion_id;
+
+      // Fallback to docente_grados for Secundaria docentes
+      if (!gradoSeccionId && user) {
+        const { data: dg } = await supabase
+          .from('docente_grados')
+          .select('grado_seccion_id')
+          .eq('user_id', user.id)
+          .limit(1);
+        if (dg?.length) {
+          gradoSeccionId = dg[0].grado_seccion_id;
+        }
+      }
+
+      if (!gradoSeccionId) return;
+
       const { data: allProfiles } = await supabase
         .from('profiles')
         .select('id, user_id, nombre_completo, dni')
-        .eq('grado_seccion_id', profile.grado_seccion_id)
+        .eq('grado_seccion_id', gradoSeccionId)
         .order('nombre_completo');
       if (!allProfiles?.length) return;
 
@@ -145,7 +162,7 @@ const Digitacion = () => {
       if (students.length) setStudents(students);
     };
     loadStudents();
-  }, [profile?.grado_seccion_id]);
+  }, [profile, user]);
 
   // Load saved offline data
   useEffect(() => {

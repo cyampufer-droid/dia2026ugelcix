@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Users, School, ClipboardList, UserCog, GraduationCap, Shield, Lightbulb, FileText } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 import OnlineUsersPanel from '@/components/admin/OnlineUsersPanel';
 import LoginHistoryPanel from '@/components/admin/LoginHistoryPanel';
 

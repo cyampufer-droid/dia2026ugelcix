@@ -6,6 +6,7 @@ import { School, Users, BarChart3, MapPin, Calculator, BookOpen, Heart, FileText
 import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 const ALL_DISTRITOS = [
   'Chiclayo', 'José Leonardo Ortiz', 'La Victoria', 'Monsefú', 'Pimentel',

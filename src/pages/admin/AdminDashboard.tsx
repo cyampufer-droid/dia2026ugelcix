@@ -8,6 +8,7 @@ import OnlineUsersPanel from '@/components/admin/OnlineUsersPanel';
 import LoginHistoryPanel from '@/components/admin/LoginHistoryPanel';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     instituciones: 0, docentes: 0, estudiantes: 0, evaluaciones: 0,
     especialistas: 0, directores: 0, subdirectores: 0, pip: 0,

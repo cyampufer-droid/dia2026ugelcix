@@ -125,7 +125,7 @@ serve(async (req) => {
         .from("profiles")
         .select("id")
         .eq("institucion_id", targetInstId)
-        .not("grado_seccion_id", "is", null);
+        .limit(5000);
 
       const studentIds = (instStudents || []).map((s) => s.id);
       if (studentIds.length === 0) {
@@ -135,10 +135,17 @@ serve(async (req) => {
         );
       }
 
-      const { data: resultados } = await supabase
-        .from("resultados")
-        .select("puntaje_total, nivel_logro, evaluacion_id")
-        .in("estudiante_id", studentIds.slice(0, 500));
+      // Query in batches if >500 students
+      let allResultados: any[] = [];
+      for (let i = 0; i < studentIds.length; i += 500) {
+        const batch = studentIds.slice(i, i + 500);
+        const { data: batchRes } = await supabase
+          .from("resultados")
+          .select("puntaje_total, nivel_logro, evaluacion_id")
+          .in("estudiante_id", batch)
+          .limit(5000);
+        if (batchRes) allResultados = allResultados.concat(batchRes);
+      }
 
       const { data: evaluaciones } = await supabase
         .from("evaluaciones")

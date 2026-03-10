@@ -84,6 +84,7 @@ const DirectorDashboard = () => {
             docentesPip: pipRes.count ?? 0,
             estudiantes: estudiantesRes.count ?? 0,
             evaluaciones: evalsRes.count ?? 0,
+            tieneResultados: false,
           });
         }
       } catch (err) {

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import StatCard from '@/components/StatCard';
-import { School, Users, BarChart3, MapPin, Calculator, BookOpen, Heart } from 'lucide-react';
+import { School, Users, BarChart3, MapPin, Calculator, BookOpen, Heart, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 

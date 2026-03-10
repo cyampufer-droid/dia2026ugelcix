@@ -31,9 +31,10 @@ interface Props {
   institucionIdOverride?: string;
   gradoSeccionIdOverride?: string;
   compact?: boolean;
+  disabled?: boolean;
 }
 
-const PlanRefuerzoButton = ({ tipo, label, institucionIdOverride, gradoSeccionIdOverride, compact }: Props) => {
+const PlanRefuerzoButton = ({ tipo, label, institucionIdOverride, gradoSeccionIdOverride, compact, disabled }: Props) => {
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<PlanData | null>(null);
   const [open, setOpen] = useState(false);
@@ -153,7 +154,7 @@ const PlanRefuerzoButton = ({ tipo, label, institucionIdOverride, gradoSeccionId
     <>
       <Button
         onClick={handleGenerate}
-        disabled={loading}
+        disabled={loading || disabled}
         className="gap-2"
         variant="outline"
         size={compact ? 'sm' : 'lg'}

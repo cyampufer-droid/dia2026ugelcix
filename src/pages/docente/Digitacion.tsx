@@ -50,7 +50,7 @@ const Digitacion = () => {
   const [saving, setSaving] = useState(false);
   const [nivelDocente, setNivelDocente] = useState<string | null>(null);
   const { toast } = useToast();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const { isOnline, pendingCount, isSyncing, syncToCloud, refreshPendingCount } = useOfflineSync();
 
   // Load evaluaciones matching docente's grado

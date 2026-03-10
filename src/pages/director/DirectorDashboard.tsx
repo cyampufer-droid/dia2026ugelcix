@@ -109,10 +109,12 @@ const DirectorDashboard = () => {
         <StatCard title="Evaluaciones" value={String(stats.evaluaciones)} icon={ClipboardList} variant="warning" href="/director/resultados" />
       </div>
 
-      <div className="bg-card rounded-xl border p-6 shadow-card">
-        <h2 className="text-lg font-semibold mb-3 text-foreground">Herramientas de Gestión Pedagógica</h2>
-        <PlanRefuerzoButton tipo="institucional" label="Plan de Refuerzo Escolar Institucional" />
-      </div>
+      {stats.tieneResultados && (
+        <div className="bg-card rounded-xl border p-6 shadow-card">
+          <h2 className="text-lg font-semibold mb-3 text-foreground">Herramientas de Gestión Pedagógica</h2>
+          <PlanRefuerzoButton tipo="institucional" label="Plan de Refuerzo Escolar Institucional" />
+        </div>
+      )}
 
       {tienePrimaria && <EvaluacionesDownloadCard />}
 

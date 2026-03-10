@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, School, BookOpen, ClipboardList,
-  BarChart3, LogOut, GraduationCap, UserCog, Building2, FileSpreadsheet, UserCircle
+  BarChart3, LogOut, GraduationCap, UserCog, Building2, FileSpreadsheet, UserCircle, FileText
 } from 'lucide-react';
 import {
   Sidebar,

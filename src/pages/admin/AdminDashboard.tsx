@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Users, School, ClipboardList, UserCog, GraduationCap, Shield, Lightbulb } from 'lucide-react';
+import { Users, School, ClipboardList, UserCog, GraduationCap, Shield, Lightbulb, FileText } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 import OnlineUsersPanel from '@/components/admin/OnlineUsersPanel';
 import LoginHistoryPanel from '@/components/admin/LoginHistoryPanel';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     instituciones: 0, docentes: 0, estudiantes: 0, evaluaciones: 0,
     especialistas: 0, directores: 0, subdirectores: 0, pip: 0,
@@ -81,6 +84,14 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <OnlineUsersPanel />
         <LoginHistoryPanel />
+      </div>
+
+      <div className="bg-card rounded-xl border p-6 shadow-card">
+        <h2 className="text-lg font-semibold mb-3 text-foreground">Herramientas Pedagógicas</h2>
+        <Button variant="outline" size="lg" className="gap-2" onClick={() => navigate('/admin/planes-refuerzo')}>
+          <FileText className="h-4 w-4" />
+          Planes de Refuerzo Escolar
+        </Button>
       </div>
 
       <div className="bg-card rounded-xl border border-border p-6 shadow-card">

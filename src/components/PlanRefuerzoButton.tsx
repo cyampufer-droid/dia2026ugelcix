@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, Download, Loader2, X } from 'lucide-react';
+import { FileText, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
@@ -28,9 +28,12 @@ interface PlanData {
 interface Props {
   tipo: 'institucional' | 'aula';
   label: string;
+  institucionIdOverride?: string;
+  gradoSeccionIdOverride?: string;
+  compact?: boolean;
 }
 
-const PlanRefuerzoButton = ({ tipo, label }: Props) => {
+const PlanRefuerzoButton = ({ tipo, label, institucionIdOverride, gradoSeccionIdOverride, compact }: Props) => {
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<PlanData | null>(null);
   const [open, setOpen] = useState(false);
@@ -38,7 +41,10 @@ const PlanRefuerzoButton = ({ tipo, label }: Props) => {
   const handleGenerate = async () => {
     setLoading(true);
     try {
-      const data = await invokeEdgeFunction<PlanData>('generate-plan-refuerzo', { tipo });
+      const body: Record<string, unknown> = { tipo };
+      if (institucionIdOverride) body.institucion_id_override = institucionIdOverride;
+      if (gradoSeccionIdOverride) body.grado_seccion_id_override = gradoSeccionIdOverride;
+      const data = await invokeEdgeFunction<PlanData>('generate-plan-refuerzo', body);
       setPlan(data);
       setOpen(true);
     } catch (err: any) {
@@ -51,7 +57,7 @@ const PlanRefuerzoButton = ({ tipo, label }: Props) => {
   const handleDownloadHTML = () => {
     if (!plan) return;
     const titulo = tipo === 'institucional' ? 'Plan de Refuerzo Escolar Institucional' : 'Plan de Refuerzo Escolar de Aula';
-    
+
     const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -150,23 +156,22 @@ const PlanRefuerzoButton = ({ tipo, label }: Props) => {
         disabled={loading}
         className="gap-2"
         variant="outline"
-        size="lg"
+        size={compact ? 'sm' : 'lg'}
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-        {loading ? 'Generando plan...' : label}
+        {loading ? 'Generando...' : label}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>{tipo === 'institucional' ? 'Plan de Refuerzo Escolar Institucional' : 'Plan de Refuerzo Escolar de Aula'}</span>
+            <DialogTitle>
+              {tipo === 'institucional' ? 'Plan de Refuerzo Escolar Institucional' : 'Plan de Refuerzo Escolar de Aula'}
             </DialogTitle>
           </DialogHeader>
 
           {plan && (
             <div className="space-y-6 text-sm">
-              {/* Datos informativos */}
               <section>
                 <h3 className="text-base font-semibold text-primary mb-2">I. Datos Informativos</h3>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-1 bg-muted/50 p-4 rounded-lg">
@@ -179,7 +184,6 @@ const PlanRefuerzoButton = ({ tipo, label }: Props) => {
                 </div>
               </section>
 
-              {/* Diagnóstico */}
               <section>
                 <h3 className="text-base font-semibold text-primary mb-2">II. Diagnóstico</h3>
                 <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-4 rounded-lg">
@@ -187,7 +191,6 @@ const PlanRefuerzoButton = ({ tipo, label }: Props) => {
                 </div>
               </section>
 
-              {/* Objetivos */}
               <section>
                 <h3 className="text-base font-semibold text-primary mb-2">III. Objetivos</h3>
                 <ul className="list-disc list-inside space-y-1 text-foreground">
@@ -195,7 +198,6 @@ const PlanRefuerzoButton = ({ tipo, label }: Props) => {
                 </ul>
               </section>
 
-              {/* Competencias */}
               <section>
                 <h3 className="text-base font-semibold text-primary mb-2">IV. Competencias Priorizadas</h3>
                 <div className="border rounded-lg overflow-hidden">
@@ -208,7 +210,6 @@ const PlanRefuerzoButton = ({ tipo, label }: Props) => {
                 </div>
               </section>
 
-              {/* Estrategias */}
               <section>
                 <h3 className="text-base font-semibold text-primary mb-2">V. Estrategias</h3>
                 <div className="border rounded-lg overflow-hidden">
@@ -221,7 +222,6 @@ const PlanRefuerzoButton = ({ tipo, label }: Props) => {
                 </div>
               </section>
 
-              {/* Actividades */}
               <section>
                 <h3 className="text-base font-semibold text-primary mb-2">VI. Actividades</h3>
                 <div className="border rounded-lg overflow-hidden overflow-x-auto">
@@ -234,7 +234,6 @@ const PlanRefuerzoButton = ({ tipo, label }: Props) => {
                 </div>
               </section>
 
-              {/* Cronograma */}
               <section>
                 <h3 className="text-base font-semibold text-primary mb-2">VII. Cronograma</h3>
                 <div className="border rounded-lg overflow-hidden">
@@ -247,7 +246,6 @@ const PlanRefuerzoButton = ({ tipo, label }: Props) => {
                 </div>
               </section>
 
-              {/* Recursos */}
               <section>
                 <h3 className="text-base font-semibold text-primary mb-2">VIII. Recursos</h3>
                 <div className="border rounded-lg overflow-hidden">
@@ -260,7 +258,6 @@ const PlanRefuerzoButton = ({ tipo, label }: Props) => {
                 </div>
               </section>
 
-              {/* Evaluación */}
               <section>
                 <h3 className="text-base font-semibold text-primary mb-2">IX. Evaluación y Seguimiento</h3>
                 <div className="border rounded-lg overflow-hidden overflow-x-auto">
@@ -273,7 +270,6 @@ const PlanRefuerzoButton = ({ tipo, label }: Props) => {
                 </div>
               </section>
 
-              {/* Download button */}
               <div className="flex justify-center pt-4 border-t">
                 <Button onClick={handleDownloadHTML} className="gap-2">
                   <Download className="h-4 w-4" />

@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, School, BookOpen, ClipboardList,
-  BarChart3, LogOut, GraduationCap, UserCog, Building2, FileSpreadsheet, UserCircle
+  BarChart3, LogOut, GraduationCap, UserCog, Building2, FileSpreadsheet, UserCircle, FileText
 } from 'lucide-react';
 import {
   Sidebar,
@@ -30,6 +30,7 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: 'Usuarios', icon: Users, path: '/admin/usuarios' },
     { label: 'Instituciones', icon: Building2, path: '/admin/instituciones' },
     { label: 'Resultados', icon: BarChart3, path: '/admin/resultados' },
+    { label: 'Planes de Refuerzo', icon: FileText, path: '/admin/planes-refuerzo' },
     { label: 'Mi Perfil', icon: UserCircle, path: '/perfil' },
   ],
   director: [
@@ -58,6 +59,7 @@ const roleNavItems: Record<string, NavItem[]> = {
   especialista: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/especialista' },
     { label: 'Reportes', icon: BarChart3, path: '/especialista/reportes' },
+    { label: 'Planes de Refuerzo', icon: FileText, path: '/especialista/planes-refuerzo' },
     { label: 'Mi Perfil', icon: UserCircle, path: '/perfil' },
   ],
   estudiante: [

@@ -10,7 +10,7 @@ const DirectorDashboard = () => {
   const { profile } = useAuth();
   const [tienePrimaria, setTienePrimaria] = useState(false);
   const [stats, setStats] = useState({
-    aulas: 0, directores: 0, subdirectores: 0, docentes: 0, docentesPip: 0, estudiantes: 0, evaluaciones: 0,
+    aulas: 0, directores: 0, subdirectores: 0, docentes: 0, docentesPip: 0, estudiantes: 0, evaluaciones: 0, tieneResultados: false,
   });
 
   useEffect(() => {
@@ -33,15 +33,22 @@ const DirectorDashboard = () => {
         });
 
         if (!error && statsData && statsData.length > 0) {
-          const stats = statsData[0];
+          const s = statsData[0];
+          // Check if there are any digitized results for this institution
+          const { count: resCount } = await supabase
+            .from('resultados')
+            .select('id', { count: 'exact', head: true })
+            .limit(1);
+
           setStats({
-            aulas: Number(stats.aulas_count) || nivelesData.length,
-            directores: Number(stats.directores_count) || 0,
-            subdirectores: Number(stats.subdirectores_count) || 0,
-            docentes: Number(stats.docentes_count) || 0,
-            docentesPip: Number(stats.pip_count) || 0,
-            estudiantes: Number(stats.estudiantes_count) || 0,
-            evaluaciones: Number(stats.evaluaciones_count) || 0,
+            aulas: Number(s.aulas_count) || nivelesData.length,
+            directores: Number(s.directores_count) || 0,
+            subdirectores: Number(s.subdirectores_count) || 0,
+            docentes: Number(s.docentes_count) || 0,
+            docentesPip: Number(s.pip_count) || 0,
+            estudiantes: Number(s.estudiantes_count) || 0,
+            evaluaciones: Number(s.evaluaciones_count) || 0,
+            tieneResultados: (resCount ?? 0) > 0,
           });
         } else {
           console.warn('Director RPC failed, using fallback:', error);
@@ -77,6 +84,7 @@ const DirectorDashboard = () => {
             docentesPip: pipRes.count ?? 0,
             estudiantes: estudiantesRes.count ?? 0,
             evaluaciones: evalsRes.count ?? 0,
+            tieneResultados: false,
           });
         }
       } catch (err) {
@@ -102,10 +110,12 @@ const DirectorDashboard = () => {
         <StatCard title="Evaluaciones" value={String(stats.evaluaciones)} icon={ClipboardList} variant="warning" href="/director/resultados" />
       </div>
 
-      <div className="bg-card rounded-xl border p-6 shadow-card">
-        <h2 className="text-lg font-semibold mb-3 text-foreground">Herramientas de Gestión Pedagógica</h2>
-        <PlanRefuerzoButton tipo="institucional" label="Plan de Refuerzo Escolar Institucional" />
-      </div>
+      {stats.tieneResultados && (
+        <div className="bg-card rounded-xl border p-6 shadow-card">
+          <h2 className="text-lg font-semibold mb-3 text-foreground">Herramientas de Gestión Pedagógica</h2>
+          <PlanRefuerzoButton tipo="institucional" label="Plan de Refuerzo Escolar Institucional" />
+        </div>
+      )}
 
       {tienePrimaria && <EvaluacionesDownloadCard />}
 

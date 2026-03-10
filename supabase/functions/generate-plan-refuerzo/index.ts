@@ -22,12 +22,14 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey, {
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnon = Deno.env.get("SUPABASE_ANON_KEY")!;
+    
+    // Auth client to verify user
+    const authClient = createClient(supabaseUrl, supabaseAnon, {
       global: { headers: { Authorization: authHeader } },
     });
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "No autorizado" }), {
         status: 401,
@@ -35,7 +37,10 @@ serve(async (req) => {
       });
     }
 
-    const { tipo } = await req.json();
+    // Service role client for unrestricted data access
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    const { tipo, institucion_id_override, grado_seccion_id_override } = await req.json();
     if (!tipo || !["institucional", "aula"].includes(tipo)) {
       return new Response(JSON.stringify({ error: "Tipo inválido" }), {
         status: 400,
@@ -57,14 +62,18 @@ serve(async (req) => {
       });
     }
 
+    // Use overrides if provided (for admin/especialista)
+    const effectiveInstId = institucion_id_override || profile.institucion_id;
+    const effectiveGradoId = grado_seccion_id_override || profile.grado_seccion_id;
+
     // Get institution info
     let institucionNombre = "";
     let institucionDistrito = "";
-    if (profile.institucion_id) {
+    if (effectiveInstId) {
       const { data: inst } = await supabase
         .from("instituciones")
         .select("nombre, distrito, provincia, direccion, codigo_modular")
-        .eq("id", profile.institucion_id)
+        .eq("id", effectiveInstId)
         .single();
       if (inst) {
         institucionNombre = inst.nombre;
@@ -72,29 +81,50 @@ serve(async (req) => {
       }
     }
 
-    // Get aula info if docente
+    // Get aula info if aula type
     let aulaNivel = "", aulaGrado = "", aulaSeccion = "";
-    if (tipo === "aula" && profile.grado_seccion_id) {
+    let aulaInstId = effectiveInstId;
+    if (tipo === "aula" && effectiveGradoId) {
       const { data: aula } = await supabase
         .from("niveles_grados")
-        .select("nivel, grado, seccion")
-        .eq("id", profile.grado_seccion_id)
+        .select("nivel, grado, seccion, institucion_id")
+        .eq("id", effectiveGradoId)
         .single();
       if (aula) {
         aulaNivel = aula.nivel;
         aulaGrado = aula.grado;
         aulaSeccion = aula.seccion;
+        aulaInstId = aula.institucion_id;
+        // Get institution name if not already fetched
+        if (!institucionNombre) {
+          const { data: inst } = await supabase
+            .from("instituciones")
+            .select("nombre, distrito, provincia")
+            .eq("id", aula.institucion_id)
+            .single();
+          if (inst) {
+            institucionNombre = inst.nombre;
+            institucionDistrito = `${inst.distrito}, ${inst.provincia}`;
+          }
+        }
       }
     }
 
-    // Get results data based on tipo
+    // Get results data
     let resultadosQuery;
     if (tipo === "institucional") {
-      // Director: get all results for the institution
+      const targetInstId = effectiveInstId;
+      if (!targetInstId) {
+        return new Response(
+          JSON.stringify({ error: "No se encontró institución asociada." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       const { data: instStudents } = await supabase
         .from("profiles")
         .select("id")
-        .eq("institucion_id", profile.institucion_id)
+        .eq("institucion_id", targetInstId)
         .not("grado_seccion_id", "is", null);
 
       const studentIds = (instStudents || []).map((s) => s.id);
@@ -116,11 +146,18 @@ serve(async (req) => {
 
       resultadosQuery = { resultados: resultados || [], evaluaciones: evaluaciones || [], totalEstudiantes: studentIds.length };
     } else {
-      // Docente: get results for the aula
+      const targetGradoId = effectiveGradoId;
+      if (!targetGradoId) {
+        return new Response(
+          JSON.stringify({ error: "No se encontró aula asociada." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       const { data: aulaStudents } = await supabase
         .from("profiles")
         .select("id")
-        .eq("grado_seccion_id", profile.grado_seccion_id);
+        .eq("grado_seccion_id", targetGradoId);
 
       const studentIds = (aulaStudents || []).map((s) => s.id);
       if (studentIds.length === 0) {
@@ -142,19 +179,25 @@ serve(async (req) => {
       resultadosQuery = { resultados: resultados || [], evaluaciones: evaluaciones || [], totalEstudiantes: studentIds.length };
     }
 
+    if (!resultadosQuery.resultados.length) {
+      return new Response(
+        JSON.stringify({ error: "No hay resultados de evaluaciones digitados para generar el plan." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Aggregate results by area and nivel_logro
-    const evalMap = new Map<string, { area: string; grado: string; nivel: string }>();
+    const evalMap = new Map();
     for (const ev of resultadosQuery.evaluaciones) {
       evalMap.set(ev.id, { area: ev.area, grado: ev.grado, nivel: ev.nivel });
     }
 
-    const resumenPorArea: Record<string, { total: number; enInicio: number; enProceso: number; logroEsperado: number; logroDestacado: number; sinEvaluar: number; puntajes: number[] }> = {};
-    
+    const resumenPorArea = {};
     for (const r of resultadosQuery.resultados) {
       const ev = evalMap.get(r.evaluacion_id);
       if (!ev) continue;
       if (!resumenPorArea[ev.area]) {
-        resumenPorArea[ev.area] = { total: 0, enInicio: 0, enProceso: 0, logroEsperado: 0, logroDestacado: 0, sinEvaluar: 0, puntajes: [] };
+        resumenPorArea[ev.area] = { total: 0, enInicio: 0, enProceso: 0, logroEsperado: 0, logroDestacado: 0, puntajes: [] };
       }
       const a = resumenPorArea[ev.area];
       a.total++;
@@ -164,7 +207,6 @@ serve(async (req) => {
         case "En Proceso": a.enProceso++; break;
         case "Logro Esperado": a.logroEsperado++; break;
         case "Logro Destacado": a.logroDestacado++; break;
-        default: a.sinEvaluar++; break;
       }
     }
 
@@ -301,7 +343,6 @@ Genera el plan en formato JSON con esta estructura exacta:
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
 
-    // Extract JSON from response
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       console.error("No JSON found in AI response:", content.substring(0, 500));

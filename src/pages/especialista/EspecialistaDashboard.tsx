@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import StatCard from '@/components/StatCard';
-import { School, Users, BarChart3, MapPin, Calculator, BookOpen, Heart } from 'lucide-react';
+import { School, Users, BarChart3, MapPin, Calculator, BookOpen, Heart, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 const ALL_DISTRITOS = [
   'Chiclayo', 'José Leonardo Ortiz', 'La Victoria', 'Monsefú', 'Pimentel',
@@ -35,6 +37,7 @@ const heatMapColors = (pctInicio: number) => {
 };
 
 const EspecialistaDashboard = () => {
+  const navigate = useNavigate();
   const [totalInst, setTotalInst] = useState(0);
   const [totalEstudiantes, setTotalEstudiantes] = useState(0);
   const [totalEvals, setTotalEvals] = useState(0);
@@ -138,6 +141,14 @@ const EspecialistaDashboard = () => {
         <StatCard title="Estudiantes" value={String(totalEstudiantes)} icon={Users} variant="primary" />
         <StatCard title="Evaluaciones" value={String(totalEvals)} icon={BarChart3} variant="success" />
         <StatCard title="Resultados" value={String(totalResultados)} icon={MapPin} variant="warning" />
+      </div>
+
+      <div className="bg-card rounded-xl border p-6 shadow-card">
+        <h2 className="text-lg font-semibold mb-3 text-foreground">Herramientas Pedagógicas</h2>
+        <Button variant="outline" size="lg" className="gap-2" onClick={() => navigate('/especialista/planes-refuerzo')}>
+          <FileText className="h-4 w-4" />
+          Planes de Refuerzo Escolar
+        </Button>
       </div>
 
       <Tabs defaultValue="Matemática" className="w-full">

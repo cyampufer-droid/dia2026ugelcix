@@ -305,7 +305,7 @@ const DocenteDashboard = () => {
         </div>
       )}
 
-      {profile?.grado_seccion_id && (
+      {profile?.grado_seccion_id && stats.digitados > 0 && (
         <div className="bg-card rounded-xl border p-6 shadow-card">
           <h2 className="text-lg font-semibold mb-3 text-foreground">Herramientas Pedagógicas</h2>
           <PlanRefuerzoButton tipo="aula" label="Plan de Refuerzo Escolar de Aula" />

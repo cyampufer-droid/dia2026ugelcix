@@ -30,6 +30,7 @@ const DocenteResultados = lazy(() => import("./pages/docente/DocenteResultados")
 const EstudiantePrueba = lazy(() => import("./pages/estudiante/EstudiantePrueba"));
 const EstudianteResultados = lazy(() => import("./pages/estudiante/EstudianteResultados"));
 const EspecialistaDashboard = lazy(() => import("./pages/especialista/EspecialistaDashboard"));
+const PlanesRefuerzoListing = lazy(() => import("./pages/shared/PlanesRefuerzoListing"));
 const MiPerfil = lazy(() => import("./pages/shared/MiPerfil"));
 const GuiaUsuario = lazy(() => import("./pages/shared/GuiaUsuario"));
 const TutorialInteractivo = lazy(() => import("./pages/shared/TutorialInteractivo"));
@@ -71,6 +72,7 @@ const App = () => (
                   <Route path="/admin/usuarios" element={<ProtectedRoute allowedRoles={['administrador']}><AdminUsuarios /></ProtectedRoute>} />
                   <Route path="/admin/instituciones" element={<ProtectedRoute allowedRoles={['administrador']}><AdminInstituciones /></ProtectedRoute>} />
                   <Route path="/admin/resultados" element={<ProtectedRoute allowedRoles={['administrador']}><AdminResultados /></ProtectedRoute>} />
+                  <Route path="/admin/planes-refuerzo" element={<ProtectedRoute allowedRoles={['administrador']}><PlanesRefuerzoListing /></ProtectedRoute>} />
                 </Route>
 
                 {/* Director routes */}
@@ -100,6 +102,7 @@ const App = () => (
                 <Route element={<AppLayout />}>
                   <Route path="/especialista" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><EspecialistaDashboard /></ProtectedRoute>} />
                   <Route path="/especialista/reportes" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><EspecialistaDashboard /></ProtectedRoute>} />
+                  <Route path="/especialista/planes-refuerzo" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><PlanesRefuerzoListing /></ProtectedRoute>} />
                 </Route>
 
                 {/* Shared routes */}

@@ -42,99 +42,65 @@ Deno.serve(async (req) => {
     const isAdmin = (callerRoles || []).some((r: { role: string }) => r.role === "administrador");
     if (!isAdmin) return jsonResponse({ error: "Solo administradores pueden listar usuarios" }, 403);
 
-    // Parse query parameters for pagination and filtering
+    // Parse query parameters
     const url = new URL(req.url);
-    const limit = Math.min(parseInt(url.searchParams.get("limit") || "100"), 1000); // Max 1000
+    const limit = Math.min(parseInt(url.searchParams.get("limit") || "1000"), 1000);
     const offset = parseInt(url.searchParams.get("offset") || "0");
     const search = url.searchParams.get("search") || "";
-    const role = url.searchParams.get("role") || "";
-    const distrito = url.searchParams.get("distrito") || "";
 
-    // Optimized query: Fetch profiles with auth data in single query
-    let query = adminClient
-      .from("profiles")
-      .select(`
-        *,
-        user_roles!inner(role),
-        instituciones(nombre, distrito, centro_poblado, direccion, tipo_gestion),
-        niveles_grados(nivel, grado, seccion)
-      `);
+    // Fetch profiles, roles, instituciones, niveles in parallel (separate queries, no JOINs)
+    const [profilesRes, rolesRes, institucionesRes, nivelesRes] = await Promise.all([
+      adminClient.from("profiles").select("*").order("nombre_completo").range(offset, offset + limit - 1),
+      adminClient.from("user_roles").select("*"),
+      adminClient.from("instituciones").select("*"),
+      adminClient.from("niveles_grados").select("*"),
+    ]);
 
-    // Apply filters
-    if (role) {
-      query = query.eq("user_roles.role", role);
+    const profiles = profilesRes.data || [];
+    const allRoles = rolesRes.data || [];
+    const instituciones = institucionesRes.data || [];
+    const niveles = nivelesRes.data || [];
+
+    // Build lookup maps
+    const roleMap = new Map<string, string[]>();
+    for (const r of allRoles) {
+      const existing = roleMap.get(r.user_id) || [];
+      existing.push(r.role);
+      roleMap.set(r.user_id, existing);
     }
-    
-    if (distrito) {
-      query = query.eq("instituciones.distrito", distrito);
-    }
+    const institucionMap = new Map(instituciones.map((i: any) => [i.id, i]));
+    const nivelMap = new Map(niveles.map((n: any) => [n.id, n]));
 
-    if (search) {
-      // Search by name or DNI
-      query = query.or(`nombre_completo.ilike.%${search}%,dni.like.%${search}%`);
-    }
-
-    // Apply pagination and ordering
-    const { data: profiles, error: profileError, count } = await query
-      .order("nombre_completo")
-      .range(offset, offset + limit - 1)
-      .limit(limit);
-
-    if (profileError) {
-      console.error("Profile query error:", profileError);
-      return jsonResponse({ error: "Error al consultar perfiles" }, 500);
-    }
-
-    // Get auth data for users with user_id (batch query)
-    const userIds = (profiles || [])
-      .map(p => p.user_id)
-      .filter(Boolean) as string[];
-
+    // Get auth data for users with user_id
+    const userIds = profiles.map((p: any) => p.user_id).filter(Boolean) as string[];
     const authDataMap = new Map();
-    if (userIds.length > 0) {
-      // Batch query auth users by ID chunks
-      const chunkSize = 100;
-      for (let i = 0; i < userIds.length; i += chunkSize) {
-        const chunk = userIds.slice(i, i + chunkSize);
+    
+    // Batch fetch auth users
+    const chunkSize = 100;
+    for (let i = 0; i < userIds.length; i += chunkSize) {
+      const chunk = userIds.slice(i, i + chunkSize);
+      for (const userId of chunk) {
         try {
-          // Use service role to get user data directly from auth.users
-          const { data: authData } = await adminClient
-            .from("auth.users")
-            .select("id, email, created_at, user_metadata")
-            .in("id", chunk);
-          
-          if (authData) {
-            authData.forEach(user => {
-              authDataMap.set(user.id, user);
-            });
-          }
-        } catch (e) {
-          // Fallback: use admin.getUserById for individual users if batch fails
-          console.warn("Batch auth query failed, using individual queries");
-          for (const userId of chunk) {
-            try {
-              const { data: { user } } = await adminClient.auth.admin.getUserById(userId);
-              if (user) authDataMap.set(userId, user);
-            } catch (err) {
-              console.warn(`Failed to get user ${userId}:`, err);
-            }
-          }
+          const { data: { user } } = await adminClient.auth.admin.getUserById(userId);
+          if (user) authDataMap.set(userId, user);
+        } catch (err) {
+          console.warn(`Failed to get user ${userId}`);
         }
       }
     }
 
-    // Transform and consolidate data
-    const result = (profiles || []).map((profile: any) => {
+    // Transform data
+    let result = profiles.map((profile: any) => {
       const authUser = profile.user_id ? authDataMap.get(profile.user_id) : null;
-      const institucion = profile.instituciones;
-      const gradoSeccion = profile.niveles_grados;
-      
+      const institucion = profile.institucion_id ? institucionMap.get(profile.institucion_id) : null;
+      const gradoSeccion = profile.grado_seccion_id ? nivelMap.get(profile.grado_seccion_id) : null;
+
       return {
         id: profile.user_id || profile.id,
         email: authUser?.email || "",
         dni: profile.dni || "",
         nombre_completo: profile.nombre_completo || "",
-        roles: profile.user_roles?.map((r: any) => r.role) || [],
+        roles: profile.user_id ? (roleMap.get(profile.user_id) || []) : [],
         institucion_id: profile.institucion_id,
         institucion_nombre: institucion?.nombre || "",
         distrito: institucion?.distrito || "",
@@ -149,11 +115,19 @@ Deno.serve(async (req) => {
       };
     });
 
-    return jsonResponse({ 
+    // Apply search filter in memory
+    if (search) {
+      const s = search.toLowerCase();
+      result = result.filter((u: any) =>
+        u.nombre_completo.toLowerCase().includes(s) || u.dni.includes(s)
+      );
+    }
+
+    return jsonResponse({
       users: result,
-      total: count,
+      total: result.length,
       limit,
-      offset 
+      offset,
     }, 200);
   } catch (err) {
     console.error("Error:", err.message);

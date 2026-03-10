@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Users, FileSpreadsheet, ClipboardList, BookOpen, School, Building2, RefreshCw } from 'lucide-react';
 import EvaluacionesDownloadCard from '@/components/EvaluacionesDownloadCard';
+import PlanRefuerzoButton from '@/components/PlanRefuerzoButton';
 import StatCard from '@/components/StatCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';

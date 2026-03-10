@@ -59,6 +59,7 @@ const roleNavItems: Record<string, NavItem[]> = {
   especialista: [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/especialista' },
     { label: 'Reportes', icon: BarChart3, path: '/especialista/reportes' },
+    { label: 'Planes de Refuerzo', icon: FileText, path: '/especialista/planes-refuerzo' },
     { label: 'Mi Perfil', icon: UserCircle, path: '/perfil' },
   ],
   estudiante: [

@@ -10,7 +10,7 @@ const DirectorDashboard = () => {
   const { profile } = useAuth();
   const [tienePrimaria, setTienePrimaria] = useState(false);
   const [stats, setStats] = useState({
-    aulas: 0, directores: 0, subdirectores: 0, docentes: 0, docentesPip: 0, estudiantes: 0, evaluaciones: 0,
+    aulas: 0, directores: 0, subdirectores: 0, docentes: 0, docentesPip: 0, estudiantes: 0, evaluaciones: 0, tieneResultados: false,
   });
 
   useEffect(() => {

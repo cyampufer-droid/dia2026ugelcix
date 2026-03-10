@@ -20,40 +20,54 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return jsonResponse({ error: "No autorizado" }, 401);
+    if (!authHeader?.startsWith("Bearer ")) return jsonResponse({ error: "No autorizado" }, 401);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify caller
-    const callerClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    // Verify caller using getClaims
+    const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user: caller }, error: authError } = await callerClient.auth.getUser();
-    if (authError || !caller) return jsonResponse({ error: "No autorizado" }, 401);
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) return jsonResponse({ error: "No autorizado" }, 401);
+
+    const callerId = claimsData.claims.sub as string;
 
     // Check admin role
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: callerRoles } = await adminClient
       .from("user_roles")
       .select("role")
-      .eq("user_id", caller.id);
+      .eq("user_id", callerId);
 
     const isAdmin = (callerRoles || []).some((r: { role: string }) => r.role === "administrador");
     if (!isAdmin) return jsonResponse({ error: "Solo administradores pueden listar usuarios" }, 403);
 
-    // Parse query parameters
-    const url = new URL(req.url);
-    const limit = Math.min(parseInt(url.searchParams.get("limit") || "1000"), 1000);
-    const offset = parseInt(url.searchParams.get("offset") || "0");
-    const search = url.searchParams.get("search") || "";
+    // Parse body (POST) or query params (GET)
+    let limit = 1000, offset = 0, search = "";
+    if (req.method === "POST") {
+      try {
+        const body = await req.json();
+        limit = Math.min(body.limit || 1000, 2000);
+        offset = body.offset || 0;
+        search = body.search || "";
+      } catch { /* use defaults */ }
+    } else {
+      const url = new URL(req.url);
+      limit = Math.min(parseInt(url.searchParams.get("limit") || "1000"), 2000);
+      offset = parseInt(url.searchParams.get("offset") || "0");
+      search = url.searchParams.get("search") || "";
+    }
 
-    // Fetch profiles, roles, instituciones, niveles in parallel (separate queries, no JOINs)
+    // Fetch profiles, roles, instituciones, niveles in parallel
     const [profilesRes, rolesRes, institucionesRes, nivelesRes] = await Promise.all([
       adminClient.from("profiles").select("*").order("nombre_completo").range(offset, offset + limit - 1),
       adminClient.from("user_roles").select("*"),
-      adminClient.from("instituciones").select("*"),
-      adminClient.from("niveles_grados").select("*"),
+      adminClient.from("instituciones").select("id, nombre, distrito, centro_poblado, direccion, tipo_gestion"),
+      adminClient.from("niveles_grados").select("id, nivel, grado, seccion"),
     ]);
 
     const profiles = profilesRes.data || [];
@@ -71,20 +85,20 @@ Deno.serve(async (req) => {
     const institucionMap = new Map(instituciones.map((i: any) => [i.id, i]));
     const nivelMap = new Map(niveles.map((n: any) => [n.id, n]));
 
-    // Get auth data for users with user_id
+    // Fetch auth users in batches of 50 concurrently
     const userIds = profiles.map((p: any) => p.user_id).filter(Boolean) as string[];
-    const authDataMap = new Map();
-    
-    // Batch fetch auth users
-    const chunkSize = 100;
-    for (let i = 0; i < userIds.length; i += chunkSize) {
-      const chunk = userIds.slice(i, i + chunkSize);
-      for (const userId of chunk) {
-        try {
-          const { data: { user } } = await adminClient.auth.admin.getUserById(userId);
-          if (user) authDataMap.set(userId, user);
-        } catch (err) {
-          console.warn(`Failed to get user ${userId}`);
+    const authDataMap = new Map<string, any>();
+
+    const batchSize = 50;
+    for (let i = 0; i < userIds.length; i += batchSize) {
+      const batch = userIds.slice(i, i + batchSize);
+      const results = await Promise.allSettled(
+        batch.map(uid => adminClient.auth.admin.getUserById(uid))
+      );
+      for (let j = 0; j < results.length; j++) {
+        const r = results[j];
+        if (r.status === "fulfilled" && r.value.data?.user) {
+          authDataMap.set(batch[j], r.value.data.user);
         }
       }
     }
@@ -102,20 +116,20 @@ Deno.serve(async (req) => {
         nombre_completo: profile.nombre_completo || "",
         roles: profile.user_id ? (roleMap.get(profile.user_id) || []) : [],
         institucion_id: profile.institucion_id,
-        institucion_nombre: institucion?.nombre || "",
-        distrito: institucion?.distrito || "",
-        centro_poblado: institucion?.centro_poblado || "",
-        direccion: institucion?.direccion || "",
-        tipo_gestion: institucion?.tipo_gestion || "",
-        nivel: gradoSeccion?.nivel || "",
-        grado: gradoSeccion?.grado || "",
-        seccion: gradoSeccion?.seccion || "",
+        institucion_nombre: (institucion as any)?.nombre || "",
+        distrito: (institucion as any)?.distrito || "",
+        centro_poblado: (institucion as any)?.centro_poblado || "",
+        direccion: (institucion as any)?.direccion || "",
+        tipo_gestion: (institucion as any)?.tipo_gestion || "",
+        nivel: (gradoSeccion as any)?.nivel || "",
+        grado: (gradoSeccion as any)?.grado || "",
+        seccion: (gradoSeccion as any)?.seccion || "",
         created_at: authUser?.created_at || profile.created_at,
         is_pip: profile.is_pip || false,
       };
     });
 
-    // Apply search filter in memory
+    // Apply search filter
     if (search) {
       const s = search.toLowerCase();
       result = result.filter((u: any) =>
@@ -123,12 +137,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    return jsonResponse({
-      users: result,
-      total: result.length,
-      limit,
-      offset,
-    }, 200);
+    return jsonResponse({ users: result, total: result.length, limit, offset }, 200);
   } catch (err) {
     console.error("Error:", err.message);
     return jsonResponse({ error: "Error interno del servidor" }, 500);

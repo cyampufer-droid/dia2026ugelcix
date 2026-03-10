@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { School, Users, ClipboardList, UserCog, GraduationCap, Lightbulb } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import EvaluacionesDownloadCard from '@/components/EvaluacionesDownloadCard';
+import PlanRefuerzoButton from '@/components/PlanRefuerzoButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -99,6 +100,11 @@ const DirectorDashboard = () => {
         <StatCard title="Docentes PIP" value={String(stats.docentesPip)} icon={Lightbulb} variant="primary" href="/director/personal" />
         <StatCard title="Estudiantes" value={String(stats.estudiantes)} icon={Users} variant="success" href="/director/personal" />
         <StatCard title="Evaluaciones" value={String(stats.evaluaciones)} icon={ClipboardList} variant="warning" href="/director/resultados" />
+      </div>
+
+      <div className="bg-card rounded-xl border p-6 shadow-card">
+        <h2 className="text-lg font-semibold mb-3 text-foreground">Herramientas de Gestión Pedagógica</h2>
+        <PlanRefuerzoButton tipo="institucional" label="Plan de Refuerzo Escolar Institucional" />
       </div>
 
       {tienePrimaria && <EvaluacionesDownloadCard />}

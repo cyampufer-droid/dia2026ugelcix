@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Users, FileSpreadsheet, ClipboardList, BookOpen, School, Building2, RefreshCw } from 'lucide-react';
 import EvaluacionesDownloadCard from '@/components/EvaluacionesDownloadCard';
+import PlanRefuerzoButton from '@/components/PlanRefuerzoButton';
 import StatCard from '@/components/StatCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -301,6 +302,13 @@ const DocenteDashboard = () => {
           ) : (
             <p className="text-sm text-muted-foreground">No hay estudiantes registrados en esta aula aún.</p>
           )}
+        </div>
+      )}
+
+      {profile?.grado_seccion_id && (
+        <div className="bg-card rounded-xl border p-6 shadow-card">
+          <h2 className="text-lg font-semibold mb-3 text-foreground">Herramientas Pedagógicas</h2>
+          <PlanRefuerzoButton tipo="aula" label="Plan de Refuerzo Escolar de Aula" />
         </div>
       )}
 

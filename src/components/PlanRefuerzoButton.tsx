@@ -154,7 +154,7 @@ const PlanRefuerzoButton = ({ tipo, label, institucionIdOverride, gradoSeccionId
     <>
       <Button
         onClick={handleGenerate}
-        disabled={loading}
+        disabled={loading || disabled}
         className="gap-2"
         variant="outline"
         size={compact ? 'sm' : 'lg'}

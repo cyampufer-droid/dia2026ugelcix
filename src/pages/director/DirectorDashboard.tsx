@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { School, Users, ClipboardList, UserCog, GraduationCap, Lightbulb } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import EvaluacionesDownloadCard from '@/components/EvaluacionesDownloadCard';
+import PlanRefuerzoButton from '@/components/PlanRefuerzoButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 

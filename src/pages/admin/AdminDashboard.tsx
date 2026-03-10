@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, School, ClipboardList, UserCog, GraduationCap, Shield, Lightbulb } from 'lucide-react';
+import { Users, School, ClipboardList, UserCog, GraduationCap, Shield, Lightbulb, FileText } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import { supabase } from '@/integrations/supabase/client';
 import OnlineUsersPanel from '@/components/admin/OnlineUsersPanel';

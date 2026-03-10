@@ -56,11 +56,28 @@ const Digitacion = () => {
   // Load evaluaciones matching docente's grado
   useEffect(() => {
     const loadEvaluaciones = async () => {
-      if (!profile?.grado_seccion_id) return;
+      if (!profile) return;
+
+      let gradoSeccionId = profile.grado_seccion_id;
+
+      // If no grado_seccion_id on profile, check docente_grados table (Secundaria)
+      if (!gradoSeccionId && user) {
+        const { data: dg } = await supabase
+          .from('docente_grados')
+          .select('grado_seccion_id')
+          .eq('user_id', user.id)
+          .limit(1);
+        if (dg?.length) {
+          gradoSeccionId = dg[0].grado_seccion_id;
+        }
+      }
+
+      if (!gradoSeccionId) return;
+
       const { data: ng } = await supabase
         .from('niveles_grados')
         .select('nivel, grado')
-        .eq('id', profile.grado_seccion_id)
+        .eq('id', gradoSeccionId)
         .single();
       if (!ng) return;
 
@@ -99,7 +116,7 @@ const Digitacion = () => {
       setRespuestas(prev => ({ ...init, ...prev }));
     };
     loadEvaluaciones();
-  }, [profile?.grado_seccion_id, profile?.especialidad]);
+  }, [profile, user]);
 
   // Load students (only role=estudiante, exclude docentes)
   useEffect(() => {

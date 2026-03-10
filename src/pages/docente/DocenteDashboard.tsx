@@ -305,6 +305,13 @@ const DocenteDashboard = () => {
         </div>
       )}
 
+      {profile?.grado_seccion_id && (
+        <div className="bg-card rounded-xl border p-6 shadow-card">
+          <h2 className="text-lg font-semibold mb-3 text-foreground">Herramientas Pedagógicas</h2>
+          <PlanRefuerzoButton tipo="aula" label="Plan de Refuerzo Escolar de Aula" />
+        </div>
+      )}
+
       {aulaActual?.nivel === 'Primaria' && (
         <EvaluacionesDownloadCard
           gradoFilter={aulaActual.grado}

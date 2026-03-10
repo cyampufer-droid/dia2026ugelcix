@@ -34,11 +34,26 @@ const DirectorDashboard = () => {
 
         if (!error && statsData && statsData.length > 0) {
           const s = statsData[0];
-          // Check if there are any digitized results for this institution
-          const { count: resCount } = await supabase
-            .from('resultados')
-            .select('id', { count: 'exact', head: true })
-            .limit(1);
+          // Check if there are any digitized results for this institution's students
+          const { data: instStudents } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('institucion_id', profile.institucion_id)
+            .limit(5000);
+          
+          let resCount = 0;
+          if (instStudents && instStudents.length > 0) {
+            const studentIds = instStudents.map(s => s.id);
+            // Check in batches
+            for (let i = 0; i < studentIds.length; i += 500) {
+              const batch = studentIds.slice(i, i + 500);
+              const { count } = await supabase
+                .from('resultados')
+                .select('id', { count: 'exact', head: true })
+                .in('estudiante_id', batch);
+              if ((count ?? 0) > 0) { resCount = count ?? 0; break; }
+            }
+          }
 
           setStats({
             aulas: Number(s.aulas_count) || nivelesData.length,

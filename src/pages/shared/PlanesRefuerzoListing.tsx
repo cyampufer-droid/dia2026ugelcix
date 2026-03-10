@@ -31,10 +31,10 @@ const PlanesRefuerzoListing = () => {
     const load = async () => {
       setLoading(true);
       const [instRes, aulasRes, profilesRes, resultadosRes] = await Promise.all([
-        supabase.from('instituciones').select('id, nombre, distrito').order('nombre'),
-        supabase.from('niveles_grados').select('id, nivel, grado, seccion, institucion_id').order('nivel').order('grado').order('seccion'),
-        supabase.from('profiles').select('id, institucion_id, grado_seccion_id').not('grado_seccion_id', 'is', null),
-        supabase.from('resultados').select('id, estudiante_id'),
+        supabase.from('instituciones').select('id, nombre, distrito').order('nombre').limit(5000),
+        supabase.from('niveles_grados').select('id, nivel, grado, seccion, institucion_id').order('nivel').order('grado').order('seccion').limit(5000),
+        supabase.from('profiles').select('id, institucion_id, grado_seccion_id').not('grado_seccion_id', 'is', null).limit(5000),
+        supabase.from('resultados').select('id, estudiante_id').limit(5000),
       ]);
 
       setInstituciones(instRes.data || []);

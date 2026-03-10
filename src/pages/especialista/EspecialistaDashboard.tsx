@@ -37,6 +37,7 @@ const heatMapColors = (pctInicio: number) => {
 };
 
 const EspecialistaDashboard = () => {
+  const navigate = useNavigate();
   const [totalInst, setTotalInst] = useState(0);
   const [totalEstudiantes, setTotalEstudiantes] = useState(0);
   const [totalEvals, setTotalEvals] = useState(0);

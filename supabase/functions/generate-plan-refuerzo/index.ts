@@ -190,7 +190,7 @@ serve(async (req) => {
         .from("evaluaciones")
         .select("id, area, grado, nivel");
 
-      resultadosQuery = { resultados: resultados || [], evaluaciones: evaluaciones || [], totalEstudiantes: studentIds.length };
+      resultadosQuery = { resultados: allResultados, evaluaciones: evaluaciones || [], totalEstudiantes: studentIds.length };
     }
 
     if (!resultadosQuery.resultados.length) {

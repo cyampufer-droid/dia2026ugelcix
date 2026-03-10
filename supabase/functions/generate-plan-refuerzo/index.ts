@@ -54,7 +54,7 @@ serve(async (req) => {
     const { data: profile } = await supabase
       .from("profiles")
       .select("nombre_completo, institucion_id, grado_seccion_id, dni")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .single();
 
     if (!profile) {

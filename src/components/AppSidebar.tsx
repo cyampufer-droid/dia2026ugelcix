@@ -30,6 +30,7 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: 'Usuarios', icon: Users, path: '/admin/usuarios' },
     { label: 'Instituciones', icon: Building2, path: '/admin/instituciones' },
     { label: 'Resultados', icon: BarChart3, path: '/admin/resultados' },
+    { label: 'Planes de Refuerzo', icon: FileText, path: '/admin/planes-refuerzo' },
     { label: 'Mi Perfil', icon: UserCircle, path: '/perfil' },
   ],
   director: [

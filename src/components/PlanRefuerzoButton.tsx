@@ -55,17 +55,23 @@ const PlanRefuerzoButton = ({ tipo, label, institucionIdOverride, gradoSeccionId
     }
   };
 
-  const handleDownloadHTML = () => {
-    if (!plan) return;
+  const buildHtmlContent = (forWord = false) => {
+    if (!plan) return '';
     const titulo = tipo === 'institucional' ? 'Plan de Refuerzo Escolar Institucional' : 'Plan de Refuerzo Escolar de Aula';
+    const wordMeta = forWord
+      ? `<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+         <meta name="ProgId" content="Word.Document">
+         <meta name="Generator" content="Microsoft Word 15">`
+      : '';
 
-    const html = `<!DOCTYPE html>
-<html lang="es">
+    return `<!DOCTYPE html>
+<html lang="es" ${forWord ? 'xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"' : ''}>
 <head>
 <meta charset="UTF-8">
+${wordMeta}
 <title>${titulo}</title>
 <style>
-  body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 30px; color: #1a1a1a; line-height: 1.6; }
+  body { font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 30px; color: #1a1a1a; line-height: 1.6; }
   h1 { text-align: center; color: #1e40af; border-bottom: 3px solid #1e40af; padding-bottom: 10px; font-size: 1.5em; }
   h2 { color: #1e3a5f; border-left: 4px solid #2563eb; padding-left: 12px; margin-top: 28px; font-size: 1.1em; }
   table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9em; }
@@ -139,12 +145,31 @@ const PlanRefuerzoButton = ({ tipo, label, institucionIdOverride, gradoSeccionId
 
 </body>
 </html>`;
+  };
 
+  const handleDownloadWord = () => {
+    if (!plan) return;
+    const titulo = tipo === 'institucional' ? 'Plan_Refuerzo_Institucional' : 'Plan_Refuerzo_Aula';
+    const html = buildHtmlContent(true);
+    const blob = new Blob(['\ufeff' + html], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${titulo}.doc`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Plan descargado en formato Word editable.');
+  };
+
+  const handleDownloadHTML = () => {
+    if (!plan) return;
+    const titulo = tipo === 'institucional' ? 'Plan_Refuerzo_Institucional' : 'Plan_Refuerzo_Aula';
+    const html = buildHtmlContent(false);
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${titulo.replace(/ /g, '_')}.html`;
+    a.download = `${titulo}.html`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success('Plan descargado. Ábralo en su navegador e imprima como PDF (Ctrl+P).');
@@ -271,10 +296,14 @@ const PlanRefuerzoButton = ({ tipo, label, institucionIdOverride, gradoSeccionId
                 </div>
               </section>
 
-              <div className="flex justify-center pt-4 border-t">
-                <Button onClick={handleDownloadHTML} className="gap-2">
+              <div className="flex flex-wrap justify-center gap-3 pt-4 border-t">
+                <Button onClick={handleDownloadWord} className="gap-2">
                   <Download className="h-4 w-4" />
-                  Descargar Plan (HTML/PDF)
+                  Descargar Word (editable)
+                </Button>
+                <Button onClick={handleDownloadHTML} variant="outline" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Descargar HTML/PDF
                 </Button>
               </div>
             </div>

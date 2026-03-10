@@ -33,15 +33,22 @@ const DirectorDashboard = () => {
         });
 
         if (!error && statsData && statsData.length > 0) {
-          const stats = statsData[0];
+          const s = statsData[0];
+          // Check if there are any digitized results for this institution
+          const { count: resCount } = await supabase
+            .from('resultados')
+            .select('id', { count: 'exact', head: true })
+            .limit(1);
+
           setStats({
-            aulas: Number(stats.aulas_count) || nivelesData.length,
-            directores: Number(stats.directores_count) || 0,
-            subdirectores: Number(stats.subdirectores_count) || 0,
-            docentes: Number(stats.docentes_count) || 0,
-            docentesPip: Number(stats.pip_count) || 0,
-            estudiantes: Number(stats.estudiantes_count) || 0,
-            evaluaciones: Number(stats.evaluaciones_count) || 0,
+            aulas: Number(s.aulas_count) || nivelesData.length,
+            directores: Number(s.directores_count) || 0,
+            subdirectores: Number(s.subdirectores_count) || 0,
+            docentes: Number(s.docentes_count) || 0,
+            docentesPip: Number(s.pip_count) || 0,
+            estudiantes: Number(s.estudiantes_count) || 0,
+            evaluaciones: Number(s.evaluaciones_count) || 0,
+            tieneResultados: (resCount ?? 0) > 0,
           });
         } else {
           console.warn('Director RPC failed, using fallback:', error);

@@ -86,6 +86,14 @@ const AdminDashboard = () => {
         <LoginHistoryPanel />
       </div>
 
+      <div className="bg-card rounded-xl border p-6 shadow-card">
+        <h2 className="text-lg font-semibold mb-3 text-foreground">Herramientas Pedagógicas</h2>
+        <Button variant="outline" size="lg" className="gap-2" onClick={() => navigate('/admin/planes-refuerzo')}>
+          <FileText className="h-4 w-4" />
+          Planes de Refuerzo Escolar
+        </Button>
+      </div>
+
       <div className="bg-card rounded-xl border border-border p-6 shadow-card">
         <h2 className="text-lg font-semibold text-foreground mb-2">Inicio Rápido</h2>
         <p className="text-sm text-muted-foreground">

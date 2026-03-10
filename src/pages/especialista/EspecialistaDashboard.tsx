@@ -143,6 +143,14 @@ const EspecialistaDashboard = () => {
         <StatCard title="Resultados" value={String(totalResultados)} icon={MapPin} variant="warning" />
       </div>
 
+      <div className="bg-card rounded-xl border p-6 shadow-card">
+        <h2 className="text-lg font-semibold mb-3 text-foreground">Herramientas Pedagógicas</h2>
+        <Button variant="outline" size="lg" className="gap-2" onClick={() => navigate('/especialista/planes-refuerzo')}>
+          <FileText className="h-4 w-4" />
+          Planes de Refuerzo Escolar
+        </Button>
+      </div>
+
       <Tabs defaultValue="Matemática" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           {AREAS.map(a => (

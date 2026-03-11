@@ -40,12 +40,12 @@ const EvaluacionesDownloadCard = ({ gradoFilter, title = 'Cuadernillos de Evalua
                   <div key={pdf.driveId} className="flex items-center gap-2 p-3 rounded-lg border bg-muted/30">
                     <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="text-sm font-medium text-foreground flex-1 truncate">{pdf.titulo}</span>
-                    <a href={getViewUrl(pdf.driveId)} target="_blank" rel="noopener noreferrer">
+                    <a href={getViewUrl(pdf)} target="_blank" rel="noopener noreferrer">
                       <Button variant="ghost" size="icon" className="h-8 w-8" title="Ver PDF">
                         <ExternalLink className="h-4 w-4" />
                       </Button>
                     </a>
-                    <a href={getDownloadUrl(pdf.driveId)} target="_blank" rel="noopener noreferrer">
+                    <a href={getDownloadUrl(pdf)} target="_blank" rel="noopener noreferrer">
                       <Button variant="ghost" size="icon" className="h-8 w-8" title="Descargar PDF">
                         <Download className="h-4 w-4" />
                       </Button>

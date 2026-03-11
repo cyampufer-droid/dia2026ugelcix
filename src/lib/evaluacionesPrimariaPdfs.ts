@@ -15,13 +15,13 @@ export interface EvaluacionPdf {
 const BASE = 'https://drive.google.com/file/d/';
 
 export const evaluacionesPrimariaPdfs: EvaluacionPdf[] = [
-  // --- Comunicación (Google Drive) ---
-  { grado: 'Primero', gradoNumero: 1, area: 'Comunicación', titulo: 'Ev. 1° Comunicación', driveId: '1v2GO7ZECyHScLW1WUZA2wAVDuBbmIsCd' },
-  { grado: 'Segundo', gradoNumero: 2, area: 'Comunicación', titulo: 'Ev. 2° Comunicación', driveId: '1om4gFmUeJwo6UAZ6pELarYU685cjQpIz' },
-  { grado: 'Tercero', gradoNumero: 3, area: 'Comunicación', titulo: 'Ev. 3° Comunicación', driveId: '1htnIHUN3jQSYeWfK0vlywZgXVeDV_gcp' },
-  { grado: 'Cuarto', gradoNumero: 4, area: 'Comunicación', titulo: 'Ev. 4° Comunicación', driveId: '1AGcfpNB-vS6tsImiwfLfjSiV7Ay_EoHc' },
-  { grado: 'Quinto', gradoNumero: 5, area: 'Comunicación', titulo: 'Ev. 5° Comunicación', driveId: '1w7wHjRwYhoYEYr5KF7f8Cq5LZOEgIOav' },
-  { grado: 'Sexto', gradoNumero: 6, area: 'Comunicación', titulo: 'Ev. 6° Comunicación', driveId: '1kmwuI-tZPYzoNJrZXdqoftC5aDmWktoZ' },
+  // --- Comunicación (archivos locales actualizados) ---
+  { grado: 'Primero', gradoNumero: 1, area: 'Comunicación', titulo: 'Ev. 1° Comunicación', localPath: '/evaluaciones/comunicacion-1-primaria.pdf' },
+  { grado: 'Segundo', gradoNumero: 2, area: 'Comunicación', titulo: 'Ev. 2° Comunicación', localPath: '/evaluaciones/comunicacion-2-primaria.pdf' },
+  { grado: 'Tercero', gradoNumero: 3, area: 'Comunicación', titulo: 'Ev. 3° Comunicación', localPath: '/evaluaciones/comunicacion-3-primaria.pdf' },
+  { grado: 'Cuarto', gradoNumero: 4, area: 'Comunicación', titulo: 'Ev. 4° Comunicación', localPath: '/evaluaciones/comunicacion-4-primaria.pdf' },
+  { grado: 'Quinto', gradoNumero: 5, area: 'Comunicación', titulo: 'Ev. 5° Comunicación', localPath: '/evaluaciones/comunicacion-5-primaria.pdf' },
+  { grado: 'Sexto', gradoNumero: 6, area: 'Comunicación', titulo: 'Ev. 6° Comunicación', localPath: '/evaluaciones/comunicacion-6-primaria.pdf' },
 
   // --- Matemática (archivos locales actualizados) ---
   { grado: 'Primero', gradoNumero: 1, area: 'Matemática', titulo: 'Ev. 1° Matemática', localPath: '/evaluaciones/matematica-1-primaria.pdf' },

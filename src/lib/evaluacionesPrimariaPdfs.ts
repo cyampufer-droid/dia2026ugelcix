@@ -1,16 +1,13 @@
 // PDFs de evaluaciones de entrada - Primaria
-// Almacenados en Lovable Cloud Storage (bucket: evaluaciones)
+// Servidos desde public/docs/ en el dominio de la app
 
 export interface EvaluacionPdf {
   grado: string;
   gradoNumero: number;
   area: 'Comunicación' | 'Matemática';
   titulo: string;
-  /** Storage file name */
   fileName: string;
 }
-
-const STORAGE_BASE = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/evaluaciones`;
 
 export const evaluacionesPrimariaPdfs: EvaluacionPdf[] = [
   // --- Comunicación ---
@@ -31,9 +28,9 @@ export const evaluacionesPrimariaPdfs: EvaluacionPdf[] = [
 ];
 
 export function getViewUrl(pdf: EvaluacionPdf) {
-  return `${STORAGE_BASE}/${pdf.fileName}`;
+  return `/docs/${pdf.fileName}`;
 }
 
 export function getDownloadUrl(pdf: EvaluacionPdf) {
-  return `${STORAGE_BASE}/${pdf.fileName}?download=`;
+  return `/docs/${pdf.fileName}`;
 }

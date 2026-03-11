@@ -1,4 +1,4 @@
-// PDFs de evaluaciones de entrada - Primaria (Google Drive)
+// PDFs de evaluaciones de entrada - Primaria
 // Fuente: https://sites.google.com/ugelchiclayo.edu.pe/agp-ugel-cix/dia-2026/prueba-de-entrada/instrumentos-de-entrada/entrada-primaria
 
 export interface EvaluacionPdf {
@@ -6,30 +6,38 @@ export interface EvaluacionPdf {
   gradoNumero: number;
   area: 'Comunicación' | 'Matemática';
   titulo: string;
-  driveId: string;
+  /** Google Drive file ID (for legacy/Comunicación files) */
+  driveId?: string;
+  /** Local path in public/ folder (for updated files) */
+  localPath?: string;
 }
 
 const BASE = 'https://drive.google.com/file/d/';
 
 export const evaluacionesPrimariaPdfs: EvaluacionPdf[] = [
+  // --- Comunicación (Google Drive) ---
   { grado: 'Primero', gradoNumero: 1, area: 'Comunicación', titulo: 'Ev. 1° Comunicación', driveId: '1v2GO7ZECyHScLW1WUZA2wAVDuBbmIsCd' },
-  { grado: 'Primero', gradoNumero: 1, area: 'Matemática', titulo: 'Ev. 1° Matemática', driveId: '1R599mrp1YoC45vrW2wiSQHK69aRpwsKJ' },
   { grado: 'Segundo', gradoNumero: 2, area: 'Comunicación', titulo: 'Ev. 2° Comunicación', driveId: '1om4gFmUeJwo6UAZ6pELarYU685cjQpIz' },
-  { grado: 'Segundo', gradoNumero: 2, area: 'Matemática', titulo: 'Ev. 2° Matemática', driveId: '1__HFBVc0JdMXQleOd-luh3zOMwdSfD0J' },
   { grado: 'Tercero', gradoNumero: 3, area: 'Comunicación', titulo: 'Ev. 3° Comunicación', driveId: '1htnIHUN3jQSYeWfK0vlywZgXVeDV_gcp' },
-  { grado: 'Tercero', gradoNumero: 3, area: 'Matemática', titulo: 'Ev. 3° Matemática', driveId: '1jcpxK3mohfBLQNAMSf0kZTtUeIwbu6cH' },
   { grado: 'Cuarto', gradoNumero: 4, area: 'Comunicación', titulo: 'Ev. 4° Comunicación', driveId: '1AGcfpNB-vS6tsImiwfLfjSiV7Ay_EoHc' },
-  { grado: 'Cuarto', gradoNumero: 4, area: 'Matemática', titulo: 'Ev. 4° Matemática', driveId: '1EWCk30LriY0n3PH00_DZnl3Cy-juWIQz' },
   { grado: 'Quinto', gradoNumero: 5, area: 'Comunicación', titulo: 'Ev. 5° Comunicación', driveId: '1w7wHjRwYhoYEYr5KF7f8Cq5LZOEgIOav' },
-  { grado: 'Quinto', gradoNumero: 5, area: 'Matemática', titulo: 'Ev. 5° Matemática', driveId: '1OSnBvSZarJydRCu2pnRXT-R-kojq8bVu' },
   { grado: 'Sexto', gradoNumero: 6, area: 'Comunicación', titulo: 'Ev. 6° Comunicación', driveId: '1kmwuI-tZPYzoNJrZXdqoftC5aDmWktoZ' },
-  { grado: 'Sexto', gradoNumero: 6, area: 'Matemática', titulo: 'Ev. 6° Matemática', driveId: '16J-2WmROtYDusLOJCMXffzkClLf7KkAX' },
+
+  // --- Matemática (archivos locales actualizados) ---
+  { grado: 'Primero', gradoNumero: 1, area: 'Matemática', titulo: 'Ev. 1° Matemática', localPath: '/evaluaciones/matematica-1-primaria.pdf' },
+  { grado: 'Segundo', gradoNumero: 2, area: 'Matemática', titulo: 'Ev. 2° Matemática', localPath: '/evaluaciones/matematica-2-primaria.pdf' },
+  { grado: 'Tercero', gradoNumero: 3, area: 'Matemática', titulo: 'Ev. 3° Matemática', localPath: '/evaluaciones/matematica-3-primaria.pdf' },
+  { grado: 'Cuarto', gradoNumero: 4, area: 'Matemática', titulo: 'Ev. 4° Matemática', localPath: '/evaluaciones/matematica-4-primaria.pdf' },
+  { grado: 'Quinto', gradoNumero: 5, area: 'Matemática', titulo: 'Ev. 5° Matemática', localPath: '/evaluaciones/matematica-5-primaria.pdf' },
+  { grado: 'Sexto', gradoNumero: 6, area: 'Matemática', titulo: 'Ev. 6° Matemática', localPath: '/evaluaciones/matematica-6-primaria.pdf' },
 ];
 
-export function getViewUrl(driveId: string) {
-  return `${BASE}${driveId}/view`;
+export function getViewUrl(pdf: EvaluacionPdf) {
+  if (pdf.localPath) return pdf.localPath;
+  return `${BASE}${pdf.driveId}/view`;
 }
 
-export function getDownloadUrl(driveId: string) {
-  return `https://drive.google.com/uc?export=download&id=${driveId}`;
+export function getDownloadUrl(pdf: EvaluacionPdf) {
+  if (pdf.localPath) return pdf.localPath;
+  return `https://drive.google.com/uc?export=download&id=${pdf.driveId}`;
 }

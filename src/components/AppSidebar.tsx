@@ -91,7 +91,15 @@ const AppSidebar = () => {
   const collapsed = state === 'collapsed';
 
   const effectiveRole = (isPIP && primaryRole === 'docente') ? 'director' : primaryRole;
-  const items = effectiveRole ? (roleNavItems[effectiveRole] || []) : [];
+  const baseItems = effectiveRole ? (roleNavItems[effectiveRole] || []) : [];
+  
+  // Directors/subdirectors with docente role get docente items merged
+  const { roles } = useAuth();
+  const isDirectorWithDocente = (primaryRole === 'director' || primaryRole === 'subdirector') && roles.includes('docente');
+  const docenteExtras = isDirectorWithDocente
+    ? (roleNavItems['docente'] || []).filter(item => !baseItems.some(b => b.path === item.path))
+    : [];
+  const items = [...baseItems, ...docenteExtras];
 
   const handleNav = (path: string) => {
     navigate(path);

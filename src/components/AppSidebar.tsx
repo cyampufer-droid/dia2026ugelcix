@@ -84,14 +84,19 @@ const roleLabels: Record<string, string> = {
 };
 
 const AppSidebar = () => {
-  const { primaryRole, profile, signOut, isPIP } = useAuth();
+  const { primaryRole, profile, signOut, isPIP, roles } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { state, setOpenMobile } = useSidebar();
   const collapsed = state === 'collapsed';
 
   const effectiveRole = (isPIP && primaryRole === 'docente') ? 'director' : primaryRole;
-  const items = effectiveRole ? (roleNavItems[effectiveRole] || []) : [];
+  const baseItems = effectiveRole ? (roleNavItems[effectiveRole] || []) : [];
+  const isDirectorWithDocente = (primaryRole === 'director' || primaryRole === 'subdirector') && roles.includes('docente');
+  const docenteExtras = isDirectorWithDocente
+    ? (roleNavItems['docente'] || []).filter(item => !baseItems.some(b => b.path === item.path))
+    : [];
+  const items = [...baseItems, ...docenteExtras];
 
   const handleNav = (path: string) => {
     navigate(path);

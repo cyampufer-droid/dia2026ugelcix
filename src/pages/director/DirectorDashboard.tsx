@@ -27,6 +27,7 @@ const DirectorDashboard = () => {
         
         const nivelesData = nivelesRes || [];
         setTienePrimaria(nivelesData.some(n => n.nivel === 'Primaria'));
+        setTieneSecundaria(nivelesData.some(n => n.nivel === 'Secundaria'));
 
         // Optimized: Use RPC for director stats
         const { data: statsData, error } = await supabase.rpc('get_director_stats', { 

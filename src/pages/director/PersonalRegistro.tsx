@@ -15,6 +15,7 @@ import { UserPlus, RefreshCw, Pencil, Trash2, KeyRound, Search, ChevronDown, Che
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import BulkPersonalUpload from '@/components/director/BulkPersonalUpload';
 import SortableTableHead, { useSort, sortData } from '@/components/SortableTableHead';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const personalRoles = [
   { value: 'subdirector', label: 'Subdirector(a)' },

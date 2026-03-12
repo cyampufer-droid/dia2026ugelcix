@@ -9,12 +9,13 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { UserPlus, Search, Pencil, Trash2, Loader2, RefreshCw, Download } from 'lucide-react';
+import { UserPlus, Search, Pencil, Trash2, Loader2, RefreshCw, Download, ChevronDown, ChevronRight, Users } from 'lucide-react';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import BulkUserUpload from '@/components/admin/BulkUserUpload';
 import * as XLSX from 'xlsx';
 import SortableTableHead, { useSort, sortData } from '@/components/SortableTableHead';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const roles = [
   { value: 'director', label: 'Director' },

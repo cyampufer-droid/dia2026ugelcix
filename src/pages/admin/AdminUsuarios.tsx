@@ -381,64 +381,79 @@ const AdminUsuarios = () => {
                 : 'No se encontraron usuarios con ese criterio de búsqueda.'}
             </p>
           ) : (
-             <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableCell className="w-10 p-2">
-                      <Checkbox
-                        checked={sortedUsers.length > 0 && selectedIds.size === sortedUsers.length}
-                        onCheckedChange={toggleSelectAll}
-                        aria-label="Seleccionar todos"
-                      />
-                    </TableCell>
-                    <SortableTableHead label="DNI" sortKey="dni" currentSort={sort} onSort={handleSort} />
-                    <SortableTableHead label="Nombre Completo" sortKey="nombre_completo" currentSort={sort} onSort={handleSort} />
-                    <SortableTableHead label="Correo Electrónico" sortKey="email" currentSort={sort} onSort={handleSort} />
-                    <SortableTableHead label="Rol" sortKey="rol" currentSort={sort} onSort={handleSort} />
-                    <SortableTableHead label="Acciones" sortKey="" currentSort={{ key: '', direction: null }} onSort={() => {}} className="text-right" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedUsers.map((user) => (
-                    <TableRow key={user.id} data-state={selectedIds.has(user.id) ? 'selected' : undefined}>
-                      <TableCell className="w-10 p-2">
-                        <Checkbox
-                          checked={selectedIds.has(user.id)}
-                          onCheckedChange={() => toggleSelect(user.id)}
-                          aria-label={`Seleccionar ${user.nombre_completo}`}
-                        />
-                      </TableCell>
-                      <TableCell className="font-mono">{user.dni}</TableCell>
-                      <TableCell>{user.nombre_completo}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>
-                        {user.roles.map((r) => (
-                          <Badge key={r} variant="secondary" className="mr-1">
-                            {roleLabelMap[r] || r}
-                          </Badge>
-                        ))}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(user)} title="Editar">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => { setDeleteUser(user); setDeleteOpen(true); }}
-                            title="Eliminar"
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <div className="space-y-2">
+              {usersByRole.map(([role, roleUsers]) => (
+                <Collapsible key={role} open={openRoles.has(role)} onOpenChange={() => toggleRoleOpen(role)}>
+                  <CollapsibleTrigger asChild>
+                    <button className="flex items-center gap-2 w-full px-3 py-2.5 rounded-md hover:bg-muted/50 transition-colors text-left border border-border">
+                      {openRoles.has(role) ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                      <Users className="h-4 w-4 text-primary" />
+                      <span className="font-semibold text-sm">{roleLabelMap[role] || role}</span>
+                      <Badge variant="secondary" className="ml-auto">{roleUsers.length}</Badge>
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="overflow-x-auto mt-1 border rounded-md">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableCell className="w-10 p-2">
+                              <Checkbox
+                                checked={roleUsers.every(u => selectedIds.has(u.id))}
+                                onCheckedChange={() => {
+                                  const allSelected = roleUsers.every(u => selectedIds.has(u.id));
+                                  setSelectedIds(prev => {
+                                    const next = new Set(prev);
+                                    roleUsers.forEach(u => allSelected ? next.delete(u.id) : next.add(u.id));
+                                    return next;
+                                  });
+                                }}
+                                aria-label={`Seleccionar todos los ${roleLabelMap[role] || role}`}
+                              />
+                            </TableCell>
+                            <SortableTableHead label="DNI" sortKey="dni" currentSort={sort} onSort={handleSort} />
+                            <SortableTableHead label="Nombre Completo" sortKey="nombre_completo" currentSort={sort} onSort={handleSort} />
+                            <SortableTableHead label="Correo Electrónico" sortKey="email" currentSort={sort} onSort={handleSort} />
+                            <SortableTableHead label="Acciones" sortKey="" currentSort={{ key: '', direction: null }} onSort={() => {}} className="text-right" />
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {roleUsers.map((user) => (
+                            <TableRow key={user.id} data-state={selectedIds.has(user.id) ? 'selected' : undefined}>
+                              <TableCell className="w-10 p-2">
+                                <Checkbox
+                                  checked={selectedIds.has(user.id)}
+                                  onCheckedChange={() => toggleSelect(user.id)}
+                                  aria-label={`Seleccionar ${user.nombre_completo}`}
+                                />
+                              </TableCell>
+                              <TableCell className="font-mono">{user.dni}</TableCell>
+                              <TableCell>{user.nombre_completo}</TableCell>
+                              <TableCell>{user.email}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-1">
+                                  <Button variant="ghost" size="icon" onClick={() => openEdit(user)} title="Editar">
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => { setDeleteUser(user); setDeleteOpen(true); }}
+                                    title="Eliminar"
+                                    className="text-destructive hover:text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              ))}
               <p className="text-xs text-muted-foreground mt-2">
                 {sortedUsers.length} de {users.length} usuarios
               </p>

@@ -288,9 +288,10 @@ const EstudiantePrueba = () => {
         <p className="text-muted-foreground mt-1">Responde las evaluaciones de cada área</p>
       </div>
 
-      {nivelNombre === 'Primaria' && gradoNombre && (
+      {(nivelNombre === 'Primaria' || nivelNombre === 'Secundaria') && gradoNombre && (
         <EvaluacionesDownloadCard
           gradoFilter={gradoNombre}
+          nivelFilter={nivelNombre as 'Primaria' | 'Secundaria'}
           title="Cuadernillos de Evaluación"
         />
       )}

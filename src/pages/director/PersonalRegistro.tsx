@@ -420,6 +420,31 @@ const PersonalRegistro = () => {
     return '';
   });
 
+  // Group by role
+  const personalByRole = useMemo(() => {
+    const groups: Record<string, PersonalItem[]> = {};
+    for (const p of sortedPersonal) {
+      const primaryRole = p.is_pip ? 'docente_pip' : (p.roles[0] || 'sin_rol');
+      if (!groups[primaryRole]) groups[primaryRole] = [];
+      groups[primaryRole].push(p);
+    }
+    const roleOrder = personalRoles.map(r => r.value);
+    roleOrder.push('director', 'sin_rol');
+    const sorted: [string, PersonalItem[]][] = [];
+    for (const r of roleOrder) {
+      if (groups[r]) sorted.push([r, groups[r]]);
+    }
+    return sorted;
+  }, [sortedPersonal]);
+
+  const toggleRoleOpen = (role: string) => {
+    setOpenRoles(prev => {
+      const next = new Set(prev);
+      if (next.has(role)) next.delete(role); else next.add(role);
+      return next;
+    });
+  };
+
   const AulaSelector = ({ value, onChange, label = 'Nivel / Grado / Sección' }: { value: string; onChange: (v: string) => void; label?: string }) => (
     <div>
       <Label>{label}</Label>

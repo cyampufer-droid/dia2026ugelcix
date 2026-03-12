@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { UserPlus, RefreshCw, Pencil, Trash2, KeyRound, Search } from 'lucide-react';
+import { UserPlus, RefreshCw, Pencil, Trash2, KeyRound, Search, ChevronDown, ChevronRight, Users } from 'lucide-react';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import BulkPersonalUpload from '@/components/director/BulkPersonalUpload';
 import SortableTableHead, { useSort, sortData } from '@/components/SortableTableHead';

@@ -94,6 +94,9 @@ const PersonalRegistro = () => {
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Collapsible role sections
+  const [openRoles, setOpenRoles] = useState<Set<string>>(new Set());
+
   // Fetch niveles/grados for the director's institution
   useEffect(() => {
     const fetchNiveles = async () => {

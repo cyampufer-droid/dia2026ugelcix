@@ -1,18 +1,32 @@
 import { Download, FileText, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { evaluacionesPrimariaPdfs, getViewUrl, getDownloadUrl, type EvaluacionPdf } from '@/lib/evaluacionesPrimariaPdfs';
+import { evaluacionesPdfs, getViewUrl, getDownloadUrl, type EvaluacionPdf } from '@/lib/evaluacionesPrimariaPdfs';
 
 interface Props {
   gradoFilter?: string | null;
+  nivelFilter?: 'Primaria' | 'Secundaria' | null;
   title?: string;
 }
 
-const EvaluacionesDownloadCard = ({ gradoFilter, title = 'Cuadernillos de Evaluación de Entrada – Primaria' }: Props) => {
-  const pdfs = gradoFilter
-    ? evaluacionesPrimariaPdfs.filter(p => p.grado === gradoFilter)
-    : evaluacionesPrimariaPdfs;
+const EvaluacionesDownloadCard = ({ gradoFilter, nivelFilter, title }: Props) => {
+  let pdfs = evaluacionesPdfs;
+
+  if (nivelFilter) {
+    pdfs = pdfs.filter(p => p.nivel === nivelFilter);
+  } else {
+    // Default to Primaria for backward compatibility
+    pdfs = pdfs.filter(p => p.nivel === 'Primaria');
+  }
+
+  if (gradoFilter) {
+    pdfs = pdfs.filter(p => p.grado === gradoFilter);
+  }
 
   if (pdfs.length === 0) return null;
+
+  const defaultTitle = nivelFilter === 'Secundaria'
+    ? 'Cuadernillos de Evaluación de Entrada – Secundaria'
+    : 'Cuadernillos de Evaluación de Entrada – Primaria';
 
   const grouped = pdfs.reduce<Record<string, EvaluacionPdf[]>>((acc, p) => {
     (acc[p.grado] ??= []).push(p);
@@ -23,7 +37,7 @@ const EvaluacionesDownloadCard = ({ gradoFilter, title = 'Cuadernillos de Evalua
     <div className="bg-card rounded-xl border p-6 shadow-card">
       <div className="flex items-center gap-2 mb-4">
         <FileText className="h-5 w-5 text-primary" />
-        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+        <h2 className="text-lg font-semibold text-foreground">{title || defaultTitle}</h2>
       </div>
       <div className="space-y-4">
         {Object.entries(grouped)

@@ -134,7 +134,8 @@ const DirectorDashboard = () => {
         </div>
       )}
 
-      {tienePrimaria && <EvaluacionesDownloadCard />}
+      {tienePrimaria && <EvaluacionesDownloadCard nivelFilter="Primaria" />}
+      {tieneSecundaria && <EvaluacionesDownloadCard nivelFilter="Secundaria" />}
 
       <div className="bg-card rounded-xl border p-6 shadow-card">
         <h2 className="text-lg font-semibold mb-2 text-foreground">Pasos para comenzar</h2>

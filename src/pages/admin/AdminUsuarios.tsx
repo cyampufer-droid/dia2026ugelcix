@@ -89,6 +89,9 @@ const AdminUsuarios = () => {
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
 
+  // Collapsible role sections
+  const [openRoles, setOpenRoles] = useState<Set<string>>(new Set());
+
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {

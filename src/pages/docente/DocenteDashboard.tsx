@@ -312,9 +312,10 @@ const DocenteDashboard = () => {
         </div>
       )}
 
-      {aulaActual?.nivel === 'Primaria' && (
+      {(aulaActual?.nivel === 'Primaria' || aulaActual?.nivel === 'Secundaria') && (
         <EvaluacionesDownloadCard
           gradoFilter={aulaActual.grado}
+          nivelFilter={aulaActual.nivel as 'Primaria' | 'Secundaria'}
           title={`Cuadernillos de Evaluación – ${aulaActual.grado} Grado`}
         />
       )}

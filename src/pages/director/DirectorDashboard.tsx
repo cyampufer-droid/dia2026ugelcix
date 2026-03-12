@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 const DirectorDashboard = () => {
   const { profile } = useAuth();
   const [tienePrimaria, setTienePrimaria] = useState(false);
+  const [tieneSecundaria, setTieneSecundaria] = useState(false);
   const [stats, setStats] = useState({
     aulas: 0, directores: 0, subdirectores: 0, docentes: 0, docentesPip: 0, estudiantes: 0, evaluaciones: 0, tieneResultados: false,
   });
@@ -26,6 +27,7 @@ const DirectorDashboard = () => {
         
         const nivelesData = nivelesRes || [];
         setTienePrimaria(nivelesData.some(n => n.nivel === 'Primaria'));
+        setTieneSecundaria(nivelesData.some(n => n.nivel === 'Secundaria'));
 
         // Optimized: Use RPC for director stats
         const { data: statsData, error } = await supabase.rpc('get_director_stats', { 
@@ -132,7 +134,8 @@ const DirectorDashboard = () => {
         </div>
       )}
 
-      {tienePrimaria && <EvaluacionesDownloadCard />}
+      {tienePrimaria && <EvaluacionesDownloadCard nivelFilter="Primaria" />}
+      {tieneSecundaria && <EvaluacionesDownloadCard nivelFilter="Secundaria" />}
 
       <div className="bg-card rounded-xl border p-6 shadow-card">
         <h2 className="text-lg font-semibold mb-2 text-foreground">Pasos para comenzar</h2>

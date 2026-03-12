@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 const DirectorDashboard = () => {
   const { profile } = useAuth();
   const [tienePrimaria, setTienePrimaria] = useState(false);
+  const [tieneSecundaria, setTieneSecundaria] = useState(false);
   const [stats, setStats] = useState({
     aulas: 0, directores: 0, subdirectores: 0, docentes: 0, docentesPip: 0, estudiantes: 0, evaluaciones: 0, tieneResultados: false,
   });

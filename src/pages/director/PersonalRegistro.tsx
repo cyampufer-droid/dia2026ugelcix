@@ -11,10 +11,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { UserPlus, RefreshCw, Pencil, Trash2, KeyRound, Search } from 'lucide-react';
+import { UserPlus, RefreshCw, Pencil, Trash2, KeyRound, Search, ChevronDown, ChevronRight, Users } from 'lucide-react';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import BulkPersonalUpload from '@/components/director/BulkPersonalUpload';
 import SortableTableHead, { useSort, sortData } from '@/components/SortableTableHead';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const personalRoles = [
   { value: 'subdirector', label: 'Subdirector(a)' },
@@ -92,6 +93,9 @@ const PersonalRegistro = () => {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Collapsible role sections
+  const [openRoles, setOpenRoles] = useState<Set<string>>(new Set());
 
   // Fetch niveles/grados for the director's institution
   useEffect(() => {
@@ -416,6 +420,31 @@ const PersonalRegistro = () => {
     return '';
   });
 
+  // Group by role
+  const personalByRole = useMemo(() => {
+    const groups: Record<string, PersonalItem[]> = {};
+    for (const p of sortedPersonal) {
+      const primaryRole = p.is_pip ? 'docente_pip' : (p.roles[0] || 'sin_rol');
+      if (!groups[primaryRole]) groups[primaryRole] = [];
+      groups[primaryRole].push(p);
+    }
+    const roleOrder = personalRoles.map(r => r.value);
+    roleOrder.push('director', 'sin_rol');
+    const sorted: [string, PersonalItem[]][] = [];
+    for (const r of roleOrder) {
+      if (groups[r]) sorted.push([r, groups[r]]);
+    }
+    return sorted;
+  }, [sortedPersonal]);
+
+  const toggleRoleOpen = (role: string) => {
+    setOpenRoles(prev => {
+      const next = new Set(prev);
+      if (next.has(role)) next.delete(role); else next.add(role);
+      return next;
+    });
+  };
+
   const AulaSelector = ({ value, onChange, label = 'Nivel / Grado / Sección' }: { value: string; onChange: (v: string) => void; label?: string }) => (
     <div>
       <Label>{label}</Label>
@@ -618,68 +647,68 @@ const PersonalRegistro = () => {
               No hay personal registrado aún. Use los botones superiores para agregar.
             </p>
           ) : (
-            <div className="overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <SortableTableHead label="DNI" sortKey="dni" currentSort={sort} onSort={handleSort} />
-                    <SortableTableHead label="Apellidos y Nombres" sortKey="nombre_completo" currentSort={sort} onSort={handleSort} />
-                    <SortableTableHead label="Rol" sortKey="rol" currentSort={sort} onSort={handleSort} />
-                    <SortableTableHead label="Nivel / Grado / Sección" sortKey="aula" currentSort={sort} onSort={handleSort} />
-                    <SortableTableHead label="Acciones" sortKey="" currentSort={{ key: '', direction: null }} onSort={() => {}} className="text-right" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedPersonal.map(p => {
-                    const multiAulas = formatMultiAulas(p);
-                    return (
-                      <TableRow key={p.id}>
-                        <TableCell className="font-mono">{p.dni}</TableCell>
-                        <TableCell>{p.nombre_completo}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-1 flex-wrap">
-                            {p.is_pip ? (
-                              <Badge variant="secondary">Docente PIP</Badge>
-                            ) : (
-                              p.roles.map(r => (
-                                <Badge key={r} variant="secondary">{roleLabelMap[r] || r}</Badge>
-                              ))
-                            )}
-                            {p.especialidad && (
-                              <Badge variant="outline" className="text-xs">{p.especialidad}</Badge>
-                            )}
-                            {p.roles.length === 0 && !p.is_pip && <span className="text-muted-foreground text-xs">Sin rol</span>}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {multiAulas && multiAulas.length > 0 ? (
-                            <div className="flex gap-1 flex-wrap">
-                              {multiAulas.map((aula, i) => (
-                                <Badge key={i} variant="outline" className="text-xs">{aula}</Badge>
-                              ))}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">Sin asignar</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex gap-1 justify-end">
-                            <Button variant="ghost" size="icon" title="Editar" onClick={() => openEdit(p)}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" title="Resetear contraseña" onClick={() => setResetItem(p)}>
-                              <KeyRound className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" title="Eliminar" className="text-destructive hover:text-destructive" onClick={() => setDeleteItem(p)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+            <div className="space-y-2">
+              {personalByRole.map(([role, rolePersonal]) => (
+                <Collapsible key={role} open={openRoles.has(role)} onOpenChange={() => toggleRoleOpen(role)}>
+                  <CollapsibleTrigger asChild>
+                    <button className="flex items-center gap-2 w-full px-3 py-2.5 rounded-md hover:bg-muted/50 transition-colors text-left border border-border">
+                      {openRoles.has(role) ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                      <Users className="h-4 w-4 text-primary" />
+                      <span className="font-semibold text-sm">{roleLabelMap[role] || role}</span>
+                      <Badge variant="secondary" className="ml-auto">{rolePersonal.length}</Badge>
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="overflow-auto mt-1 border rounded-md">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <SortableTableHead label="DNI" sortKey="dni" currentSort={sort} onSort={handleSort} />
+                            <SortableTableHead label="Apellidos y Nombres" sortKey="nombre_completo" currentSort={sort} onSort={handleSort} />
+                            <SortableTableHead label="Nivel / Grado / Sección" sortKey="aula" currentSort={sort} onSort={handleSort} />
+                            <SortableTableHead label="Acciones" sortKey="" currentSort={{ key: '', direction: null }} onSort={() => {}} className="text-right" />
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {rolePersonal.map(p => {
+                            const multiAulas = formatMultiAulas(p);
+                            return (
+                              <TableRow key={p.id}>
+                                <TableCell className="font-mono">{p.dni}</TableCell>
+                                <TableCell>{p.nombre_completo}</TableCell>
+                                <TableCell>
+                                  {multiAulas && multiAulas.length > 0 ? (
+                                    <div className="flex gap-1 flex-wrap">
+                                      {multiAulas.map((aula, i) => (
+                                        <Badge key={i} variant="outline" className="text-xs">{aula}</Badge>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <span className="text-muted-foreground text-xs">Sin asignar</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex gap-1 justify-end">
+                                    <Button variant="ghost" size="icon" title="Editar" onClick={() => openEdit(p)}>
+                                      <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" title="Resetear contraseña" onClick={() => setResetItem(p)}>
+                                      <KeyRound className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" title="Eliminar" className="text-destructive hover:text-destructive" onClick={() => setDeleteItem(p)}>
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              ))}
             </div>
           )}
         </CardContent>

@@ -209,6 +209,32 @@ const AdminUsuarios = () => {
     return '';
   });
 
+  // Group users by primary role
+  const usersByRole = useMemo(() => {
+    const groups: Record<string, UserRow[]> = {};
+    for (const u of sortedUsers) {
+      const primaryRole = u.roles[0] || 'sin_rol';
+      if (!groups[primaryRole]) groups[primaryRole] = [];
+      groups[primaryRole].push(u);
+    }
+    // Sort groups by role order
+    const roleOrder = roles.map(r => r.value);
+    roleOrder.push('sin_rol');
+    const sorted: [string, UserRow[]][] = [];
+    for (const r of roleOrder) {
+      if (groups[r]) sorted.push([r, groups[r]]);
+    }
+    return sorted;
+  }, [sortedUsers]);
+
+  const toggleRoleOpen = (role: string) => {
+    setOpenRoles(prev => {
+      const next = new Set(prev);
+      if (next.has(role)) next.delete(role); else next.add(role);
+      return next;
+    });
+  };
+
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);

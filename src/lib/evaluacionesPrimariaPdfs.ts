@@ -35,6 +35,18 @@ export const evaluacionesPdfs: EvaluacionPdf[] = [
   { nivel: 'Secundaria', grado: 'Tercero', gradoNumero: 3, area: 'Comunicación', titulo: 'Ev. 3° Comunicación', driveId: '16XEHyGfTIJefYn1_8suAIpQXMCsGiYi_' },
   { nivel: 'Secundaria', grado: 'Cuarto', gradoNumero: 4, area: 'Comunicación', titulo: 'Ev. 4° Comunicación', driveId: '1LQ2nVCkbp825C2t3ro5FB0miHQZFhUtK' },
   { nivel: 'Secundaria', grado: 'Quinto', gradoNumero: 5, area: 'Comunicación', titulo: 'Ev. 5° Comunicación', driveId: '1jC6-y9tg5Ovh6ve_J4ivX4aLaw-3M6OY' },
+
+  // --- Matemática (Cuadernillo A y B) ---
+  { nivel: 'Secundaria', grado: 'Primero', gradoNumero: 1, area: 'Matemática', titulo: 'Ev. 1° Matemática – Cuadernillo A', driveId: '18lcLVwWpdh5NxA8e176jvLIHHvwfTxK6' },
+  { nivel: 'Secundaria', grado: 'Primero', gradoNumero: 1, area: 'Matemática', titulo: 'Ev. 1° Matemática – Cuadernillo B', driveId: '1RWER0zj9mANb1FbtTf5ZsG2Pdma6qVzp' },
+  { nivel: 'Secundaria', grado: 'Segundo', gradoNumero: 2, area: 'Matemática', titulo: 'Ev. 2° Matemática – Cuadernillo A', driveId: '1cayG0ra-70G9rZXNhdalCNz1Q7HKL51X' },
+  { nivel: 'Secundaria', grado: 'Segundo', gradoNumero: 2, area: 'Matemática', titulo: 'Ev. 2° Matemática – Cuadernillo B', driveId: '1TwScDVncpmmAgLUHBR-84LJ3MmyDVlEU' },
+  { nivel: 'Secundaria', grado: 'Tercero', gradoNumero: 3, area: 'Matemática', titulo: 'Ev. 3° Matemática – Cuadernillo A', driveId: '1ubSCzo35NapSmDISXvKxXFGihyvDBbO4' },
+  { nivel: 'Secundaria', grado: 'Tercero', gradoNumero: 3, area: 'Matemática', titulo: 'Ev. 3° Matemática – Cuadernillo B', driveId: '1I_ggFSuwHY4MaSRLOOLlLZl8vhzVUpGX' },
+  { nivel: 'Secundaria', grado: 'Cuarto', gradoNumero: 4, area: 'Matemática', titulo: 'Ev. 4° Matemática – Cuadernillo A', driveId: '1uBG6_735xyM4Ewh2hmvQ2GTLzWRHgw3H' },
+  { nivel: 'Secundaria', grado: 'Cuarto', gradoNumero: 4, area: 'Matemática', titulo: 'Ev. 4° Matemática – Cuadernillo B', driveId: '1OCm5rhDnIdfuvmA2XbDPt18wvuV3Wwz5' },
+  { nivel: 'Secundaria', grado: 'Quinto', gradoNumero: 5, area: 'Matemática', titulo: 'Ev. 5° Matemática – Cuadernillo A', driveId: '1UPtll_7VJjrUAU5DcKU1euxzD6V0TpwC' },
+  { nivel: 'Secundaria', grado: 'Quinto', gradoNumero: 5, area: 'Matemática', titulo: 'Ev. 5° Matemática – Cuadernillo B', driveId: '1SQigil5G2wObMJSzMFOPincbng0Nv8_u' },
 ];
 
 

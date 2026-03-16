@@ -30,9 +30,18 @@ export const evaluacionesPdfs: EvaluacionPdf[] = [
 
   // ===== SECUNDARIA =====
   // --- Comunicación (Comprensión Lectora) ---
-  { nivel: 'Secundaria', grado: 'Primero', gradoNumero: 1, area: 'Comunicación', titulo: 'Ev. 1° Comunicación', driveId: '1lBePVTnr6TPR80X91m8XK1BagaI4oelc' },
-  { nivel: 'Secundaria', grado: 'Segundo', gradoNumero: 2, area: 'Comunicación', titulo: 'Ev. 2° Comunicación', driveId: '1sG8LPtB3ZqwoAJXbQYe9KhaEn9SQGI6P' },
+  { nivel: 'Secundaria', grado: 'Primero', gradoNumero: 1, area: 'Comunicación', titulo: 'Ev. 1° Comunicación', driveId: '12iLLJ2LJRNjw-8NF_6pMN58W4LZOGqAM' },
+  { nivel: 'Secundaria', grado: 'Segundo', gradoNumero: 2, area: 'Comunicación', titulo: 'Ev. 2° Comunicación', driveId: '16dMwF62T30VnvIHyjXEwgX325ik8LhS0' },
+  { nivel: 'Secundaria', grado: 'Tercero', gradoNumero: 3, area: 'Comunicación', titulo: 'Ev. 3° Comunicación', driveId: '16XEHyGfTIJefYn1_8suAIpQXMCsGiYi_' },
+  { nivel: 'Secundaria', grado: 'Cuarto', gradoNumero: 4, area: 'Comunicación', titulo: 'Ev. 4° Comunicación', driveId: '1LQ2nVCkbp825C2t3ro5FB0miHQZFhUtK' },
+  { nivel: 'Secundaria', grado: 'Quinto', gradoNumero: 5, area: 'Comunicación', titulo: 'Ev. 5° Comunicación', driveId: '1jC6-y9tg5Ovh6ve_J4ivX4aLaw-3M6OY' },
 ];
+
+// Tabla de respuestas correctas - Secundaria Comunicación
+export const tablaRespuestasSecundaria = {
+  titulo: 'Tabla de Respuestas Correctas – Comunicación Secundaria',
+  driveId: '1D86bmNi3d6GXpXRZ-WoRiAgtFvVjMUdg',
+};
 
 /** @deprecated Use evaluacionesPdfs instead */
 export const evaluacionesPrimariaPdfs = evaluacionesPdfs.filter(p => p.nivel === 'Primaria');

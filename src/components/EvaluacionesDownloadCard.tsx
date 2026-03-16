@@ -1,6 +1,6 @@
-import { Download, FileText, ExternalLink } from 'lucide-react';
+import { Download, FileText, ExternalLink, Table2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { evaluacionesPdfs, getViewUrl, getDownloadUrl, type EvaluacionPdf } from '@/lib/evaluacionesPrimariaPdfs';
+import { evaluacionesPdfs, getViewUrl, getDownloadUrl, tablaRespuestasSecundaria, type EvaluacionPdf } from '@/lib/evaluacionesPrimariaPdfs';
 
 interface Props {
   gradoFilter?: string | null;

@@ -1,6 +1,6 @@
-import { Download, FileText, ExternalLink, Table2 } from 'lucide-react';
+import { Download, FileText, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { evaluacionesPdfs, getViewUrl, getDownloadUrl, tablaRespuestasSecundaria, type EvaluacionPdf } from '@/lib/evaluacionesPrimariaPdfs';
+import { evaluacionesPdfs, getViewUrl, getDownloadUrl, type EvaluacionPdf } from '@/lib/evaluacionesPrimariaPdfs';
 
 interface Props {
   gradoFilter?: string | null;
@@ -68,25 +68,6 @@ const EvaluacionesDownloadCard = ({ gradoFilter, nivelFilter, title }: Props) =>
             </div>
           ))}
       </div>
-
-      {nivelFilter === 'Secundaria' && (
-        <div className="mt-4 pt-4 border-t">
-          <div className="flex items-center gap-2 p-3 rounded-lg border bg-muted/30">
-            <Table2 className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className="text-sm font-medium text-foreground flex-1 truncate">{tablaRespuestasSecundaria.titulo}</span>
-            <a href={`https://drive.google.com/file/d/${tablaRespuestasSecundaria.driveId}/view`} target="_blank" rel="noopener noreferrer">
-              <Button variant="ghost" size="icon" className="h-8 w-8" title="Ver">
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-            </a>
-            <a href={`https://drive.google.com/uc?export=download&id=${tablaRespuestasSecundaria.driveId}`} target="_blank" rel="noopener noreferrer">
-              <Button variant="ghost" size="icon" className="h-8 w-8" title="Descargar">
-                <Download className="h-4 w-4" />
-              </Button>
-            </a>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

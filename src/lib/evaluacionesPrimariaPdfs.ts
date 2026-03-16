@@ -37,11 +37,6 @@ export const evaluacionesPdfs: EvaluacionPdf[] = [
   { nivel: 'Secundaria', grado: 'Quinto', gradoNumero: 5, area: 'Comunicación', titulo: 'Ev. 5° Comunicación', driveId: '1jC6-y9tg5Ovh6ve_J4ivX4aLaw-3M6OY' },
 ];
 
-// Tabla de respuestas correctas - Secundaria Comunicación
-export const tablaRespuestasSecundaria = {
-  titulo: 'Tabla de Respuestas Correctas – Comunicación Secundaria',
-  driveId: '1D86bmNi3d6GXpXRZ-WoRiAgtFvVjMUdg',
-};
 
 /** @deprecated Use evaluacionesPdfs instead */
 export const evaluacionesPrimariaPdfs = evaluacionesPdfs.filter(p => p.nivel === 'Primaria');

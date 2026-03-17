@@ -94,33 +94,14 @@ Deno.serve(async (req) => {
     const institucionMap = new Map(instituciones.map((i: any) => [i.id, i]));
     const nivelMap = new Map(niveles.map((n: any) => [n.id, n]));
 
-    // Fetch auth users in batches of 50 concurrently
-    const userIds = profiles.map((p: any) => p.user_id).filter(Boolean) as string[];
-    const authDataMap = new Map<string, any>();
-
-    const batchSize = 50;
-    for (let i = 0; i < userIds.length; i += batchSize) {
-      const batch = userIds.slice(i, i + batchSize);
-      const results = await Promise.allSettled(
-        batch.map(uid => adminClient.auth.admin.getUserById(uid))
-      );
-      for (let j = 0; j < results.length; j++) {
-        const r = results[j];
-        if (r.status === "fulfilled" && r.value.data?.user) {
-          authDataMap.set(batch[j], r.value.data.user);
-        }
-      }
-    }
-
-    // Transform data
+    // Transform data - derive email from DNI pattern instead of fetching auth users
     let result = profiles.map((profile: any) => {
-      const authUser = profile.user_id ? authDataMap.get(profile.user_id) : null;
       const institucion = profile.institucion_id ? institucionMap.get(profile.institucion_id) : null;
       const gradoSeccion = profile.grado_seccion_id ? nivelMap.get(profile.grado_seccion_id) : null;
 
       return {
         id: profile.user_id || profile.id,
-        email: authUser?.email || "",
+        email: profile.dni ? `${profile.dni}@dia.ugel.local` : "",
         dni: profile.dni || "",
         nombre_completo: profile.nombre_completo || "",
         roles: profile.user_id ? (roleMap.get(profile.user_id) || []) : [],
@@ -133,7 +114,7 @@ Deno.serve(async (req) => {
         nivel: (gradoSeccion as any)?.nivel || "",
         grado: (gradoSeccion as any)?.grado || "",
         seccion: (gradoSeccion as any)?.seccion || "",
-        created_at: authUser?.created_at || profile.created_at,
+        created_at: profile.created_at,
         is_pip: profile.is_pip || false,
       };
     });

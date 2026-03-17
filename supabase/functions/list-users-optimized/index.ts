@@ -13,6 +13,24 @@ function jsonResponse(body: unknown, status: number) {
   });
 }
 
+// Helper to fetch ALL rows from a table, paginating in chunks of 1000
+async function fetchAll(client: any, table: string, selectCols: string, orderCol?: string) {
+  const pageSize = 1000;
+  let allData: any[] = [];
+  let from = 0;
+  while (true) {
+    let query = client.from(table).select(selectCols).range(from, from + pageSize - 1);
+    if (orderCol) query = query.order(orderCol);
+    const { data, error } = await query;
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    allData = allData.concat(data);
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+  return allData;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -46,34 +64,25 @@ Deno.serve(async (req) => {
     const isAdmin = (callerRoles || []).some((r: { role: string }) => r.role === "administrador");
     if (!isAdmin) return jsonResponse({ error: "Solo administradores pueden listar usuarios" }, 403);
 
-    // Parse body (POST) or query params (GET)
-    let limit = 1000, offset = 0, search = "";
+    // Parse search param
+    let search = "";
     if (req.method === "POST") {
       try {
         const body = await req.json();
-        limit = Math.min(body.limit || 1000, 2000);
-        offset = body.offset || 0;
         search = body.search || "";
       } catch { /* use defaults */ }
     } else {
       const url = new URL(req.url);
-      limit = Math.min(parseInt(url.searchParams.get("limit") || "1000"), 2000);
-      offset = parseInt(url.searchParams.get("offset") || "0");
       search = url.searchParams.get("search") || "";
     }
 
-    // Fetch profiles, roles, instituciones, niveles in parallel
-    const [profilesRes, rolesRes, institucionesRes, nivelesRes] = await Promise.all([
-      adminClient.from("profiles").select("*").order("nombre_completo").range(offset, offset + limit - 1),
-      adminClient.from("user_roles").select("*"),
-      adminClient.from("instituciones").select("id, nombre, distrito, centro_poblado, direccion, tipo_gestion"),
-      adminClient.from("niveles_grados").select("id, nivel, grado, seccion"),
+    // Fetch ALL profiles, roles, instituciones, niveles in parallel (paginated)
+    const [profiles, allRoles, instituciones, niveles] = await Promise.all([
+      fetchAll(adminClient, "profiles", "*", "nombre_completo"),
+      fetchAll(adminClient, "user_roles", "*"),
+      fetchAll(adminClient, "instituciones", "id, nombre, distrito, centro_poblado, direccion, tipo_gestion"),
+      fetchAll(adminClient, "niveles_grados", "id, nivel, grado, seccion"),
     ]);
-
-    const profiles = profilesRes.data || [];
-    const allRoles = rolesRes.data || [];
-    const instituciones = institucionesRes.data || [];
-    const niveles = nivelesRes.data || [];
 
     // Build lookup maps
     const roleMap = new Map<string, string[]>();
@@ -137,7 +146,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    return jsonResponse({ users: result, total: result.length, limit, offset }, 200);
+    return jsonResponse({ users: result, total: result.length }, 200);
   } catch (err) {
     console.error("Error:", err.message);
     return jsonResponse({ error: "Error interno del servidor" }, 500);

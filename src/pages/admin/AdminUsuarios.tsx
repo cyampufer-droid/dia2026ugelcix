@@ -38,6 +38,23 @@ const roleLabelMap: Record<string, string> = {
   administrador: 'Administrador',
 };
 
+interface UserRow {
+  id: string;
+  email: string;
+  dni: string;
+  nombre_completo: string;
+  roles: string[];
+  created_at: string;
+  institucion_nombre?: string;
+  distrito?: string;
+  centro_poblado?: string;
+  direccion?: string;
+  tipo_gestion?: string;
+  nivel?: string;
+  grado?: string;
+  seccion?: string;
+}
+
 interface NivelGrado {
   id: string;
   nivel: string;

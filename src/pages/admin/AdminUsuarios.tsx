@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { UserPlus, Search, Pencil, Trash2, Loader2, RefreshCw, Download, ChevronDown, ChevronRight, Users, ChevronLeft } from 'lucide-react';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import BulkUserUpload from '@/components/admin/BulkUserUpload';
@@ -54,6 +55,28 @@ interface UserRow {
   seccion?: string;
 }
 
+interface NivelGrado {
+  id: string;
+  nivel: string;
+  grado: string;
+  seccion: string;
+  institucion_id: string;
+}
+
+interface Institucion {
+  id: string;
+  nombre: string;
+}
+
+const ESPECIALIDADES = [
+  { value: 'Matemática', label: 'Matemática' },
+  { value: 'Comunicación', label: 'Comunicación' },
+  { value: 'DPCC', label: 'Desarrollo Personal, Ciudadanía y Cívica' },
+];
+
+const rolesNeedInstitution = ['director', 'subdirector', 'docente', 'docente_pip', 'estudiante'];
+const rolesNeedAula = ['docente', 'estudiante'];
+
 const PAGE_SIZE = 500;
 
 const AdminUsuarios = () => {
@@ -61,8 +84,16 @@ const AdminUsuarios = () => {
   const [dni, setDni] = useState('');
   const [nombre, setNombre] = useState('');
   const [rol, setRol] = useState('');
+  const [selectedInstitucion, setSelectedInstitucion] = useState('');
+  const [selectedGradoSeccion, setSelectedGradoSeccion] = useState('');
+  const [selectedMultiGrados, setSelectedMultiGrados] = useState<string[]>([]);
+  const [especialidad, setEspecialidad] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  // Instituciones & niveles
+  const [instituciones, setInstituciones] = useState<Institucion[]>([]);
+  const [nivelesGrados, setNivelesGrados] = useState<NivelGrado[]>([]);
 
   // List state
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -138,6 +169,59 @@ const AdminUsuarios = () => {
     fetchUsers(0);
   }, []);
 
+  // Fetch instituciones on mount
+  useEffect(() => {
+    const fetchInstituciones = async () => {
+      const { data } = await supabase
+        .from('instituciones')
+        .select('id, nombre')
+        .order('nombre');
+      setInstituciones(data ?? []);
+    };
+    fetchInstituciones();
+  }, []);
+
+  // Fetch niveles when institution changes
+  useEffect(() => {
+    if (!selectedInstitucion) {
+      setNivelesGrados([]);
+      setSelectedGradoSeccion('');
+      setSelectedMultiGrados([]);
+      return;
+    }
+    const fetchNiveles = async () => {
+      const { data } = await supabase
+        .from('niveles_grados')
+        .select('id, nivel, grado, seccion, institucion_id')
+        .eq('institucion_id', selectedInstitucion)
+        .order('nivel')
+        .order('grado')
+        .order('seccion');
+      setNivelesGrados(data ?? []);
+    };
+    fetchNiveles();
+  }, [selectedInstitucion]);
+
+  // Filtered niveles for the form
+  const filteredNiveles = useMemo(() => {
+    return nivelesGrados.filter(ng => ng.seccion !== 'PIP');
+  }, [nivelesGrados]);
+
+  const secundariaNiveles = useMemo(() => {
+    return filteredNiveles.filter(ng => ng.nivel === 'Secundaria');
+  }, [filteredNiveles]);
+
+  const showSecundariaMulti = rol === 'docente' && secundariaNiveles.length > 0;
+
+  const needsInstitution = rolesNeedInstitution.includes(rol);
+  const needsAula = rolesNeedAula.includes(rol) && rol !== 'docente_pip';
+  const isSecundariaSelected = (() => {
+    if (selectedMultiGrados.length > 0) return true;
+    const ng = nivelesGrados.find(n => n.id === selectedGradoSeccion);
+    return ng?.nivel === 'Secundaria';
+  })();
+  const needsEspecialidad = rol === 'docente' && isSecundariaSelected;
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -145,12 +229,36 @@ const AdminUsuarios = () => {
       const email = `${dni.trim()}@dia.ugel.local`;
       const password = dni.trim();
       const isPip = rol === 'docente_pip';
-      await invokeEdgeFunction('create-user', {
-        email, password, dni, nombre_completo: nombre, role: isPip ? 'docente' : rol, is_pip: isPip || undefined,
-      });
+
+      const payload: any = {
+        email, password, dni, nombre_completo: nombre,
+        role: isPip ? 'docente' : rol,
+        is_pip: isPip || undefined,
+      };
+
+      if (needsInstitution && selectedInstitucion) {
+        payload.institucion_id = selectedInstitucion;
+      }
+
+      if (needsAula && !isPip) {
+        if (showSecundariaMulti && selectedMultiGrados.length > 0) {
+          payload.grado_seccion_ids = selectedMultiGrados;
+          payload.grado_seccion_id = selectedMultiGrados[0];
+        } else if (selectedGradoSeccion) {
+          payload.grado_seccion_id = selectedGradoSeccion;
+        }
+      }
+
+      if (needsEspecialidad && especialidad) {
+        payload.especialidad = especialidad;
+      }
+
+      await invokeEdgeFunction('create-user', payload);
       toast({ title: 'Usuario creado', description: `${nombre} registrado como ${roleLabelMap[rol] || rol}.` });
       setOpen(false);
       setDni(''); setNombre(''); setRol('');
+      setSelectedInstitucion(''); setSelectedGradoSeccion('');
+      setSelectedMultiGrados([]); setEspecialidad('');
       fetchUsers(currentPage);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message || 'Error al crear usuario', variant: 'destructive' });
@@ -328,7 +436,7 @@ const AdminUsuarios = () => {
                   <Label>Rol</Label>
                   <select
                     value={rol}
-                    onChange={e => setRol(e.target.value)}
+                    onChange={e => { setRol(e.target.value); setSelectedGradoSeccion(''); setSelectedMultiGrados([]); setEspecialidad(''); }}
                     required
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
@@ -336,6 +444,91 @@ const AdminUsuarios = () => {
                     {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                   </select>
                 </div>
+
+                {needsInstitution && (
+                  <div>
+                    <Label>Institución Educativa</Label>
+                    <select
+                      value={selectedInstitucion}
+                      onChange={e => { setSelectedInstitucion(e.target.value); setSelectedGradoSeccion(''); setSelectedMultiGrados([]); }}
+                      required
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="" disabled>Seleccione institución</option>
+                      {instituciones.map(i => <option key={i.id} value={i.id}>{i.nombre}</option>)}
+                    </select>
+                  </div>
+                )}
+
+                {needsAula && selectedInstitucion && (
+                  <>
+                    {showSecundariaMulti ? (
+                      <div>
+                        <Label>Aulas de Secundaria (selección múltiple)</Label>
+                        <div className="border rounded-md p-2 max-h-40 overflow-y-auto space-y-1">
+                          {secundariaNiveles.map(ng => (
+                            <label key={ng.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1">
+                              <Checkbox
+                                checked={selectedMultiGrados.includes(ng.id)}
+                                onCheckedChange={(checked) => {
+                                  setSelectedMultiGrados(prev =>
+                                    checked ? [...prev, ng.id] : prev.filter(id => id !== ng.id)
+                                  );
+                                }}
+                              />
+                              {ng.grado} "{ng.seccion}"
+                            </label>
+                          ))}
+                        </div>
+                        {filteredNiveles.some(ng => ng.nivel !== 'Secundaria') && (
+                          <div className="mt-2">
+                            <Label>O seleccione un aula de otro nivel</Label>
+                            <select
+                              value={selectedGradoSeccion}
+                              onChange={e => { setSelectedGradoSeccion(e.target.value); setSelectedMultiGrados([]); }}
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
+                              <option value="">-- Otro nivel --</option>
+                              {filteredNiveles.filter(ng => ng.nivel !== 'Secundaria').map(ng => (
+                                <option key={ng.id} value={ng.id}>{ng.nivel} - {ng.grado} "{ng.seccion}"</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div>
+                        <Label>Nivel / Grado / Sección</Label>
+                        <select
+                          value={selectedGradoSeccion}
+                          onChange={e => setSelectedGradoSeccion(e.target.value)}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <option value="">Seleccione aula</option>
+                          {filteredNiveles.map(ng => (
+                            <option key={ng.id} value={ng.id}>{ng.nivel} - {ng.grado} "{ng.seccion}"</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {needsEspecialidad && (
+                  <div>
+                    <Label>Especialidad</Label>
+                    <select
+                      value={especialidad}
+                      onChange={e => setEspecialidad(e.target.value)}
+                      required
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="" disabled>Seleccione especialidad</option>
+                      {ESPECIALIDADES.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
+                    </select>
+                  </div>
+                )}
+
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Creando…' : 'Crear Usuario'}
                 </Button>

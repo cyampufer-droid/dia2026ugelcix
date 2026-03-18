@@ -38,22 +38,27 @@ const roleLabelMap: Record<string, string> = {
   administrador: 'Administrador',
 };
 
-interface UserRow {
+interface NivelGrado {
   id: string;
-  email: string;
-  dni: string;
-  nombre_completo: string;
-  roles: string[];
-  created_at: string;
-  institucion_nombre?: string;
-  distrito?: string;
-  centro_poblado?: string;
-  direccion?: string;
-  tipo_gestion?: string;
-  nivel?: string;
-  grado?: string;
-  seccion?: string;
+  nivel: string;
+  grado: string;
+  seccion: string;
+  institucion_id: string;
 }
+
+interface Institucion {
+  id: string;
+  nombre: string;
+}
+
+const ESPECIALIDADES = [
+  { value: 'Matemática', label: 'Matemática' },
+  { value: 'Comunicación', label: 'Comunicación' },
+  { value: 'DPCC', label: 'Desarrollo Personal, Ciudadanía y Cívica' },
+];
+
+const rolesNeedInstitution = ['director', 'subdirector', 'docente', 'docente_pip', 'estudiante'];
+const rolesNeedAula = ['docente', 'estudiante'];
 
 const PAGE_SIZE = 500;
 
@@ -62,8 +67,16 @@ const AdminUsuarios = () => {
   const [dni, setDni] = useState('');
   const [nombre, setNombre] = useState('');
   const [rol, setRol] = useState('');
+  const [selectedInstitucion, setSelectedInstitucion] = useState('');
+  const [selectedGradoSeccion, setSelectedGradoSeccion] = useState('');
+  const [selectedMultiGrados, setSelectedMultiGrados] = useState<string[]>([]);
+  const [especialidad, setEspecialidad] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  // Instituciones & niveles
+  const [instituciones, setInstituciones] = useState<Institucion[]>([]);
+  const [nivelesGrados, setNivelesGrados] = useState<NivelGrado[]>([]);
 
   // List state
   const [users, setUsers] = useState<UserRow[]>([]);

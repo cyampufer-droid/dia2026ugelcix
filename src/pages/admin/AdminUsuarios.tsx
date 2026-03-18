@@ -436,7 +436,7 @@ const AdminUsuarios = () => {
                   <Label>Rol</Label>
                   <select
                     value={rol}
-                    onChange={e => setRol(e.target.value)}
+                    onChange={e => { setRol(e.target.value); setSelectedGradoSeccion(''); setSelectedMultiGrados([]); setEspecialidad(''); }}
                     required
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
@@ -444,6 +444,91 @@ const AdminUsuarios = () => {
                     {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                   </select>
                 </div>
+
+                {needsInstitution && (
+                  <div>
+                    <Label>Institución Educativa</Label>
+                    <select
+                      value={selectedInstitucion}
+                      onChange={e => { setSelectedInstitucion(e.target.value); setSelectedGradoSeccion(''); setSelectedMultiGrados([]); }}
+                      required
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="" disabled>Seleccione institución</option>
+                      {instituciones.map(i => <option key={i.id} value={i.id}>{i.nombre}</option>)}
+                    </select>
+                  </div>
+                )}
+
+                {needsAula && selectedInstitucion && (
+                  <>
+                    {showSecundariaMulti ? (
+                      <div>
+                        <Label>Aulas de Secundaria (selección múltiple)</Label>
+                        <div className="border rounded-md p-2 max-h-40 overflow-y-auto space-y-1">
+                          {secundariaNiveles.map(ng => (
+                            <label key={ng.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-1">
+                              <Checkbox
+                                checked={selectedMultiGrados.includes(ng.id)}
+                                onCheckedChange={(checked) => {
+                                  setSelectedMultiGrados(prev =>
+                                    checked ? [...prev, ng.id] : prev.filter(id => id !== ng.id)
+                                  );
+                                }}
+                              />
+                              {ng.grado} "{ng.seccion}"
+                            </label>
+                          ))}
+                        </div>
+                        {filteredNiveles.some(ng => ng.nivel !== 'Secundaria') && (
+                          <div className="mt-2">
+                            <Label>O seleccione un aula de otro nivel</Label>
+                            <select
+                              value={selectedGradoSeccion}
+                              onChange={e => { setSelectedGradoSeccion(e.target.value); setSelectedMultiGrados([]); }}
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            >
+                              <option value="">-- Otro nivel --</option>
+                              {filteredNiveles.filter(ng => ng.nivel !== 'Secundaria').map(ng => (
+                                <option key={ng.id} value={ng.id}>{ng.nivel} - {ng.grado} "{ng.seccion}"</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div>
+                        <Label>Nivel / Grado / Sección</Label>
+                        <select
+                          value={selectedGradoSeccion}
+                          onChange={e => setSelectedGradoSeccion(e.target.value)}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <option value="">Seleccione aula</option>
+                          {filteredNiveles.map(ng => (
+                            <option key={ng.id} value={ng.id}>{ng.nivel} - {ng.grado} "{ng.seccion}"</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {needsEspecialidad && (
+                  <div>
+                    <Label>Especialidad</Label>
+                    <select
+                      value={especialidad}
+                      onChange={e => setEspecialidad(e.target.value)}
+                      required
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="" disabled>Seleccione especialidad</option>
+                      {ESPECIALIDADES.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
+                    </select>
+                  </div>
+                )}
+
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Creando…' : 'Crear Usuario'}
                 </Button>

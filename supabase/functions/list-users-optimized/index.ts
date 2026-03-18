@@ -13,24 +13,6 @@ function jsonResponse(body: unknown, status: number) {
   });
 }
 
-// Helper to fetch ALL rows from a table, paginating in chunks of 1000
-async function fetchAll(client: any, table: string, selectCols: string, orderCol?: string) {
-  const pageSize = 1000;
-  let allData: any[] = [];
-  let from = 0;
-  while (true) {
-    let query = client.from(table).select(selectCols).range(from, from + pageSize - 1);
-    if (orderCol) query = query.order(orderCol);
-    const { data, error } = await query;
-    if (error) throw error;
-    if (!data || data.length === 0) break;
-    allData = allData.concat(data);
-    if (data.length < pageSize) break;
-    from += pageSize;
-  }
-  return allData;
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -44,7 +26,6 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify caller using getClaims
     const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -54,7 +35,6 @@ Deno.serve(async (req) => {
 
     const callerId = claimsData.claims.sub as string;
 
-    // Check admin role
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: callerRoles } = await adminClient
       .from("user_roles")
@@ -64,38 +44,82 @@ Deno.serve(async (req) => {
     const isAdmin = (callerRoles || []).some((r: { role: string }) => r.role === "administrador");
     if (!isAdmin) return jsonResponse({ error: "Solo administradores pueden listar usuarios" }, 403);
 
-    // Parse search param
+    // Parse params
+    let page = 0;
+    let pageSize = 500;
     let search = "";
+    let roleFilter = "";
+
     if (req.method === "POST") {
       try {
         const body = await req.json();
+        page = parseInt(body.page) || 0;
+        pageSize = Math.min(parseInt(body.pageSize) || 500, 500);
         search = body.search || "";
-      } catch { /* use defaults */ }
-    } else {
-      const url = new URL(req.url);
-      search = url.searchParams.get("search") || "";
+        roleFilter = body.roleFilter || "";
+      } catch { /* defaults */ }
     }
 
-    // Fetch ALL profiles, roles, instituciones, niveles in parallel (paginated)
-    const [profiles, allRoles, instituciones, niveles] = await Promise.all([
-      fetchAll(adminClient, "profiles", "*", "nombre_completo"),
-      fetchAll(adminClient, "user_roles", "*"),
-      fetchAll(adminClient, "instituciones", "id, nombre, distrito, centro_poblado, direccion, tipo_gestion"),
-      fetchAll(adminClient, "niveles_grados", "id, nivel, grado, seccion"),
-    ]);
+    // Strategy: fetch roles first to get user_ids for the requested role, then fetch profiles
+    // This avoids loading all 9000+ profiles at once
 
-    // Build lookup maps
+    // Step 1: Fetch all roles (small table, ~9000 rows but lightweight)
+    const { data: allRoles, error: rolesErr } = await adminClient
+      .from("user_roles")
+      .select("user_id, role");
+    if (rolesErr) throw rolesErr;
+
+    // Build role map
     const roleMap = new Map<string, string[]>();
-    for (const r of allRoles) {
+    for (const r of (allRoles || [])) {
       const existing = roleMap.get(r.user_id) || [];
       existing.push(r.role);
       roleMap.set(r.user_id, existing);
     }
+
+    // Step 2: Build query for profiles with server-side filtering
+    let profileQuery = adminClient.from("profiles").select("*", { count: "exact" });
+    
+    if (search) {
+      profileQuery = profileQuery.or(`dni.ilike.%${search}%,nombre_completo.ilike.%${search}%`);
+    }
+
+    if (roleFilter) {
+      // Get user_ids with this role
+      const roleUserIds = (allRoles || [])
+        .filter((r: any) => r.role === roleFilter)
+        .map((r: any) => r.user_id);
+      
+      if (roleUserIds.length === 0) {
+        return jsonResponse({ users: [], total: 0, page, pageSize }, 200);
+      }
+      profileQuery = profileQuery.in("user_id", roleUserIds);
+    }
+
+    profileQuery = profileQuery
+      .order("nombre_completo")
+      .range(page * pageSize, (page + 1) * pageSize - 1);
+
+    const { data: profiles, error: profilesErr, count } = await profileQuery;
+    if (profilesErr) throw profilesErr;
+
+    // Step 3: Fetch related data only for the profiles in this page
+    const instIds = [...new Set((profiles || []).map((p: any) => p.institucion_id).filter(Boolean))];
+    const nivelIds = [...new Set((profiles || []).map((p: any) => p.grado_seccion_id).filter(Boolean))];
+
+    const [instituciones, niveles] = await Promise.all([
+      instIds.length > 0
+        ? adminClient.from("instituciones").select("id, nombre, distrito, centro_poblado, direccion, tipo_gestion").in("id", instIds).then(r => r.data || [])
+        : Promise.resolve([]),
+      nivelIds.length > 0
+        ? adminClient.from("niveles_grados").select("id, nivel, grado, seccion").in("id", nivelIds).then(r => r.data || [])
+        : Promise.resolve([]),
+    ]);
+
     const institucionMap = new Map(instituciones.map((i: any) => [i.id, i]));
     const nivelMap = new Map(niveles.map((n: any) => [n.id, n]));
 
-    // Transform data - derive email from DNI pattern instead of fetching auth users
-    let result = profiles.map((profile: any) => {
+    const result = (profiles || []).map((profile: any) => {
       const institucion = profile.institucion_id ? institucionMap.get(profile.institucion_id) : null;
       const gradoSeccion = profile.grado_seccion_id ? nivelMap.get(profile.grado_seccion_id) : null;
 
@@ -119,15 +143,7 @@ Deno.serve(async (req) => {
       };
     });
 
-    // Apply search filter
-    if (search) {
-      const s = search.toLowerCase();
-      result = result.filter((u: any) =>
-        u.nombre_completo.toLowerCase().includes(s) || u.dni.includes(s)
-      );
-    }
-
-    return jsonResponse({ users: result, total: result.length }, 200);
+    return jsonResponse({ users: result, total: count || 0, page, pageSize }, 200);
   } catch (err) {
     console.error("Error:", err.message);
     return jsonResponse({ error: "Error interno del servidor" }, 500);

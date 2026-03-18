@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { UserPlus, Search, Pencil, Trash2, Loader2, RefreshCw, Download, ChevronDown, ChevronRight, Users, ChevronLeft } from 'lucide-react';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import BulkUserUpload from '@/components/admin/BulkUserUpload';

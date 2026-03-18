@@ -75,7 +75,7 @@ const ESPECIALIDADES = [
 ];
 
 const rolesNeedInstitution = ['director', 'subdirector', 'docente', 'docente_pip', 'estudiante'];
-const rolesNeedAula = ['docente', 'estudiante'];
+const rolesNeedAula = ['director', 'subdirector', 'docente', 'estudiante'];
 
 const PAGE_SIZE = 500;
 

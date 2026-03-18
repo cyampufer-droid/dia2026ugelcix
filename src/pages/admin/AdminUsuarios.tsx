@@ -169,6 +169,59 @@ const AdminUsuarios = () => {
     fetchUsers(0);
   }, []);
 
+  // Fetch instituciones on mount
+  useEffect(() => {
+    const fetchInstituciones = async () => {
+      const { data } = await supabase
+        .from('instituciones')
+        .select('id, nombre')
+        .order('nombre');
+      setInstituciones(data ?? []);
+    };
+    fetchInstituciones();
+  }, []);
+
+  // Fetch niveles when institution changes
+  useEffect(() => {
+    if (!selectedInstitucion) {
+      setNivelesGrados([]);
+      setSelectedGradoSeccion('');
+      setSelectedMultiGrados([]);
+      return;
+    }
+    const fetchNiveles = async () => {
+      const { data } = await supabase
+        .from('niveles_grados')
+        .select('id, nivel, grado, seccion, institucion_id')
+        .eq('institucion_id', selectedInstitucion)
+        .order('nivel')
+        .order('grado')
+        .order('seccion');
+      setNivelesGrados(data ?? []);
+    };
+    fetchNiveles();
+  }, [selectedInstitucion]);
+
+  // Filtered niveles for the form
+  const filteredNiveles = useMemo(() => {
+    return nivelesGrados.filter(ng => ng.seccion !== 'PIP');
+  }, [nivelesGrados]);
+
+  const secundariaNiveles = useMemo(() => {
+    return filteredNiveles.filter(ng => ng.nivel === 'Secundaria');
+  }, [filteredNiveles]);
+
+  const showSecundariaMulti = rol === 'docente' && secundariaNiveles.length > 0;
+
+  const needsInstitution = rolesNeedInstitution.includes(rol);
+  const needsAula = rolesNeedAula.includes(rol) && rol !== 'docente_pip';
+  const isSecundariaSelected = (() => {
+    if (selectedMultiGrados.length > 0) return true;
+    const ng = nivelesGrados.find(n => n.id === selectedGradoSeccion);
+    return ng?.nivel === 'Secundaria';
+  })();
+  const needsEspecialidad = rol === 'docente' && isSecundariaSelected;
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -176,12 +229,36 @@ const AdminUsuarios = () => {
       const email = `${dni.trim()}@dia.ugel.local`;
       const password = dni.trim();
       const isPip = rol === 'docente_pip';
-      await invokeEdgeFunction('create-user', {
-        email, password, dni, nombre_completo: nombre, role: isPip ? 'docente' : rol, is_pip: isPip || undefined,
-      });
+
+      const payload: any = {
+        email, password, dni, nombre_completo: nombre,
+        role: isPip ? 'docente' : rol,
+        is_pip: isPip || undefined,
+      };
+
+      if (needsInstitution && selectedInstitucion) {
+        payload.institucion_id = selectedInstitucion;
+      }
+
+      if (needsAula && !isPip) {
+        if (showSecundariaMulti && selectedMultiGrados.length > 0) {
+          payload.grado_seccion_ids = selectedMultiGrados;
+          payload.grado_seccion_id = selectedMultiGrados[0];
+        } else if (selectedGradoSeccion) {
+          payload.grado_seccion_id = selectedGradoSeccion;
+        }
+      }
+
+      if (needsEspecialidad && especialidad) {
+        payload.especialidad = especialidad;
+      }
+
+      await invokeEdgeFunction('create-user', payload);
       toast({ title: 'Usuario creado', description: `${nombre} registrado como ${roleLabelMap[rol] || rol}.` });
       setOpen(false);
       setDni(''); setNombre(''); setRol('');
+      setSelectedInstitucion(''); setSelectedGradoSeccion('');
+      setSelectedMultiGrados([]); setEspecialidad('');
       fetchUsers(currentPage);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message || 'Error al crear usuario', variant: 'destructive' });

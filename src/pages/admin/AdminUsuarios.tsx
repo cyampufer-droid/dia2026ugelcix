@@ -1,15 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { UserPlus, Search, Pencil, Trash2, Loader2, RefreshCw, Download, ChevronDown, ChevronRight, Users } from 'lucide-react';
+import { UserPlus, Search, Pencil, Trash2, Loader2, RefreshCw, Download, ChevronDown, ChevronRight, Users, ChevronLeft } from 'lucide-react';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import BulkUserUpload from '@/components/admin/BulkUserUpload';
 import * as XLSX from 'xlsx';
@@ -56,6 +54,8 @@ interface UserRow {
   seccion?: string;
 }
 
+const PAGE_SIZE = 500;
+
 const AdminUsuarios = () => {
   const [open, setOpen] = useState(false);
   const [dni, setDni] = useState('');
@@ -66,8 +66,12 @@ const AdminUsuarios = () => {
 
   // List state
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
 
   // Edit state
   const [editOpen, setEditOpen] = useState(false);
@@ -92,15 +96,27 @@ const AdminUsuarios = () => {
   // Collapsible role sections
   const [openRoles, setOpenRoles] = useState<Set<string>>(new Set());
 
-  const fetchUsers = async () => {
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const fetchUsers = useCallback(async (page = currentPage) => {
     setLoadingUsers(true);
     try {
-      // Usar la versión optimizada de la Edge Function
-      const data = await invokeEdgeFunction('list-users-optimized', { 
-        limit: 1000, 
-        offset: 0 
+      const data = await invokeEdgeFunction('list-users-optimized', {
+        page,
+        pageSize: PAGE_SIZE,
+        search: debouncedSearch,
+        roleFilter,
       });
       setUsers(data.users || []);
+      setTotalUsers(data.total || 0);
+      setCurrentPage(page);
     } catch (err: any) {
       const msg = err.message || '';
       if (msg.includes('No autorizado') || msg.includes('401') || msg.includes('Unauthorized')) {
@@ -111,10 +127,15 @@ const AdminUsuarios = () => {
     } finally {
       setLoadingUsers(false);
     }
-  };
+  }, [currentPage, debouncedSearch, roleFilter, toast]);
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(0);
+  }, [debouncedSearch, roleFilter]);
+
+  // Initial load
+  useEffect(() => {
+    fetchUsers(0);
   }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -127,10 +148,10 @@ const AdminUsuarios = () => {
       await invokeEdgeFunction('create-user', {
         email, password, dni, nombre_completo: nombre, role: isPip ? 'docente' : rol, is_pip: isPip || undefined,
       });
-      toast({ title: 'Usuario creado', description: `${nombre} registrado como ${roleLabelMap[rol] || rol}. Credenciales: DNI como usuario y contraseña.` });
+      toast({ title: 'Usuario creado', description: `${nombre} registrado como ${roleLabelMap[rol] || rol}.` });
       setOpen(false);
       setDni(''); setNombre(''); setRol('');
-      fetchUsers();
+      fetchUsers(currentPage);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message || 'Error al crear usuario', variant: 'destructive' });
     } finally {
@@ -163,7 +184,7 @@ const AdminUsuarios = () => {
       await invokeEdgeFunction('manage-user', body);
       toast({ title: 'Usuario actualizado' });
       setEditOpen(false);
-      fetchUsers();
+      fetchUsers(currentPage);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message || 'Error al actualizar', variant: 'destructive' });
     } finally {
@@ -175,13 +196,11 @@ const AdminUsuarios = () => {
     if (!deleteUser) return;
     setDeleteLoading(true);
     try {
-      await invokeEdgeFunction('manage-user', {
-        action: 'delete', user_id: deleteUser.id,
-      });
+      await invokeEdgeFunction('manage-user', { action: 'delete', user_id: deleteUser.id });
       toast({ title: 'Usuario eliminado', description: `${deleteUser.nombre_completo} ha sido eliminado` });
       setDeleteOpen(false);
       setDeleteUser(null);
-      fetchUsers();
+      fetchUsers(currentPage);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message || 'Error al eliminar', variant: 'destructive' });
     } finally {
@@ -189,19 +208,9 @@ const AdminUsuarios = () => {
     }
   };
 
-  const filteredUsers = users.filter((u) => {
-    const term = searchTerm.toLowerCase();
-    return (
-      u.dni.toLowerCase().includes(term) ||
-      u.nombre_completo.toLowerCase().includes(term) ||
-      u.email.toLowerCase().includes(term) ||
-      u.roles.some((r) => (roleLabelMap[r] || r).toLowerCase().includes(term))
-    );
-  });
-
   const { sort, handleSort } = useSort();
 
-  const sortedUsers = sortData(filteredUsers, sort, (u, key) => {
+  const sortedUsers = sortData(users, sort, (u, key) => {
     if (key === 'dni') return u.dni;
     if (key === 'nombre_completo') return u.nombre_completo;
     if (key === 'email') return u.email;
@@ -217,7 +226,6 @@ const AdminUsuarios = () => {
       if (!groups[primaryRole]) groups[primaryRole] = [];
       groups[primaryRole].push(u);
     }
-    // Sort groups by role order
     const roleOrder = roles.map(r => r.value);
     roleOrder.push('sin_rol');
     const sorted: [string, UserRow[]][] = [];
@@ -243,14 +251,6 @@ const AdminUsuarios = () => {
     });
   };
 
-  const toggleSelectAll = () => {
-    if (selectedIds.size === sortedUsers.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(sortedUsers.map(u => u.id)));
-    }
-  };
-
   const handleBulkDelete = async () => {
     setBulkDeleteLoading(true);
     try {
@@ -259,7 +259,7 @@ const AdminUsuarios = () => {
       toast({ title: 'Usuarios eliminados', description: `${ids.length} usuario(s) eliminado(s) correctamente` });
       setBulkDeleteOpen(false);
       setSelectedIds(new Set());
-      fetchUsers();
+      fetchUsers(currentPage);
     } catch (err: any) {
       toast({ title: 'Error', description: err.message || 'Error al eliminar usuarios', variant: 'destructive' });
     } finally {
@@ -268,7 +268,7 @@ const AdminUsuarios = () => {
   };
 
   const downloadExcel = () => {
-    const data = filteredUsers.map((u) => ({
+    const data = sortedUsers.map((u) => ({
       'Distrito': u.distrito || '',
       'Centro Poblado': u.centro_poblado || '',
       'Dirección': u.direccion || '',
@@ -288,6 +288,8 @@ const AdminUsuarios = () => {
     XLSX.writeFile(wb, 'usuarios_dia2026.xlsx');
   };
 
+  const totalPages = Math.ceil(totalUsers / PAGE_SIZE);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -296,64 +298,74 @@ const AdminUsuarios = () => {
           <p className="text-muted-foreground">Registre directores, docentes, estudiantes y demás personal</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={downloadExcel} disabled={filteredUsers.length === 0}>
+          <Button variant="outline" onClick={downloadExcel} disabled={sortedUsers.length === 0}>
             <Download className="h-4 w-4 mr-2" />Descargar Excel
           </Button>
-          <BulkUserUpload onComplete={fetchUsers} />
+          <BulkUserUpload onComplete={() => fetchUsers(currentPage)} />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button><UserPlus className="h-4 w-4 mr-2" />Nuevo Usuario</Button>
             </DialogTrigger>
-          <DialogContent>
-             <DialogHeader>
-               <DialogTitle>Registrar Nuevo Usuario</DialogTitle>
-               <DialogDescription>Complete los datos del nuevo usuario del sistema</DialogDescription>
-             </DialogHeader>
-            <form onSubmit={handleCreate} className="space-y-4 mt-4">
-              <div>
-                <Label>DNI</Label>
-                <Input value={dni} onChange={e => setDni(e.target.value)} required maxLength={8} placeholder="12345678" />
-              </div>
-              <div>
-                <Label>Nombre Completo</Label>
-                <Input value={nombre} onChange={e => setNombre(e.target.value)} required placeholder="Apellidos y Nombres" />
-              </div>
-              <p className="text-xs text-muted-foreground bg-muted rounded p-2">
-                📧 El correo se generará automáticamente como <strong>{dni ? `${dni}@dia.ugel.local` : '{DNI}@dia.ugel.local'}</strong><br/>
-                🔑 La contraseña inicial será el <strong>DNI</strong>. El usuario deberá cambiarla en su primer inicio de sesión.
-              </p>
-               <div>
-                 <Label>Rol</Label>
-                 <select
-                   value={rol}
-                   onChange={e => setRol(e.target.value)}
-                   required
-                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                 >
-                   <option value="" disabled>Seleccione rol</option>
-                   {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-                 </select>
-               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Creando…' : 'Crear Usuario'}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Registrar Nuevo Usuario</DialogTitle>
+                <DialogDescription>Complete los datos del nuevo usuario del sistema</DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleCreate} className="space-y-4 mt-4">
+                <div>
+                  <Label>DNI</Label>
+                  <Input value={dni} onChange={e => setDni(e.target.value)} required maxLength={8} placeholder="12345678" />
+                </div>
+                <div>
+                  <Label>Nombre Completo</Label>
+                  <Input value={nombre} onChange={e => setNombre(e.target.value)} required placeholder="Apellidos y Nombres" />
+                </div>
+                <p className="text-xs text-muted-foreground bg-muted rounded p-2">
+                  📧 El correo se generará automáticamente como <strong>{dni ? `${dni}@dia.ugel.local` : '{DNI}@dia.ugel.local'}</strong><br/>
+                  🔑 La contraseña inicial será el <strong>DNI</strong>.
+                </p>
+                <div>
+                  <Label>Rol</Label>
+                  <select
+                    value={rol}
+                    onChange={e => setRol(e.target.value)}
+                    required
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="" disabled>Seleccione rol</option>
+                    {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                  </select>
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? 'Creando…' : 'Crear Usuario'}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
       <Card className="shadow-card">
         <CardHeader>
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 flex-1">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por DNI, nombre, correo o rol…"
+                placeholder="Buscar por DNI o nombre…"
                 className="max-w-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+              <select
+                value={roleFilter}
+                onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(0); }}
+                className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Todos los roles</option>
+                {roles.filter(r => r.value !== 'docente_pip').map(r => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
             </div>
             <div className="flex items-center gap-2">
               {selectedIds.size > 0 && (
@@ -362,7 +374,7 @@ const AdminUsuarios = () => {
                   Eliminar ({selectedIds.size})
                 </Button>
               )}
-              <Button variant="outline" size="sm" onClick={fetchUsers} disabled={loadingUsers}>
+              <Button variant="outline" size="sm" onClick={() => fetchUsers(currentPage)} disabled={loadingUsers}>
                 <RefreshCw className={`h-4 w-4 mr-1 ${loadingUsers ? 'animate-spin' : ''}`} />
                 Actualizar
               </Button>
@@ -374,9 +386,9 @@ const AdminUsuarios = () => {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-           ) : sortedUsers.length === 0 ? (
+          ) : sortedUsers.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              {users.length === 0
+              {totalUsers === 0
                 ? 'No hay usuarios registrados. Use el botón "Nuevo Usuario" para comenzar.'
                 : 'No se encontraron usuarios con ese criterio de búsqueda.'}
             </p>
@@ -454,9 +466,34 @@ const AdminUsuarios = () => {
                   </CollapsibleContent>
                 </Collapsible>
               ))}
-              <p className="text-xs text-muted-foreground mt-2">
-                {sortedUsers.length} de {users.length} usuarios
-              </p>
+
+              {/* Pagination */}
+              <div className="flex items-center justify-between pt-4">
+                <p className="text-xs text-muted-foreground">
+                  Mostrando {currentPage * PAGE_SIZE + 1}–{Math.min((currentPage + 1) * PAGE_SIZE, totalUsers)} de {totalUsers} usuarios
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage === 0 || loadingUsers}
+                    onClick={() => fetchUsers(currentPage - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />Anterior
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Página {currentPage + 1} de {totalPages || 1}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage >= totalPages - 1 || loadingUsers}
+                    onClick={() => fetchUsers(currentPage + 1)}
+                  >
+                    Siguiente<ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
@@ -485,17 +522,17 @@ const AdminUsuarios = () => {
               <Label>Nueva Contraseña (dejar vacío para no cambiar)</Label>
               <Input type="password" value={editPassword} onChange={e => setEditPassword(e.target.value)} minLength={6} placeholder="••••••" />
             </div>
-             <div>
-               <Label>Rol</Label>
-               <select
-                 value={editRol}
-                 onChange={e => setEditRol(e.target.value)}
-                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-               >
-                 <option value="" disabled>Seleccione rol</option>
-                 {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-               </select>
-             </div>
+            <div>
+              <Label>Rol</Label>
+              <select
+                value={editRol}
+                onChange={e => setEditRol(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="" disabled>Seleccione rol</option>
+                {roles.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+              </select>
+            </div>
             <Button type="submit" className="w-full" disabled={editLoading}>
               {editLoading ? 'Guardando…' : 'Guardar Cambios'}
             </Button>
@@ -514,9 +551,7 @@ const AdminUsuarios = () => {
             Esta acción no se puede deshacer.
           </p>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleteLoading}>
-              Cancelar
-            </Button>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleteLoading}>Cancelar</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleteLoading}>
               {deleteLoading ? 'Eliminando…' : 'Eliminar'}
             </Button>
@@ -535,9 +570,7 @@ const AdminUsuarios = () => {
             Esta acción no se puede deshacer.
           </p>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setBulkDeleteOpen(false)} disabled={bulkDeleteLoading}>
-              Cancelar
-            </Button>
+            <Button variant="outline" onClick={() => setBulkDeleteOpen(false)} disabled={bulkDeleteLoading}>Cancelar</Button>
             <Button variant="destructive" onClick={handleBulkDelete} disabled={bulkDeleteLoading}>
               {bulkDeleteLoading ? 'Eliminando…' : `Eliminar ${selectedIds.size} usuario(s)`}
             </Button>

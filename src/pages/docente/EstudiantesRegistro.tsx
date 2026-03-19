@@ -466,6 +466,13 @@ const EstudiantesRegistro = () => {
           )}
         </CardContent>
       </Card>
+
+      <EditStudentDialog
+        student={editStudent}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSaved={fetchStudents}
+      />
     </div>
   );
 };

@@ -10,8 +10,10 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { UserPlus, Upload, Loader2, Users, Building2, FileSpreadsheet, Download, CheckCircle2, XCircle, Search } from 'lucide-react';
+import { UserPlus, Upload, Loader2, Users, Building2, FileSpreadsheet, Download, CheckCircle2, XCircle, Search, Pencil } from 'lucide-react';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
+import EditStudentDialog from '@/components/docente/EditStudentDialog';
+import * as XLSX from 'xlsx';
 import * as XLSX from 'xlsx';
 
 interface Student {

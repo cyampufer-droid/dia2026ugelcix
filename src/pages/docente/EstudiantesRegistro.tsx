@@ -14,7 +14,6 @@ import { UserPlus, Upload, Loader2, Users, Building2, FileSpreadsheet, Download,
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import EditStudentDialog from '@/components/docente/EditStudentDialog';
 import * as XLSX from 'xlsx';
-import * as XLSX from 'xlsx';
 
 interface Student {
   id: string;

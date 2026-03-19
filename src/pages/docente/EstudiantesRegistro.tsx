@@ -50,6 +50,8 @@ const EstudiantesRegistro = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editStudent, setEditStudent] = useState<Student | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
   const { toast } = useToast();
   const { profile } = useAuth();
 

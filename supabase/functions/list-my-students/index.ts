@@ -158,6 +158,7 @@ Deno.serve(async (req) => {
         const aula = aulaMap.get(p.grado_seccion_id);
         return {
           id: p.id,
+          user_id: p.user_id,
           dni: p.dni,
           nombre_completo: p.nombre_completo,
           email: emailMap.get(p.user_id) || "",

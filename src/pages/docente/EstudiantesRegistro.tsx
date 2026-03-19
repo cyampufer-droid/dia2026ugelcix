@@ -435,6 +435,7 @@ const EstudiantesRegistro = () => {
                     <th className="text-left py-2 px-3 font-medium text-muted-foreground">Nivel</th>
                     <th className="text-left py-2 px-3 font-medium text-muted-foreground">Grado</th>
                     <th className="text-left py-2 px-3 font-medium text-muted-foreground">Sección</th>
+                    <th className="text-left py-2 px-3 font-medium text-muted-foreground">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -452,6 +453,11 @@ const EstudiantesRegistro = () => {
                       <td className="py-2 px-3">{s.nivel}</td>
                       <td className="py-2 px-3">{s.grado}</td>
                       <td className="py-2 px-3">{s.seccion}</td>
+                      <td className="py-2 px-3">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditStudent(s); setEditOpen(true); }}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

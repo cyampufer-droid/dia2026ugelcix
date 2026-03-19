@@ -40,9 +40,10 @@ Deno.serve(async (req) => {
     const roles = (callerRoles || []).map((r: { role: string }) => r.role);
     const isAdmin = roles.includes("administrador");
     let isDirector = roles.includes("director") || roles.includes("subdirector");
+    const isDocente = roles.includes("docente");
 
     // Check if caller is a PIP docente (equivalent to director)
-    if (!isAdmin && !isDirector && roles.includes("docente")) {
+    if (!isAdmin && !isDirector && isDocente) {
       const { data: callerProfile } = await adminClient
         .from("profiles")
         .select("is_pip")
@@ -51,7 +52,7 @@ Deno.serve(async (req) => {
       if (callerProfile?.is_pip) isDirector = true;
     }
 
-    if (!isAdmin && !isDirector) {
+    if (!isAdmin && !isDirector && !isDocente) {
       return jsonResponse({ error: "No tiene permisos para esta acción" }, 403);
     }
 

@@ -10,12 +10,14 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { UserPlus, Upload, Loader2, Users, Building2, FileSpreadsheet, Download, CheckCircle2, XCircle, Search } from 'lucide-react';
+import { UserPlus, Upload, Loader2, Users, Building2, FileSpreadsheet, Download, CheckCircle2, XCircle, Search, Pencil } from 'lucide-react';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
+import EditStudentDialog from '@/components/docente/EditStudentDialog';
 import * as XLSX from 'xlsx';
 
 interface Student {
   id: string;
+  user_id?: string;
   dni: string;
   nombre_completo: string;
   email: string;
@@ -48,6 +50,8 @@ const EstudiantesRegistro = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editStudent, setEditStudent] = useState<Student | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
   const { toast } = useToast();
   const { profile } = useAuth();
 
@@ -431,6 +435,7 @@ const EstudiantesRegistro = () => {
                     <th className="text-left py-2 px-3 font-medium text-muted-foreground">Nivel</th>
                     <th className="text-left py-2 px-3 font-medium text-muted-foreground">Grado</th>
                     <th className="text-left py-2 px-3 font-medium text-muted-foreground">Sección</th>
+                    <th className="text-left py-2 px-3 font-medium text-muted-foreground">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -448,6 +453,11 @@ const EstudiantesRegistro = () => {
                       <td className="py-2 px-3">{s.nivel}</td>
                       <td className="py-2 px-3">{s.grado}</td>
                       <td className="py-2 px-3">{s.seccion}</td>
+                      <td className="py-2 px-3">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditStudent(s); setEditOpen(true); }}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -456,6 +466,13 @@ const EstudiantesRegistro = () => {
           )}
         </CardContent>
       </Card>
+
+      <EditStudentDialog
+        student={editStudent}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSaved={fetchStudents}
+      />
     </div>
   );
 };

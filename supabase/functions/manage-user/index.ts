@@ -40,9 +40,10 @@ Deno.serve(async (req) => {
     const roles = (callerRoles || []).map((r: { role: string }) => r.role);
     const isAdmin = roles.includes("administrador");
     let isDirector = roles.includes("director") || roles.includes("subdirector");
+    const isDocente = roles.includes("docente");
 
     // Check if caller is a PIP docente (equivalent to director)
-    if (!isAdmin && !isDirector && roles.includes("docente")) {
+    if (!isAdmin && !isDirector && isDocente) {
       const { data: callerProfile } = await adminClient
         .from("profiles")
         .select("is_pip")
@@ -51,7 +52,7 @@ Deno.serve(async (req) => {
       if (callerProfile?.is_pip) isDirector = true;
     }
 
-    if (!isAdmin && !isDirector) {
+    if (!isAdmin && !isDirector && !isDocente) {
       return jsonResponse({ error: "No tiene permisos para esta acción" }, 403);
     }
 
@@ -67,36 +68,55 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "No puede modificarse a sí mismo" }, 400);
     }
 
-    // If director, verify target user belongs to same institution
-    if (isDirector && !isAdmin) {
+    // Non-admin authorization checks
+    if (!isAdmin) {
       const { data: callerProfile } = await adminClient
         .from("profiles")
-        .select("institucion_id")
+        .select("institucion_id, grado_seccion_id")
         .eq("user_id", caller.id)
         .single();
 
-      if (!callerProfile?.institucion_id) {
-        return jsonResponse({ error: "No tiene una institución asociada" }, 400);
-      }
-
       const { data: targetProfile } = await adminClient
         .from("profiles")
-        .select("institucion_id")
+        .select("institucion_id, grado_seccion_id")
         .eq("user_id", user_id)
         .single();
 
-      if (!targetProfile || targetProfile.institucion_id !== callerProfile.institucion_id) {
-        return jsonResponse({ error: "Solo puede gestionar personal de su institución" }, 403);
-      }
-
-      // Directors cannot modify other directors/admins
+      // Verify target is a student
       const { data: targetRoles } = await adminClient
         .from("user_roles")
         .select("role")
         .eq("user_id", user_id);
       const targetRoleList = (targetRoles || []).map((r: { role: string }) => r.role);
-      if (targetRoleList.includes("administrador") || targetRoleList.includes("director") || targetRoleList.includes("especialista")) {
-        return jsonResponse({ error: "No tiene permisos para gestionar este usuario" }, 403);
+
+      if (isDirector) {
+        // Directors: same institution, target cannot be admin/director/especialista
+        if (!callerProfile?.institucion_id) {
+          return jsonResponse({ error: "No tiene una institución asociada" }, 400);
+        }
+        if (!targetProfile || targetProfile.institucion_id !== callerProfile.institucion_id) {
+          return jsonResponse({ error: "Solo puede gestionar personal de su institución" }, 403);
+        }
+        if (targetRoleList.includes("administrador") || targetRoleList.includes("director") || targetRoleList.includes("especialista")) {
+          return jsonResponse({ error: "No tiene permisos para gestionar este usuario" }, 403);
+        }
+      } else if (isDocente) {
+        // Docentes: can only manage students in their own grado_seccion
+        if (!targetRoleList.includes("estudiante")) {
+          return jsonResponse({ error: "Solo puede gestionar estudiantes" }, 403);
+        }
+        // Check caller's grado_seccion_ids (primary + docente_grados)
+        const gradoIds: string[] = [];
+        if (callerProfile?.grado_seccion_id) gradoIds.push(callerProfile.grado_seccion_id);
+        const { data: docenteGrados } = await adminClient
+          .from("docente_grados")
+          .select("grado_seccion_id")
+          .eq("user_id", caller.id);
+        for (const dg of docenteGrados || []) gradoIds.push(dg.grado_seccion_id);
+
+        if (gradoIds.length === 0 || !targetProfile?.grado_seccion_id || !gradoIds.includes(targetProfile.grado_seccion_id)) {
+          return jsonResponse({ error: "Solo puede gestionar estudiantes de su aula" }, 403);
+        }
       }
     }
 

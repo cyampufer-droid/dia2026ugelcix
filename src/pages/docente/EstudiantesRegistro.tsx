@@ -18,6 +18,7 @@ import * as XLSX from 'xlsx';
 
 interface Student {
   id: string;
+  user_id?: string;
   dni: string;
   nombre_completo: string;
   email: string;

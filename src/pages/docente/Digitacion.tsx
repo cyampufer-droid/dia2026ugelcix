@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -7,10 +7,11 @@ import { useOfflineSync } from '@/hooks/useOfflineSync';
 import { saveDigitacionOffline, getAllDigitaciones } from '@/lib/offlineDb';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Save, Wifi, WifiOff, CloudUpload, Loader2, BookOpen, Calculator, Heart } from 'lucide-react';
+import { Save, Wifi, WifiOff, CloudUpload, Loader2, BookOpen, Calculator, Heart, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import DigitacionGrid, { type Student } from '@/components/docente/DigitacionGrid';
 import DigitacionInicial from '@/components/docente/DigitacionInicial';
+import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 
 const AREA_ICONS: Record<string, typeof Calculator> = {
   'Matemática': Calculator,
@@ -48,10 +49,47 @@ const Digitacion = () => {
   const [evaluaciones, setEvaluaciones] = useState<EvalInfo[]>([]);
   const [activeTab, setActiveTab] = useState('');
   const [saving, setSaving] = useState(false);
+  const [loadingStudents, setLoadingStudents] = useState(true);
   const [nivelDocente, setNivelDocente] = useState<string | null>(null);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const { toast } = useToast();
   const { profile, user } = useAuth();
   const { isOnline, pendingCount, isSyncing, syncToCloud, refreshPendingCount } = useOfflineSync();
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const respuestasRef = useRef(respuestas);
+  respuestasRef.current = respuestas;
+  const evaluacionesRef = useRef(evaluaciones);
+  evaluacionesRef.current = evaluaciones;
+
+  // Load students via edge function (handles multi-grado, RLS bypass, fast)
+  useEffect(() => {
+    const loadStudents = async () => {
+      setLoadingStudents(true);
+      try {
+        const data = await invokeEdgeFunction('list-my-students', {});
+        if (data?.students?.length) {
+          setStudents(data.students.map((s: any) => ({
+            id: s.id,
+            nombre_completo: s.nombre_completo,
+            dni: s.dni,
+          })));
+          // Set nivel from first student's data
+          if (data.students[0]?.nivel) {
+            setNivelDocente(data.students[0].nivel);
+          }
+        }
+        // Also get nivel from aulas if no students
+        if (data?.aulas?.length && !data?.students?.length) {
+          setNivelDocente(data.aulas[0].nivel);
+        }
+      } catch (err) {
+        console.error('Error loading students:', err);
+      } finally {
+        setLoadingStudents(false);
+      }
+    };
+    loadStudents();
+  }, []);
 
   // Load evaluaciones matching docente's grado
   useEffect(() => {
@@ -60,7 +98,6 @@ const Digitacion = () => {
 
       let gradoSeccionId = profile.grado_seccion_id;
 
-      // If no grado_seccion_id on profile, check docente_grados table (Secundaria)
       if (!gradoSeccionId && user) {
         const { data: dg } = await supabase
           .from('docente_grados')
@@ -81,12 +118,10 @@ const Digitacion = () => {
         .single();
       if (!ng) return;
 
-      setNivelDocente(ng.nivel);
+      if (!nivelDocente) setNivelDocente(ng.nivel);
 
-      // If Inicial, no evaluaciones grid needed - use DigitacionInicial
       if (ng.nivel === 'Inicial') return;
 
-      // Map grado name (e.g. "Primero") to evaluaciones format (e.g. "1°")
       const gradoEval = GRADO_TO_ORDINAL[ng.grado] || ng.grado;
 
       const { data: evals } = await supabase
@@ -99,7 +134,6 @@ const Digitacion = () => {
 
       let filtered = evals as EvalInfo[];
 
-      // Secundaria: filter by especialidad
       if (ng.nivel === 'Secundaria' && profile.especialidad) {
         const allowedArea = ESPECIALIDAD_AREA_MAP[profile.especialidad];
         if (allowedArea) {
@@ -110,59 +144,12 @@ const Digitacion = () => {
       setEvaluaciones(filtered);
       if (filtered.length > 0) setActiveTab(filtered[0].id);
 
-      // Init respuestas state
       const init: Record<string, Record<string, string[]>> = {};
       for (const ev of filtered) init[ev.id] = {};
       setRespuestas(prev => ({ ...init, ...prev }));
     };
     loadEvaluaciones();
-  }, [profile, user]);
-
-  // Load students (only role=estudiante, exclude docentes)
-  useEffect(() => {
-    const loadStudents = async () => {
-      if (!profile) return;
-
-      let gradoSeccionId = profile.grado_seccion_id;
-
-      // Fallback to docente_grados for Secundaria docentes
-      if (!gradoSeccionId && user) {
-        const { data: dg } = await supabase
-          .from('docente_grados')
-          .select('grado_seccion_id')
-          .eq('user_id', user.id)
-          .limit(1);
-        if (dg?.length) {
-          gradoSeccionId = dg[0].grado_seccion_id;
-        }
-      }
-
-      if (!gradoSeccionId) return;
-
-      const { data: allProfiles } = await supabase
-        .from('profiles')
-        .select('id, user_id, nombre_completo, dni')
-        .eq('grado_seccion_id', gradoSeccionId)
-        .order('nombre_completo');
-      if (!allProfiles?.length) return;
-
-      // Filter to only students by checking roles
-      const userIds = allProfiles.filter(p => p.user_id).map(p => p.user_id!);
-      if (userIds.length === 0) return;
-      const { data: roles } = await supabase
-        .from('user_roles')
-        .select('user_id, role')
-        .in('user_id', userIds);
-      const studentUserIds = new Set(
-        (roles || []).filter(r => r.role === 'estudiante').map(r => r.user_id)
-      );
-      const students = allProfiles
-        .filter(p => p.user_id && studentUserIds.has(p.user_id))
-        .map(({ id, nombre_completo, dni }) => ({ id, nombre_completo, dni }));
-      if (students.length) setStudents(students);
-    };
-    loadStudents();
-  }, [profile, user]);
+  }, [profile, user, nivelDocente]);
 
   // Load saved offline data
   useEffect(() => {
@@ -182,7 +169,7 @@ const Digitacion = () => {
     loadOffline();
   }, []);
 
-  // Also load existing results from cloud
+  // Load existing results from cloud
   useEffect(() => {
     const loadCloudResults = async () => {
       if (!students.length || !evaluaciones.length) return;
@@ -200,7 +187,6 @@ const Digitacion = () => {
         for (const r of resultados) {
           if (r.respuestas_dadas?.length) {
             if (!updated[r.evaluacion_id]) updated[r.evaluacion_id] = {};
-            // Only set if not already locally modified
             if (!updated[r.evaluacion_id][r.estudiante_id]?.some(a => a !== '')) {
               updated[r.evaluacion_id][r.estudiante_id] = r.respuestas_dadas;
             }
@@ -221,7 +207,36 @@ const Digitacion = () => {
       updated[preguntaIdx] = valor;
       return { ...prev, [evalId]: { ...evalData, [studentId]: updated } };
     });
+
+    // Auto-save locally after 3 seconds of inactivity
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      doAutoSave();
+    }, 3000);
   }, []);
+
+  const doAutoSave = useCallback(async () => {
+    try {
+      const currentResp = respuestasRef.current;
+      const currentEvals = evaluacionesRef.current;
+      let totalRecords = 0;
+      for (const ev of currentEvals) {
+        const evalData = currentResp[ev.id] || {};
+        for (const [studentId, answers] of Object.entries(evalData)) {
+          if (answers.some(a => a !== '')) {
+            await saveDigitacionOffline(studentId, ev.id, answers);
+            totalRecords++;
+          }
+        }
+      }
+      if (totalRecords > 0) {
+        await refreshPendingCount();
+        setLastSaved(new Date());
+      }
+    } catch (err) {
+      console.error('Auto-save error:', err);
+    }
+  }, [refreshPendingCount]);
 
   const handleSaveLocal = async () => {
     setSaving(true);
@@ -237,7 +252,8 @@ const Digitacion = () => {
         }
       }
       await refreshPendingCount();
-      toast({ title: '💾 Guardado localmente', description: `${totalRecords} registros guardados en el dispositivo.` });
+      setLastSaved(new Date());
+      toast({ title: '💾 Guardado correctamente', description: `${totalRecords} registros guardados en el dispositivo. Presione "Sincronizar" para enviar a la nube.` });
     } catch (err) {
       console.error(err);
       toast({ title: 'Error al guardar', variant: 'destructive' });
@@ -246,30 +262,55 @@ const Digitacion = () => {
     }
   };
 
-  const displayStudents = students.length > 0 ? students : [
-    { id: 'demo-1', nombre_completo: 'García López, Ana María', dni: '71234567' },
-    { id: 'demo-2', nombre_completo: 'Pérez Torres, Carlos', dni: '71234568' },
-    { id: 'demo-3', nombre_completo: 'Mendoza Ríos, Lucía', dni: '71234569' },
-  ];
+  // Auto-sync when coming back online
+  useEffect(() => {
+    if (isOnline && pendingCount > 0) {
+      const timer = setTimeout(() => {
+        syncToCloud();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isOnline, pendingCount, syncToCloud]);
+
+  // Save before page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      doAutoSave();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [doAutoSave]);
 
   const getProgress = (evalId: string) => {
     const ev = evaluaciones.find(e => e.id === evalId);
     const numPreguntas = ev?.numero_preguntas || 20;
     const evalData = respuestas[evalId] || {};
-    const total = displayStudents.length * numPreguntas;
+    const total = students.length * numPreguntas;
     if (total === 0) return 0;
     let filled = 0;
-    for (const s of displayStudents) {
+    for (const s of students) {
       const answers = evalData[s.id] || [];
       filled += answers.filter(a => a !== '' && a !== undefined).length;
     }
     return Math.round((filled / total) * 100);
   };
 
+  // Loading state
+  if (loadingStudents) {
+    return (
+      <div className="space-y-4 animate-fade-in">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Digitación de Respuestas</h1>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Cargando estudiantes…</span>
+        </div>
+      </div>
+    );
+  }
+
   // Inicial level: show descriptive conclusions UI
   if (nivelDocente === 'Inicial') {
-    const displayStudentsInicial = students.length > 0 ? students : [];
-    if (displayStudentsInicial.length === 0) {
+    if (students.length === 0) {
       return (
         <div className="space-y-4 animate-fade-in">
           <h1 className="text-xl sm:text-2xl font-bold text-foreground">Conclusiones Descriptivas – Inicial</h1>
@@ -279,7 +320,18 @@ const Digitacion = () => {
         </div>
       );
     }
-    return <DigitacionInicial students={displayStudentsInicial} />;
+    return <DigitacionInicial students={students} />;
+  }
+
+  if (students.length === 0) {
+    return (
+      <div className="space-y-4 animate-fade-in">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Digitación de Respuestas</h1>
+        <p className="text-muted-foreground text-sm">
+          No se encontraron estudiantes en su aula. Registre estudiantes primero desde "Mis Estudiantes".
+        </p>
+      </div>
+    );
   }
 
   if (!evaluaciones.length) {
@@ -298,7 +350,7 @@ const Digitacion = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-foreground">Digitación de Respuestas</h1>
-          <p className="text-sm text-muted-foreground">Registre las respuestas de cada evaluación de entrada (A, B, C, D)</p>
+          <p className="text-sm text-muted-foreground">Registre las respuestas de cada evaluación (A, B, C, D). Se guarda automáticamente.</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant={isOnline ? 'default' : 'destructive'} className="gap-1">
@@ -306,6 +358,12 @@ const Digitacion = () => {
             {isOnline ? 'En línea' : 'Sin conexión'}
           </Badge>
           {pendingCount > 0 && <Badge variant="secondary" className="gap-1">{pendingCount} pendientes</Badge>}
+          {lastSaved && (
+            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3 text-green-500" />
+              Guardado {lastSaved.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
           <Button size="sm" variant="outline" onClick={handleSaveLocal} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             <span className="hidden sm:inline ml-1">Guardar</span>
@@ -343,7 +401,7 @@ const Digitacion = () => {
             <Card className="shadow-card">
               <CardContent className="p-0">
                 <DigitacionGrid
-                  students={displayStudents}
+                  students={students}
                   respuestas={respuestas[ev.id] || {}}
                   numPreguntas={ev.numero_preguntas}
                   onRespuesta={(studentId, idx, val) => handleRespuesta(ev.id, studentId, idx, val)}
@@ -357,7 +415,7 @@ const Digitacion = () => {
       {!isOnline && (
         <div className="rounded-lg bg-secondary/10 border border-secondary/30 p-3 text-sm text-foreground flex items-center gap-2">
           <WifiOff className="h-4 w-4 text-secondary shrink-0" />
-          <span>Trabajando sin conexión. Los datos se guardan en el dispositivo. Sincronice cuando tenga internet.</span>
+          <span>Trabajando sin conexión. Los datos se guardan automáticamente en el dispositivo. Cuando tenga internet, se sincronizará automáticamente.</span>
         </div>
       )}
     </div>

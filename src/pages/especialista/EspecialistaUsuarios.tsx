@@ -4,9 +4,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TableHead } from '@/components/ui/table';
 import { Users, Search, Loader2 } from 'lucide-react';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
-import SortableTableHead, { useSort, sortData } from '@/components/SortableTableHead';
 import ExportUsersButton from '@/components/shared/ExportUsersButton';
 
 interface UserRow {
@@ -41,7 +41,6 @@ const EspecialistaUsuarios = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [distritoFilter, setDistritoFilter] = useState('');
-  const { sortField, sortDirection, handleSort } = useSort('nombre_completo', 'asc');
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -84,15 +83,14 @@ const EspecialistaUsuarios = () => {
     if (distritoFilter) {
       result = result.filter(u => u.distrito === distritoFilter);
     }
-    return sortData(result, sortField, sortDirection);
-  }, [users, searchTerm, roleFilter, distritoFilter, sortField, sortDirection]);
+    return result;
+  }, [users, searchTerm, roleFilter, distritoFilter]);
 
-  const roleColor = (roles: string) => {
+  const roleColor = (roles: string): "destructive" | "default" | "secondary" | "outline" => {
     if (roles.includes('administrador')) return 'destructive';
     if (roles.includes('director') || roles.includes('subdirector')) return 'default';
     if (roles.includes('docente')) return 'secondary';
-    if (roles.includes('estudiante')) return 'outline';
-    return 'secondary';
+    return 'outline';
   };
 
   return (
@@ -153,15 +151,15 @@ const EspecialistaUsuarios = () => {
               <Table>
                 <TableHeader className="sticky top-0 bg-background z-10">
                   <TableRow>
-                    <SortableTableHead field="index" label="N°" sortField={sortField} sortDirection={sortDirection} onSort={() => {}} className="w-12" />
-                    <SortableTableHead field="dni" label="DNI" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
-                    <SortableTableHead field="nombre_completo" label="Apellidos y Nombres" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
-                    <SortableTableHead field="roles" label="Rol" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
-                    <SortableTableHead field="institucion" label="Institución" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
-                    <SortableTableHead field="distrito" label="Distrito" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
-                    <SortableTableHead field="nivel" label="Nivel" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
-                    <SortableTableHead field="grado" label="Grado" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
-                    <SortableTableHead field="seccion" label="Sección" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+                    <TableHead className="w-12">N°</TableHead>
+                    <TableHead>DNI</TableHead>
+                    <TableHead>Apellidos y Nombres</TableHead>
+                    <TableHead>Rol</TableHead>
+                    <TableHead>Institución</TableHead>
+                    <TableHead>Distrito</TableHead>
+                    <TableHead>Nivel</TableHead>
+                    <TableHead>Grado</TableHead>
+                    <TableHead>Sección</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -174,7 +172,7 @@ const EspecialistaUsuarios = () => {
                         <TableCell className="font-mono">{u.dni}</TableCell>
                         <TableCell>{u.nombre_completo}{u.is_pip && <Badge variant="secondary" className="ml-2 text-xs">PIP</Badge>}</TableCell>
                         <TableCell>
-                          <Badge variant={roleColor(u.roles) as any} className="text-xs">
+                          <Badge variant={roleColor(u.roles)} className="text-xs">
                             {u.roles.split(', ').map(r => roleLabelMap[r] || r).join(', ')}
                           </Badge>
                         </TableCell>

@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,6 +23,13 @@ interface Student {
   nombre_completo: string;
   email: string;
   institucion: string;
+  nivel: string;
+  grado: string;
+  seccion: string;
+}
+
+interface Aula {
+  id: string;
   nivel: string;
   grado: string;
   seccion: string;
@@ -48,6 +56,9 @@ const EstudiantesRegistro = () => {
   const [nombre, setNombre] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
+  const [allStudents, setAllStudents] = useState<Student[]>([]);
+  const [aulas, setAulas] = useState<Aula[]>([]);
+  const [selectedAulaId, setSelectedAulaId] = useState<string>('');
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [editStudent, setEditStudent] = useState<Student | null>(null);
@@ -66,7 +77,22 @@ const EstudiantesRegistro = () => {
     setLoadingStudents(true);
     try {
       const data = await invokeEdgeFunction('list-my-students', {});
-      if (data?.students) setStudents(data.students);
+      const fetchedStudents = data?.students || [];
+      const fetchedAulas = data?.aulas || [];
+      setAllStudents(fetchedStudents);
+      setAulas(fetchedAulas);
+
+      // Auto-select first aula if none selected
+      if (fetchedAulas.length > 0 && !selectedAulaId) {
+        const firstId = fetchedAulas[0].id;
+        setSelectedAulaId(firstId);
+        // Filter students by this aula — we match by nivel/grado/seccion
+        filterStudentsByAula(fetchedStudents, fetchedAulas, firstId);
+      } else if (selectedAulaId) {
+        filterStudentsByAula(fetchedStudents, fetchedAulas, selectedAulaId);
+      } else {
+        setStudents(fetchedStudents);
+      }
     } catch (err: any) {
       console.error('Error loading students:', err);
       toast({ title: 'Error', description: 'No se pudo cargar la lista de estudiantes', variant: 'destructive' });
@@ -75,13 +101,41 @@ const EstudiantesRegistro = () => {
     }
   };
 
+  const filterStudentsByAula = (allSt: Student[], allAulas: Aula[], aulaId: string) => {
+    if (allAulas.length <= 1) {
+      setStudents(allSt);
+      return;
+    }
+    const aula = allAulas.find(a => a.id === aulaId);
+    if (!aula) { setStudents(allSt); return; }
+    setStudents(allSt.filter(s => s.nivel === aula.nivel && s.grado === aula.grado && s.seccion === aula.seccion));
+  };
+
+  const handleAulaChange = (aulaId: string) => {
+    setSelectedAulaId(aulaId);
+    filterStudentsByAula(allStudents, aulas, aulaId);
+  };
+
   useEffect(() => { fetchStudents(); }, []);
+
+  // Get the effective grado_seccion_id for registration
+  const getActiveGradoSeccionId = (): string | undefined => {
+    // If teacher has multi-aula, use selected one
+    if (aulas.length > 0 && selectedAulaId) return selectedAulaId;
+    // Fallback to profile
+    return profile?.grado_seccion_id || undefined;
+  };
 
   // Manual add
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!/^\d{8}$/.test(dni)) {
       toast({ title: 'Error', description: 'DNI debe ser exactamente 8 dígitos', variant: 'destructive' });
+      return;
+    }
+    const gradoId = getActiveGradoSeccionId();
+    if (!gradoId) {
+      toast({ title: 'Error', description: 'No tiene un aula asignada. Contacte a su director.', variant: 'destructive' });
       return;
     }
     setIsLoading(true);
@@ -94,7 +148,7 @@ const EstudiantesRegistro = () => {
         nombre_completo: nombre,
         role: 'estudiante',
         institucion_id: profile?.institucion_id,
-        grado_seccion_id: profile?.grado_seccion_id,
+        grado_seccion_id: gradoId,
       });
       toast({ title: 'Estudiante registrado', description: nombre });
       setOpen(false);
@@ -137,10 +191,8 @@ const EstudiantesRegistro = () => {
         if (!text) return;
         parseCSV(text);
       };
-      // Try UTF-8 first, fallback handled by normalizeText
       reader.readAsText(file, 'UTF-8');
     } else {
-      // Excel file
       const reader = new FileReader();
       reader.onload = (ev) => {
         const data = new Uint8Array(ev.target?.result as ArrayBuffer);
@@ -170,12 +222,10 @@ const EstudiantesRegistro = () => {
       return;
     }
 
-    // Detect columns by header names (flexible for SIAGIE format)
     const header = rows[0].map(h => h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
     let dniCol = header.findIndex(h => h.includes('dni') || h.includes('documento'));
     let nombreCol = header.findIndex(h => h.includes('apellido') || h.includes('nombre') || h.includes('alumno') || h.includes('estudiante'));
 
-    // Fallback: first two columns
     if (dniCol === -1) dniCol = 0;
     if (nombreCol === -1) nombreCol = dniCol === 0 ? 1 : 0;
 
@@ -219,6 +269,11 @@ const EstudiantesRegistro = () => {
       toast({ title: 'Error', description: 'No hay estudiantes válidos para importar.', variant: 'destructive' });
       return;
     }
+    const gradoId = getActiveGradoSeccionId();
+    if (!gradoId) {
+      toast({ title: 'Error', description: 'No tiene un aula asignada.', variant: 'destructive' });
+      return;
+    }
     setImportStep('processing');
     setImportProgress(10);
 
@@ -229,7 +284,7 @@ const EstudiantesRegistro = () => {
         email: `${s.dni}@dia.ugel.local`,
         password: s.dni,
         rol: 'estudiante',
-        grado_seccion_id: profile?.grado_seccion_id || undefined,
+        grado_seccion_id: gradoId,
       }));
 
       const data = await invokeEdgeFunction('bulk-create-users', {
@@ -238,8 +293,6 @@ const EstudiantesRegistro = () => {
       });
 
       setImportProgress(90);
-
-      setImportResults(data.results || []);
 
       setImportResults(data.results || []);
       setImportStep('done');
@@ -260,9 +313,12 @@ const EstudiantesRegistro = () => {
     }
   };
 
-  const aulaLabel = students.length > 0
-    ? `${students[0].institucion} — ${students[0].nivel} / ${students[0].grado} / Sección "${students[0].seccion}"`
-    : null;
+  const selectedAula = aulas.find(a => a.id === selectedAulaId);
+  const aulaLabel = selectedAula
+    ? `${students.length > 0 ? students[0].institucion + ' — ' : ''}${selectedAula.nivel} / ${selectedAula.grado} / Sección "${selectedAula.seccion}"`
+    : students.length > 0
+      ? `${students[0].institucion} — ${students[0].nivel} / ${students[0].grado} / Sección "${students[0].seccion}"`
+      : null;
 
   const validCount = parsedStudents.filter(s => s.valid).length;
   const invalidCount = parsedStudents.filter(s => !s.valid).length;
@@ -379,6 +435,19 @@ const EstudiantesRegistro = () => {
                   <Label>Apellidos y Nombres</Label>
                   <Input value={nombre} onChange={e => setNombre(e.target.value)} required placeholder="García Pérez María" />
                 </div>
+                {aulas.length > 1 && (
+                  <div>
+                    <Label>Aula destino</Label>
+                    <Select value={selectedAulaId} onValueChange={handleAulaChange}>
+                      <SelectTrigger><SelectValue placeholder="Seleccione aula" /></SelectTrigger>
+                      <SelectContent>
+                        {aulas.map(a => (
+                          <SelectItem key={a.id} value={a.id}>{a.nivel} - {a.grado} "{a.seccion}"</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Registrando…' : 'Registrar Estudiante'}
                 </Button>
@@ -387,6 +456,21 @@ const EstudiantesRegistro = () => {
           </Dialog>
         </div>
       </div>
+
+      {/* Aula selector for multi-grado teachers */}
+      {aulas.length > 1 && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <Label className="text-sm font-medium text-muted-foreground">Aula:</Label>
+          <Select value={selectedAulaId} onValueChange={handleAulaChange}>
+            <SelectTrigger className="w-auto min-w-[200px]"><SelectValue placeholder="Seleccione aula" /></SelectTrigger>
+            <SelectContent>
+              {aulas.map(a => (
+                <SelectItem key={a.id} value={a.id}>{a.nivel} - {a.grado} "{a.seccion}"</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Aula info */}
       {aulaLabel && (

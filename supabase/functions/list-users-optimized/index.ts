@@ -91,9 +91,10 @@ Deno.serve(async (req) => {
 
     if (roleFilter) {
       // Get user_ids with this role
-      const roleUserIds = (allRoles || [])
-        .filter((r: any) => r.role === roleFilter)
-        .map((r: any) => r.user_id);
+      const roleUserIds: string[] = [];
+      for (const [userId, roles] of roleMap) {
+        if (roles.includes(roleFilter)) roleUserIds.push(userId);
+      }
       
       if (roleUserIds.length === 0) {
         return jsonResponse({ users: [], total: 0, page, pageSize }, 200);

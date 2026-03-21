@@ -16,6 +16,7 @@ import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import BulkPersonalUpload from '@/components/director/BulkPersonalUpload';
 import SortableTableHead, { useSort, sortData } from '@/components/SortableTableHead';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import ExportUsersButton from '@/components/shared/ExportUsersButton';
 
 const personalRoles = [
   { value: 'subdirector', label: 'Subdirector(a)' },
@@ -504,6 +505,7 @@ const PersonalRegistro = () => {
           <p className="text-muted-foreground">Registre subdirectores, docentes y estudiantes de su institución</p>
         </div>
         <div className="flex gap-2">
+          <ExportUsersButton label="Exportar Excel" fileName="personal_institucional" />
           <BulkPersonalUpload onComplete={fetchPersonal} nivelesGrados={nivelesGrados} institucionId={profile?.institucion_id ?? null} />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>

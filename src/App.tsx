@@ -30,6 +30,7 @@ const DocenteResultados = lazy(() => import("./pages/docente/DocenteResultados")
 const EstudiantePrueba = lazy(() => import("./pages/estudiante/EstudiantePrueba"));
 const EstudianteResultados = lazy(() => import("./pages/estudiante/EstudianteResultados"));
 const EspecialistaDashboard = lazy(() => import("./pages/especialista/EspecialistaDashboard"));
+const EspecialistaUsuarios = lazy(() => import("./pages/especialista/EspecialistaUsuarios"));
 const PlanesRefuerzoListing = lazy(() => import("./pages/shared/PlanesRefuerzoListing"));
 const MiPerfil = lazy(() => import("./pages/shared/MiPerfil"));
 const GuiaUsuario = lazy(() => import("./pages/shared/GuiaUsuario"));
@@ -101,6 +102,7 @@ const App = () => (
                 {/* Especialista routes */}
                 <Route element={<AppLayout />}>
                   <Route path="/especialista" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><EspecialistaDashboard /></ProtectedRoute>} />
+                  <Route path="/especialista/usuarios" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><EspecialistaUsuarios /></ProtectedRoute>} />
                   <Route path="/especialista/reportes" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><EspecialistaDashboard /></ProtectedRoute>} />
                   <Route path="/especialista/planes-refuerzo" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><PlanesRefuerzoListing /></ProtectedRoute>} />
                 </Route>

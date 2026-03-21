@@ -375,25 +375,38 @@ const AdminUsuarios = () => {
     }
   };
 
-  const downloadExcel = () => {
-    const data = sortedUsers.map((u) => ({
-      'Distrito': u.distrito || '',
-      'Centro Poblado': u.centro_poblado || '',
-      'Dirección': u.direccion || '',
-      'Gestión': u.tipo_gestion || '',
-      'Institución Educativa': u.institucion_nombre || '',
-      'Nivel': u.nivel || '',
-      'Grado': u.grado || '',
-      'Sección': u.seccion || '',
-      'DNI': u.dni,
-      'Nombre Completo': u.nombre_completo,
-      'Correo Electrónico': u.email,
-      'Rol': u.roles.map((r) => roleLabelMap[r] || r).join(', '),
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
-    XLSX.writeFile(wb, 'usuarios_dia2026.xlsx');
+  const downloadExcel = async () => {
+    toast({ title: 'Exportando…', description: 'Descargando todos los usuarios del sistema.' });
+    try {
+      const data = await invokeEdgeFunction('export-users', {});
+      if (!data?.users?.length) {
+        toast({ title: 'Sin datos', description: 'No hay usuarios para exportar.', variant: 'destructive' });
+        return;
+      }
+      const rows = data.users.map((u: any, i: number) => ({
+        'N°': i + 1,
+        'Distrito': u.distrito || '',
+        'Centro Poblado': u.centro_poblado || '',
+        'Tipo Gestión': u.tipo_gestion || '',
+        'Institución Educativa': u.institucion || '',
+        'Nivel': u.nivel || '',
+        'Grado': u.grado || '',
+        'Sección': u.seccion || '',
+        'DNI': u.dni,
+        'Nombre Completo': u.nombre_completo,
+        'Correo Electrónico': u.email,
+        'Rol': u.roles,
+        'PIP': u.is_pip ? 'Sí' : 'No',
+        'Fecha Registro': u.created_at,
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
+      XLSX.writeFile(wb, `usuarios_dia2026_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      toast({ title: 'Exportación completada', description: `${data.total} usuarios exportados.` });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Error al exportar', variant: 'destructive' });
+    }
   };
 
   const totalPages = Math.ceil(totalUsers / PAGE_SIZE);

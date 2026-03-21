@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { UserPlus, Upload, Loader2, Users, Building2, FileSpreadsheet, Download, CheckCircle2, XCircle, Search, Pencil } from 'lucide-react';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import EditStudentDialog from '@/components/docente/EditStudentDialog';
+import ExportUsersButton from '@/components/shared/ExportUsersButton';
 import * as XLSX from 'xlsx';
 
 interface Student {
@@ -338,7 +339,8 @@ const EstudiantesRegistro = () => {
           <h1 className="text-2xl font-bold text-foreground">Mis Estudiantes</h1>
           <p className="text-muted-foreground">Registre estudiantes de forma manual o importando desde SIAGIE (Excel/CSV)</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <ExportUsersButton label="Exportar Excel" fileName="mis_estudiantes" />
           {/* SIAGIE Import Dialog */}
           <Dialog open={importOpen} onOpenChange={(v) => { setImportOpen(v); if (!v) resetImport(); }}>
             <DialogTrigger asChild>

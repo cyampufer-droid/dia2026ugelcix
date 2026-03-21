@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { UserPlus, Upload, Loader2, Users, Building2, FileSpreadsheet, Download, CheckCircle2, XCircle, Search, Pencil } from 'lucide-react';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import EditStudentDialog from '@/components/docente/EditStudentDialog';
+import ExportUsersButton from '@/components/shared/ExportUsersButton';
 import * as XLSX from 'xlsx';
 
 interface Student {

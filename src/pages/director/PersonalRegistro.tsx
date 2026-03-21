@@ -504,6 +504,7 @@ const PersonalRegistro = () => {
           <p className="text-muted-foreground">Registre subdirectores, docentes y estudiantes de su institución</p>
         </div>
         <div className="flex gap-2">
+          <ExportUsersButton label="Exportar Excel" fileName="personal_institucional" />
           <BulkPersonalUpload onComplete={fetchPersonal} nivelesGrados={nivelesGrados} institucionId={profile?.institucion_id ?? null} />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>

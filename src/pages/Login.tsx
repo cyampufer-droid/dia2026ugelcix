@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { BookOpen, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getUserFriendlyError } from '@/lib/errorMapper';
+import HelpWidget from '@/components/HelpWidget';
 import diaLogo from '@/assets/dia_ugel_cix_2026.png';
 import dgpLogo from '@/assets/logo_dgp_ugel_cix.jpg';
 
@@ -63,6 +64,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex">
+      <HelpWidget />
       {/* Left panel */}
       <div className="hidden lg:flex lg:w-1/2 gradient-primary items-center justify-center p-12 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">

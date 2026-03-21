@@ -130,8 +130,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "update") {
-      const { email, dni, nombre_completo, role, password } = body;
-
+      const { email, dni, nombre_completo, role, password, grado_seccion_id } = body;
       const updateData: any = {};
       if (email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

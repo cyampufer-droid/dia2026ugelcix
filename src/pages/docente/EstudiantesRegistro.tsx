@@ -568,6 +568,7 @@ const EstudiantesRegistro = () => {
         open={editOpen}
         onOpenChange={setEditOpen}
         onSaved={fetchStudents}
+        aulas={aulas}
       />
     </div>
   );

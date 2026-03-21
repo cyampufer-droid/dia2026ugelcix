@@ -1,6 +1,7 @@
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import AppSidebar from './AppSidebar';
+import HelpWidget from './HelpWidget';
 import { Badge } from '@/components/ui/badge';
 import { Shield, GraduationCap, School, Users, BookOpen, Briefcase } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
@@ -34,6 +35,7 @@ const AppLayout = () => {
 
   return (
     <SidebarProvider>
+      <HelpWidget />
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col overflow-auto">

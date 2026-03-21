@@ -35,6 +35,7 @@ const AppLayout = () => {
 
   return (
     <SidebarProvider>
+      <HelpWidget />
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col overflow-auto">

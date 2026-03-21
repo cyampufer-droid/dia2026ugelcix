@@ -102,6 +102,7 @@ const App = () => (
                 {/* Especialista routes */}
                 <Route element={<AppLayout />}>
                   <Route path="/especialista" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><EspecialistaDashboard /></ProtectedRoute>} />
+                  <Route path="/especialista/usuarios" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><EspecialistaUsuarios /></ProtectedRoute>} />
                   <Route path="/especialista/reportes" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><EspecialistaDashboard /></ProtectedRoute>} />
                   <Route path="/especialista/planes-refuerzo" element={<ProtectedRoute allowedRoles={['especialista', 'administrador']}><PlanesRefuerzoListing /></ProtectedRoute>} />
                 </Route>

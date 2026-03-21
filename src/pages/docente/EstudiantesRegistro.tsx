@@ -538,13 +538,16 @@ const EstudiantesRegistro = () => {
                     return s.dni.toLowerCase().includes(q) || s.nombre_completo.toLowerCase().includes(q);
                   })
                   .map((s, i) => (
-                    <tr key={s.id} className="border-b border-border hover:bg-muted/50">
+                    <tr key={s.id} className={`border-b border-border hover:bg-muted/50 ${!s.grado_seccion_id ? 'bg-destructive/5' : ''}`}>
                       <td className="py-2 px-3">{i + 1}</td>
                       <td className="py-2 px-3 font-mono">{s.dni}</td>
-                      <td className="py-2 px-3">{s.nombre_completo}</td>
-                      <td className="py-2 px-3">{s.nivel}</td>
-                      <td className="py-2 px-3">{s.grado}</td>
-                      <td className="py-2 px-3">{s.seccion}</td>
+                      <td className="py-2 px-3">
+                        {s.nombre_completo}
+                        {!s.grado_seccion_id && <Badge variant="destructive" className="ml-2 text-xs">Sin aula</Badge>}
+                      </td>
+                      <td className="py-2 px-3">{s.nivel || '—'}</td>
+                      <td className="py-2 px-3">{s.grado || '—'}</td>
+                      <td className="py-2 px-3">{s.seccion || '—'}</td>
                       <td className="py-2 px-3">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditStudent(s); setEditOpen(true); }}>
                           <Pencil className="h-3.5 w-3.5" />
@@ -552,6 +555,7 @@ const EstudiantesRegistro = () => {
                       </td>
                     </tr>
                   ))}
+
                 </tbody>
               </table>
             </div>

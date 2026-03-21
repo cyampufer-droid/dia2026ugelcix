@@ -114,8 +114,17 @@ Deno.serve(async (req) => {
           .eq("user_id", caller.id);
         for (const dg of docenteGrados || []) gradoIds.push(dg.grado_seccion_id);
 
-        if (gradoIds.length === 0 || !targetProfile?.grado_seccion_id || !gradoIds.includes(targetProfile.grado_seccion_id)) {
-          return jsonResponse({ error: "Solo puede gestionar estudiantes de su aula" }, 403);
+        // Allow managing orphan students (null grado_seccion_id) from same institution
+        const callerInstId = callerProfile?.institucion_id;
+        const targetInstId = targetProfile?.institucion_id;
+        const targetHasGrado = targetProfile?.grado_seccion_id;
+        
+        if (targetHasGrado) {
+          if (gradoIds.length === 0 || !gradoIds.includes(targetProfile.grado_seccion_id)) {
+            return jsonResponse({ error: "Solo puede gestionar estudiantes de su aula" }, 403);
+          }
+        } else if (!callerInstId || callerInstId !== targetInstId) {
+          return jsonResponse({ error: "Solo puede gestionar estudiantes de su institución" }, 403);
         }
       }
     }

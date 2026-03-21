@@ -26,6 +26,7 @@ interface Student {
   nivel: string;
   grado: string;
   seccion: string;
+  grado_seccion_id?: string | null;
 }
 
 interface Aula {

@@ -114,15 +114,23 @@ Deno.serve(async (req) => {
           .eq("user_id", caller.id);
         for (const dg of docenteGrados || []) gradoIds.push(dg.grado_seccion_id);
 
-        if (gradoIds.length === 0 || !targetProfile?.grado_seccion_id || !gradoIds.includes(targetProfile.grado_seccion_id)) {
-          return jsonResponse({ error: "Solo puede gestionar estudiantes de su aula" }, 403);
+        // Allow managing orphan students (null grado_seccion_id) from same institution
+        const callerInstId = callerProfile?.institucion_id;
+        const targetInstId = targetProfile?.institucion_id;
+        const targetHasGrado = targetProfile?.grado_seccion_id;
+        
+        if (targetHasGrado) {
+          if (gradoIds.length === 0 || !gradoIds.includes(targetProfile.grado_seccion_id)) {
+            return jsonResponse({ error: "Solo puede gestionar estudiantes de su aula" }, 403);
+          }
+        } else if (!callerInstId || callerInstId !== targetInstId) {
+          return jsonResponse({ error: "Solo puede gestionar estudiantes de su institución" }, 403);
         }
       }
     }
 
     if (action === "update") {
-      const { email, dni, nombre_completo, role, password } = body;
-
+      const { email, dni, nombre_completo, role, password, grado_seccion_id } = body;
       const updateData: any = {};
       if (email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -164,6 +172,7 @@ Deno.serve(async (req) => {
       const profileUpdate: any = {};
       if (dni) profileUpdate.dni = dni.trim();
       if (nombre_completo) profileUpdate.nombre_completo = nombre_completo.trim();
+      if (grado_seccion_id) profileUpdate.grado_seccion_id = grado_seccion_id;
       if (Object.keys(profileUpdate).length > 0) {
         await adminClient.from("profiles").update(profileUpdate).eq("user_id", user_id);
       }

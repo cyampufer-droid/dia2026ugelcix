@@ -71,29 +71,61 @@ Deno.serve(async (req) => {
 
     const activeIds = filterGradoId ? [filterGradoId] : gradoSeccionIds;
 
-    if (activeIds.length === 0) {
+    if (activeIds.length === 0 && !callerProfile?.institucion_id) {
       return jsonResponse({ students: [], aulas: [], message: "No tiene aula asignada" }, 200);
     }
 
-    // Parallel: get aulas info + student profiles
-    const [aulasRes, studentsRes] = await Promise.all([
-      adminClient.from("niveles_grados").select("id, nivel, grado, seccion, institucion_id").in("id", activeIds),
-      adminClient.from("profiles").select("id, user_id, dni, nombre_completo, grado_seccion_id").in("grado_seccion_id", activeIds).order("nombre_completo", { ascending: true }),
-    ]);
+    // Parallel: get aulas info + student profiles (assigned) + orphan students (no grado)
+    const instId = callerProfile?.institucion_id;
+    
+    const promises: Promise<any>[] = [
+      activeIds.length > 0
+        ? adminClient.from("niveles_grados").select("id, nivel, grado, seccion, institucion_id").in("id", activeIds)
+        : Promise.resolve({ data: [] }),
+      activeIds.length > 0
+        ? adminClient.from("profiles").select("id, user_id, dni, nombre_completo, grado_seccion_id")
+            .in("grado_seccion_id", activeIds).order("nombre_completo", { ascending: true })
+        : Promise.resolve({ data: [] }),
+    ];
+
+    // Also fetch orphan students (same institution, null grado_seccion_id)
+    if (instId) {
+      promises.push(
+        adminClient.from("profiles").select("id, user_id, dni, nombre_completo, grado_seccion_id, institucion_id")
+          .eq("institucion_id", instId).is("grado_seccion_id", null)
+          .order("nombre_completo", { ascending: true })
+          .limit(500)
+      );
+    } else {
+      promises.push(Promise.resolve({ data: [] }));
+    }
+
+    const [aulasRes, studentsRes, orphanRes] = await Promise.all(promises);
 
     const aulasInfo = aulasRes.data || [];
-    const studentProfiles = studentsRes.data || [];
+    const assignedProfiles = studentsRes.data || [];
+    const orphanProfiles = orphanRes.data || [];
+
+    // Combine assigned + orphan, deduplicate by id
+    const seenIds = new Set<string>();
+    const allProfiles: any[] = [];
+    for (const p of [...assignedProfiles, ...orphanProfiles]) {
+      if (!seenIds.has(p.id)) {
+        seenIds.add(p.id);
+        allProfiles.push(p);
+      }
+    }
 
     // Get institution name
     let institucionNombre = "";
-    const instId = aulasInfo[0]?.institucion_id || callerProfile?.institucion_id;
-    if (instId) {
-      const { data: inst } = await adminClient.from("instituciones").select("nombre").eq("id", instId).single();
+    const firstInstId = aulasInfo[0]?.institucion_id || instId;
+    if (firstInstId) {
+      const { data: inst } = await adminClient.from("instituciones").select("nombre").eq("id", firstInstId).single();
       if (inst) institucionNombre = inst.nombre;
     }
 
     // Filter only students by checking user_roles
-    const studentUserIds = studentProfiles.filter((p: any) => p.user_id).map((p: any) => p.user_id);
+    const studentUserIds = allProfiles.filter((p: any) => p.user_id).map((p: any) => p.user_id);
 
     const { data: studentRoles } = await adminClient
       .from("user_roles")
@@ -108,11 +140,10 @@ Deno.serve(async (req) => {
     const aulaMap = new Map<string, any>();
     for (const a of aulasInfo) aulaMap.set(a.id, a);
 
-    // Derive emails from DNI pattern instead of fetching from auth (major perf improvement)
-    const students = studentProfiles
+    const students = allProfiles
       .filter((p: any) => p.user_id && studentUserIdSet.has(p.user_id))
       .map((p: any) => {
-        const aula = aulaMap.get(p.grado_seccion_id);
+        const aula = p.grado_seccion_id ? aulaMap.get(p.grado_seccion_id) : null;
         return {
           id: p.id,
           user_id: p.user_id,
@@ -123,8 +154,16 @@ Deno.serve(async (req) => {
           nivel: aula?.nivel || "",
           grado: aula?.grado || "",
           seccion: aula?.seccion || "",
+          grado_seccion_id: p.grado_seccion_id || null,
         };
       });
+
+    // Sort: assigned students first, then orphans
+    students.sort((a: any, b: any) => {
+      if (a.grado_seccion_id && !b.grado_seccion_id) return -1;
+      if (!a.grado_seccion_id && b.grado_seccion_id) return 1;
+      return a.nombre_completo.localeCompare(b.nombre_completo);
+    });
 
     return jsonResponse({
       students,

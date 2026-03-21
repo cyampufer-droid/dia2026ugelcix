@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import { Loader2, KeyRound, Trash2 } from 'lucide-react';
@@ -14,6 +15,14 @@ interface Student {
   dni: string;
   nombre_completo: string;
   email: string;
+  grado_seccion_id?: string | null;
+}
+
+interface Aula {
+  id: string;
+  nivel: string;
+  grado: string;
+  seccion: string;
 }
 
 interface EditStudentDialogProps {
@@ -21,11 +30,13 @@ interface EditStudentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved: () => void;
+  aulas?: Aula[];
 }
 
-const EditStudentDialog = ({ student, open, onOpenChange, onSaved }: EditStudentDialogProps) => {
+const EditStudentDialog = ({ student, open, onOpenChange, onSaved, aulas = [] }: EditStudentDialogProps) => {
   const [dni, setDni] = useState('');
   const [nombre, setNombre] = useState('');
+  const [gradoSeccionId, setGradoSeccionId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [action, setAction] = useState<string | null>(null);
   const { toast } = useToast();
@@ -35,11 +46,14 @@ const EditStudentDialog = ({ student, open, onOpenChange, onSaved }: EditStudent
     if (v && student) {
       setDni(student.dni);
       setNombre(student.nombre_completo);
+      setGradoSeccionId(student.grado_seccion_id || '');
     }
     onOpenChange(v);
   };
 
   if (!student) return null;
+
+  const isOrphan = !student.grado_seccion_id;
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,13 +69,18 @@ const EditStudentDialog = ({ student, open, onOpenChange, onSaved }: EditStudent
     setAction('update');
     try {
       const newEmail = `${dni}@dia.ugel.local`;
-      await invokeEdgeFunction('manage-user', {
+      const payload: any = {
         action: 'update',
         user_id: student.user_id,
         dni,
         nombre_completo: nombre.trim(),
         email: newEmail,
-      });
+      };
+      // If assigning an aula to orphan student
+      if (isOrphan && gradoSeccionId) {
+        payload.grado_seccion_id = gradoSeccionId;
+      }
+      await invokeEdgeFunction('manage-user', payload);
       toast({ title: 'Estudiante actualizado', description: nombre.trim() });
       onOpenChange(false);
       onSaved();
@@ -125,6 +144,20 @@ const EditStudentDialog = ({ student, open, onOpenChange, onSaved }: EditStudent
             <Label>Apellidos y Nombres</Label>
             <Input value={nombre} onChange={e => setNombre(e.target.value)} required placeholder="García Pérez María" />
           </div>
+          {isOrphan && aulas.length > 0 && (
+            <div>
+              <Label className="text-destructive">Asignar Aula (requerido)</Label>
+              <Select value={gradoSeccionId} onValueChange={setGradoSeccionId}>
+                <SelectTrigger><SelectValue placeholder="Seleccione aula" /></SelectTrigger>
+                <SelectContent>
+                  {aulas.map(a => (
+                    <SelectItem key={a.id} value={a.id}>{a.nivel} - {a.grado} "{a.seccion}"</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">Este estudiante no tiene aula asignada. Seleccione una para que aparezca correctamente.</p>
+            </div>
+          )}
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading && action === 'update' ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Guardando…</> : 'Guardar Cambios'}
           </Button>

@@ -172,6 +172,7 @@ Deno.serve(async (req) => {
       const profileUpdate: any = {};
       if (dni) profileUpdate.dni = dni.trim();
       if (nombre_completo) profileUpdate.nombre_completo = nombre_completo.trim();
+      if (grado_seccion_id) profileUpdate.grado_seccion_id = grado_seccion_id;
       if (Object.keys(profileUpdate).length > 0) {
         await adminClient.from("profiles").update(profileUpdate).eq("user_id", user_id);
       }

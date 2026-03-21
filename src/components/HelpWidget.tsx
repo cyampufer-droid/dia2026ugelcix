@@ -20,10 +20,9 @@ const HelpWidget = () => {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const openWhatsApp = (phone: string, name: string) => {
+  const getWhatsAppUrl = (phone: string, name: string) => {
     const msg = encodeURIComponent(`Hola ${name}, necesito asistencia técnica con el sistema DIA 2026.`);
-    window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
-    setOpen(false);
+    return `https://wa.me/${phone}?text=${msg}`;
   };
 
   return (
@@ -42,17 +41,20 @@ const HelpWidget = () => {
           <p className="text-sm font-semibold text-foreground mb-3">Seleccione su nivel educativo:</p>
           <div className="space-y-2">
             {contacts.map((c) => (
-              <button
+              <a
                 key={c.nivel}
-                onClick={() => openWhatsApp(c.phone, c.name)}
-                className="w-full flex items-start gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
+                href={getWhatsAppUrl(c.phone, c.name)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className="w-full flex items-start gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left no-underline"
               >
                 <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="h-5 w-5 mt-0.5 shrink-0" />
                 <div>
                   <span className="text-sm font-medium text-foreground">{c.nivel}</span>
                   <p className="text-xs text-muted-foreground">{c.name}</p>
                 </div>
-              </button>
+              </a>
             ))}
           </div>
         </div>

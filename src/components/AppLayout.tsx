@@ -1,6 +1,7 @@
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import AppSidebar from './AppSidebar';
+import HelpWidget from './HelpWidget';
 import { Badge } from '@/components/ui/badge';
 import { Shield, GraduationCap, School, Users, BookOpen, Briefcase } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';

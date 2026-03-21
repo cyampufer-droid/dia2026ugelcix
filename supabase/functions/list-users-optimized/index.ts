@@ -29,11 +29,10 @@ Deno.serve(async (req) => {
     const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) return jsonResponse({ error: "No autorizado" }, 401);
+    const { data: { user }, error: userError } = await callerClient.auth.getUser();
+    if (userError || !user) return jsonResponse({ error: "No autorizado" }, 401);
 
-    const callerId = claimsData.claims.sub as string;
+    const callerId = user.id;
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: callerRoles } = await adminClient

@@ -20,10 +20,9 @@ const HelpWidget = () => {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const openWhatsApp = (phone: string, name: string) => {
+  const getWhatsAppUrl = (phone: string, name: string) => {
     const msg = encodeURIComponent(`Hola ${name}, necesito asistencia técnica con el sistema DIA 2026.`);
-    window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
-    setOpen(false);
+    return `https://wa.me/${phone}?text=${msg}`;
   };
 
   return (

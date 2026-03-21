@@ -30,6 +30,7 @@ const DocenteResultados = lazy(() => import("./pages/docente/DocenteResultados")
 const EstudiantePrueba = lazy(() => import("./pages/estudiante/EstudiantePrueba"));
 const EstudianteResultados = lazy(() => import("./pages/estudiante/EstudianteResultados"));
 const EspecialistaDashboard = lazy(() => import("./pages/especialista/EspecialistaDashboard"));
+const EspecialistaUsuarios = lazy(() => import("./pages/especialista/EspecialistaUsuarios"));
 const PlanesRefuerzoListing = lazy(() => import("./pages/shared/PlanesRefuerzoListing"));
 const MiPerfil = lazy(() => import("./pages/shared/MiPerfil"));
 const GuiaUsuario = lazy(() => import("./pages/shared/GuiaUsuario"));

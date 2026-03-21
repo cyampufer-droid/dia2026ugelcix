@@ -60,21 +60,26 @@ Deno.serve(async (req) => {
       } catch { /* defaults */ }
     }
 
-    // Strategy: fetch roles first to get user_ids for the requested role, then fetch profiles
-    // This avoids loading all 9000+ profiles at once
-
-    // Step 1: Fetch all roles (small table, ~9000 rows but lightweight)
-    const { data: allRoles, error: rolesErr } = await adminClient
-      .from("user_roles")
-      .select("user_id, role");
-    if (rolesErr) throw rolesErr;
-
-    // Build role map
+    // Step 1: Fetch ALL roles in batches (table can exceed 1000 default limit)
     const roleMap = new Map<string, string[]>();
-    for (const r of (allRoles || [])) {
-      const existing = roleMap.get(r.user_id) || [];
-      existing.push(r.role);
-      roleMap.set(r.user_id, existing);
+    {
+      let from = 0;
+      const batchSize = 1000;
+      while (true) {
+        const { data: batch, error: rolesErr } = await adminClient
+          .from("user_roles")
+          .select("user_id, role")
+          .range(from, from + batchSize - 1);
+        if (rolesErr) throw rolesErr;
+        if (!batch || batch.length === 0) break;
+        for (const r of batch) {
+          const existing = roleMap.get(r.user_id) || [];
+          existing.push(r.role);
+          roleMap.set(r.user_id, existing);
+        }
+        if (batch.length < batchSize) break;
+        from += batchSize;
+      }
     }
 
     // Step 2: Build query for profiles with server-side filtering

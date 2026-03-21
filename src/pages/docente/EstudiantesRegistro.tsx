@@ -107,9 +107,16 @@ const EstudiantesRegistro = () => {
       setStudents(allSt);
       return;
     }
+    if (aulaId === '__orphan__') {
+      setStudents(allSt.filter(s => !s.grado_seccion_id));
+      return;
+    }
     const aula = allAulas.find(a => a.id === aulaId);
     if (!aula) { setStudents(allSt); return; }
-    setStudents(allSt.filter(s => s.nivel === aula.nivel && s.grado === aula.grado && s.seccion === aula.seccion));
+    // Include both assigned students and orphan students (no grado)
+    setStudents(allSt.filter(s =>
+      (s.nivel === aula.nivel && s.grado === aula.grado && s.seccion === aula.seccion) || !s.grado_seccion_id
+    ));
   };
 
   const handleAulaChange = (aulaId: string) => {

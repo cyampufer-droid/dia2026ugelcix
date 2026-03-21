@@ -1,60 +1,47 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Wrapper around supabase.functions.invoke that properly extracts
- * error messages from non-2xx responses instead of losing them.
+ * Wrapper around direct edge-function fetch calls.
  *
- * When an edge function returns e.g. 400 with { error: "DNI duplicado" },
- * supabase.functions.invoke sets `error` to a FunctionsHttpError and `data` to null,
- * losing the actual message. This helper reads the response body from the error context.
+ * Using fetch here avoids the Supabase SDK's FunctionsHttpError surface for expected
+ * business errors (e.g. duplicate email), while still preserving the real server message.
  */
 export async function invokeEdgeFunction<T = any>(
   functionName: string,
   body: Record<string, unknown>
 ): Promise<T> {
-  const { data, error } = await supabase.functions.invoke(functionName, { body });
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+    body: JSON.stringify(body ?? {}),
+  });
 
-  if (error) {
-    // Try to extract the real error message from the response body
-    let message = '';
-    try {
-      // FunctionsHttpError exposes the Response via .context
-      const context = (error as any).context;
-      if (context && typeof context.json === 'function') {
-        const responseBody = await context.json();
-        message = responseBody?.error || '';
-      }
-    } catch {
-      // If json() fails, try text() as fallback
-      try {
-        const context = (error as any).context;
-        if (context && typeof context.text === 'function') {
-          const text = await context.text();
-          try {
-            const parsed = JSON.parse(text);
-            message = parsed?.error || '';
-          } catch {
-            message = text || '';
-          }
-        }
-      } catch {
-        // ignore
-      }
+  const contentType = response.headers.get('content-type') || '';
+  let data: any = null;
+
+  try {
+    if (contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      data = text ? { error: text } : null;
     }
+  } catch {
+    data = null;
+  }
 
-    if (!message) {
-      message = error.message || 'Error de conexión con el servidor';
-    }
+  const message = data?.error || data?.message || response.statusText || 'Error del servidor. Intente nuevamente.';
 
-    // Clean up generic SDK messages
-    if (message === 'Edge Function returned a non-2xx status code') {
-      message = 'Error del servidor. Intente nuevamente.';
-    }
-
+  if (!response.ok) {
     throw new Error(message);
   }
 
-  // Also handle edge functions that return 200 with { error: "..." }
   if (data?.error) {
     throw new Error(data.error);
   }

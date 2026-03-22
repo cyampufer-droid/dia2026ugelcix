@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, Sparkles, CheckCircle2, AlertTriangle, Lightbulb, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -22,17 +22,27 @@ interface ConclusionesIA {
   por_competencia: CompetenciaAnalisis[];
 }
 
+interface ConclusionInicialInput {
+  area: string;
+  competencia: string;
+  logros: string;
+  dificultades: string;
+  mejora: string;
+  nivel_logro: string;
+}
+
 interface Props {
   area: string;
   nivel?: string;
   grado?: string;
-  respuestas_dadas: string[];
-  respuestas_correctas: string[];
-  puntaje: number | null;
-  nivel_logro: string | null;
+  respuestas_dadas?: string[];
+  respuestas_correctas?: string[];
+  puntaje?: number | null;
+  nivel_logro?: string | null;
   nombre_estudiante: string;
   autoGenerate?: boolean;
   onDataReady?: (area: string, data: ConclusionesIA) => void;
+  conclusionesInicial?: ConclusionInicialInput[];
 }
 
 export type { ConclusionesIA };
@@ -44,7 +54,7 @@ const nivelBadge: Record<string, string> = {
   'Logro Destacado': 'bg-nivel-destacado/20 text-primary-foreground border-nivel-destacado',
 };
 
-const AIConclusiones = ({ area, nivel, grado, respuestas_dadas, respuestas_correctas, puntaje, nivel_logro, nombre_estudiante, autoGenerate = false, onDataReady }: Props) => {
+const AIConclusiones = ({ area, nivel, grado, respuestas_dadas, respuestas_correctas, puntaje, nivel_logro, nombre_estudiante, autoGenerate = false, onDataReady, conclusionesInicial }: Props) => {
   const [conclusiones, setConclusiones] = useState<ConclusionesIA | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,18 +64,23 @@ const AIConclusiones = ({ area, nivel, grado, respuestas_dadas, respuestas_corre
     setLoading(true);
     setError(null);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('analyze-results', {
-        body: {
-          area,
-          nivel,
-          grado,
-          respuestas_dadas,
-          respuestas_correctas,
-          puntaje,
-          nivel_logro,
-          nombre_estudiante,
-        },
-      });
+      const body: Record<string, unknown> = {
+        area,
+        nivel,
+        grado,
+        nombre_estudiante,
+      };
+
+      if (conclusionesInicial && conclusionesInicial.length > 0) {
+        body.conclusiones_inicial = conclusionesInicial;
+      } else {
+        body.respuestas_dadas = respuestas_dadas;
+        body.respuestas_correctas = respuestas_correctas;
+        body.puntaje = puntaje;
+        body.nivel_logro = nivel_logro;
+      }
+
+      const { data, error: fnError } = await supabase.functions.invoke('analyze-results', { body });
 
       if (fnError) {
         throw new Error(fnError.message || 'Error al analizar');
@@ -113,7 +128,7 @@ const AIConclusiones = ({ area, nivel, grado, respuestas_dadas, respuestas_corre
         </Button>
         {error && <p className="text-xs text-destructive">{error}</p>}
         <p className="text-xs text-muted-foreground text-center max-w-md">
-          Se analizará tu patrón de respuestas y se generarán conclusiones descriptivas personalizadas por competencia.
+          Se analizarán los resultados y se generarán conclusiones descriptivas personalizadas.
         </p>
       </div>
     );
@@ -181,7 +196,7 @@ const AIConclusiones = ({ area, nivel, grado, respuestas_dadas, respuestas_corre
                     'text-xs px-2 py-0.5 rounded-full border font-semibold',
                     nivelBadge[comp.nivel] || 'bg-muted text-muted-foreground border-border'
                   )}>
-                    {comp.aciertos}/{comp.total} — {comp.nivel}
+                    {comp.aciertos > 0 ? `${comp.aciertos}/${comp.total} — ` : ''}{comp.nivel}
                   </span>
                 </div>
               </div>

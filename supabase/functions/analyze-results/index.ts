@@ -12,41 +12,95 @@ serve(async (req) => {
   }
 
   try {
-    const { area, nivel, grado, respuestas_dadas, respuestas_correctas, puntaje, nivel_logro, nombre_estudiante } = await req.json();
-
-    if (!area || !respuestas_dadas || !respuestas_correctas) {
-      return new Response(
-        JSON.stringify({ error: "Faltan datos requeridos" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const body = await req.json();
+    const { area, nivel, grado, nombre_estudiante, conclusiones_inicial } = body;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Build analysis of responses
-    const totalPreguntas = respuestas_correctas.length;
-    const detallePreguntas = respuestas_correctas.map((correcta: string, i: number) => {
-      const dada = respuestas_dadas[i] || "—";
-      const esCorrecta = dada.toUpperCase() === correcta.toUpperCase();
-      return `P${i + 1}: Respuesta dada="${dada}", Correcta="${correcta}" → ${esCorrecta ? "✓ CORRECTA" : "✗ INCORRECTA"}`;
-    }).join("\n");
+    let systemPrompt: string;
+    let userPrompt: string;
 
-    const correctas = respuestas_correctas.filter((c: string, i: number) => {
-      const d = respuestas_dadas[i] || "";
-      return d.toUpperCase() === c.toUpperCase();
-    }).length;
+    // ===== INICIAL MODE: Use teacher-written descriptive conclusions =====
+    if (conclusiones_inicial && Array.isArray(conclusiones_inicial) && conclusiones_inicial.length > 0) {
+      const resumenConclusiones = conclusiones_inicial.map((c: any) =>
+        `- Competencia: ${c.competencia} (${c.area})\n  Nivel de logro: ${c.nivel_logro}\n  Logros: ${c.logros || 'No registrado'}\n  Dificultades: ${c.dificultades || 'No registrado'}\n  Sugerencias de mejora: ${c.mejora || 'No registrado'}`
+      ).join("\n\n");
 
-    const incorrectas = totalPreguntas - correctas;
-    const preguntasIncorrectas = respuestas_correctas
-      .map((c: string, i: number) => {
+      systemPrompt = `Eres un especialista pedagógico del sistema DIA 2026 (Diagnóstico Integral de Aprendizajes) de la UGEL Chiclayo, Perú, experto en educación Inicial.
+Tu tarea es generar un análisis personalizado integral basado en las conclusiones descriptivas que el/la docente ha registrado para cada competencia del estudiante.
+
+CONTEXTO:
+- Nivel educativo: Inicial
+- Sistema de evaluación diagnóstica del CNEB (Currículo Nacional de Educación Básica) del Perú
+- Niveles de logro: C (En Inicio), B (En Proceso), A (Logro Esperado), AD (Logro Destacado)
+- Las conclusiones fueron escritas por el/la docente de aula
+
+INSTRUCCIONES:
+- Genera un análisis INTEGRAL que sintetice todas las conclusiones del docente
+- Identifica patrones transversales de fortalezas y dificultades
+- Usa un lenguaje cálido, profesional y empático, apropiado para educación inicial
+- Las recomendaciones deben ser prácticas y lúdicas, apropiadas para niños de inicial
+- Responde SIEMPRE en español`;
+
+      userPrompt = `Analiza las conclusiones descriptivas del docente para este estudiante de Inicial y genera un análisis integral:
+
+**Estudiante:** ${nombre_estudiante || "Estudiante"}
+**Nivel:** Inicial - ${grado || "No especificado"}
+
+CONCLUSIONES DESCRIPTIVAS DEL DOCENTE:
+${resumenConclusiones}
+
+Genera un JSON con esta estructura exacta:
+{
+  "resumen": "Resumen general del desarrollo del niño/niña en 2-3 oraciones, basado en las conclusiones del docente",
+  "fortalezas": ["Lista de fortalezas transversales identificadas a partir de los logros reportados"],
+  "dificultades": ["Lista de dificultades transversales identificadas"],
+  "recomendaciones": ["Lista de recomendaciones pedagógicas lúdicas y prácticas para el nivel inicial"],
+  "por_competencia": [
+    {
+      "competencia": "Nombre de la competencia",
+      "nivel": "Nivel de logro asignado por el docente",
+      "descripcion": "Síntesis del desempeño basada en lo reportado por el docente",
+      "preguntas_evaluadas": "Evaluación descriptiva",
+      "aciertos": 0,
+      "total": 0
+    }
+  ]
+}`;
+    } else {
+      // ===== STANDARD MODE: Use respuestas_dadas/correctas =====
+      const { respuestas_dadas, respuestas_correctas, puntaje, nivel_logro } = body;
+
+      if (!area || !respuestas_dadas || !respuestas_correctas) {
+        return new Response(
+          JSON.stringify({ error: "Faltan datos requeridos" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const totalPreguntas = respuestas_correctas.length;
+      const detallePreguntas = respuestas_correctas.map((correcta: string, i: number) => {
+        const dada = respuestas_dadas[i] || "—";
+        const esCorrecta = dada.toUpperCase() === correcta.toUpperCase();
+        return `P${i + 1}: Respuesta dada="${dada}", Correcta="${correcta}" → ${esCorrecta ? "✓ CORRECTA" : "✗ INCORRECTA"}`;
+      }).join("\n");
+
+      const correctas = respuestas_correctas.filter((c: string, i: number) => {
         const d = respuestas_dadas[i] || "";
-        return d.toUpperCase() !== c.toUpperCase() ? `P${i + 1}` : null;
-      })
-      .filter(Boolean)
-      .join(", ");
+        return d.toUpperCase() === c.toUpperCase();
+      }).length;
 
-    const systemPrompt = `Eres un especialista pedagógico del sistema DIA 2026 (Diagnóstico Integral de Aprendizajes) de la UGEL Chiclayo, Perú. Tu tarea es generar conclusiones descriptivas personalizadas para un estudiante basándote en su patrón específico de respuestas.
+      const incorrectas = totalPreguntas - correctas;
+      const preguntasIncorrectas = respuestas_correctas
+        .map((c: string, i: number) => {
+          const d = respuestas_dadas[i] || "";
+          return d.toUpperCase() !== c.toUpperCase() ? `P${i + 1}` : null;
+        })
+        .filter(Boolean)
+        .join(", ");
+
+      systemPrompt = `Eres un especialista pedagógico del sistema DIA 2026 (Diagnóstico Integral de Aprendizajes) de la UGEL Chiclayo, Perú. Tu tarea es generar conclusiones descriptivas personalizadas para un estudiante basándote en su patrón específico de respuestas.
 
 CONTEXTO EDUCATIVO:
 - Sistema de evaluación diagnóstica del Currículo Nacional de Educación Básica (CNEB) del Perú
@@ -66,7 +120,7 @@ INSTRUCCIONES:
 - Usa un tono profesional, empático y constructivo
 - Sé específico sobre qué competencias domina y cuáles necesita reforzar`;
 
-    const userPrompt = `Analiza los resultados de este estudiante y genera conclusiones descriptivas detalladas:
+      userPrompt = `Analiza los resultados de este estudiante y genera conclusiones descriptivas detalladas:
 
 **Estudiante:** ${nombre_estudiante || "Estudiante"}
 **Área:** ${area}
@@ -96,6 +150,7 @@ Genera un análisis con este formato JSON exacto:
     }
   ]
 }`;
+    }
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",

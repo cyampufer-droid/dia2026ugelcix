@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +10,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Save, Loader2, ChevronDown, ChevronUp, Calculator, BookOpen, Heart, User, CheckCircle2 } from 'lucide-react';
 import type { Student } from '@/components/docente/DigitacionGrid';
+import {
+  areConclusionDataEqual,
+  DEFAULT_NIVEL_LOGRO,
+  filterConclusionesState,
+  hasMeaningfulConclusionContent,
+  loadDigitacionInicialDraft,
+  normalizeConclusionData,
+  saveDigitacionInicialDraft,
+  type ConclusionData,
+  type ConclusionesState,
+} from '@/lib/digitacionInicialDrafts';
 
 const AREAS_INICIAL = [
   {
@@ -47,21 +58,30 @@ const NIVELES_LOGRO = [
   { value: 'Logro Destacado', label: 'AD - Destacado', letter: 'AD', color: 'bg-nivel-destacado text-primary-foreground' },
 ];
 
-interface ConclusionData {
-  logros: string;
-  dificultades: string;
-  mejora: string;
-  nivel_logro: string;
-}
-
-// key: `${studentId}_${area}_${competencia}`
-type ConclusionesState = Record<string, ConclusionData>;
-
 interface Props {
   students: Student[];
 }
 
-const BATCH_SIZE = 20;
+const BATCH_SIZE = 10;
+const AUTO_SAVE_DELAY_MS = 4000;
+
+interface ConclusionRecord {
+  estudiante_id: string;
+  area: string;
+  competencia: string;
+  logros: string;
+  dificultades: string;
+  mejora: string;
+  nivel_logro: string;
+  docente_user_id: string;
+}
+
+interface ConclusionDeleteTarget {
+  key: string;
+  estudiante_id: string;
+  area: string;
+  competencia: string;
+}
 
 const DigitacionInicial = ({ students }: Props) => {
   const [conclusiones, setConclusiones] = useState<ConclusionesState>({});
@@ -74,15 +94,57 @@ const DigitacionInicial = ({ students }: Props) => {
   const { user } = useAuth();
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const conclusionesRef = useRef(conclusiones);
+  const dirtyKeysRef = useRef<Set<string>>(new Set());
+  const serverStateRef = useRef<ConclusionesState>({});
+  const saveInFlightRef = useRef(false);
+  const queuedSaveRef = useRef(false);
   conclusionesRef.current = conclusiones;
 
   const makeKey = (studentId: string, area: string, competencia: string) =>
     `${studentId}_${area}_${competencia}`;
 
+  const allowedKeys = useMemo(() => {
+    const keys = new Set<string>();
+
+    for (const student of students) {
+      for (const areaInfo of AREAS_INICIAL) {
+        for (const comp of areaInfo.competencias) {
+          keys.add(makeKey(student.id, areaInfo.area, comp));
+        }
+      }
+    }
+
+    return keys;
+  }, [students]);
+
+  const persistDraftLocally = useCallback((state: ConclusionesState) => {
+    saveDigitacionInicialDraft(filterConclusionesState(state, allowedKeys), user?.id);
+  }, [allowedKeys, user?.id]);
+
+  const collectChangedKeys = useCallback((state: ConclusionesState) => {
+    const changedKeys = new Set<string>();
+
+    for (const key of allowedKeys) {
+      if (!areConclusionDataEqual(state[key], serverStateRef.current[key])) {
+        changedKeys.add(key);
+      }
+    }
+
+    return changedKeys;
+  }, [allowedKeys]);
+
   // Load existing conclusions from DB
   useEffect(() => {
     const load = async () => {
-      if (!students.length) { setLoadingData(false); return; }
+      const draftState = filterConclusionesState(loadDigitacionInicialDraft(user?.id), allowedKeys);
+
+      if (!students.length) {
+        serverStateRef.current = {};
+        setConclusiones(draftState);
+        setLoadingData(false);
+        return;
+      }
+
       const studentIds = students.map(s => s.id);
       const { data, error } = await supabase
         .from('conclusiones_inicial')
@@ -91,139 +153,211 @@ const DigitacionInicial = ({ students }: Props) => {
 
       if (error) {
         console.error('Error loading conclusiones:', error);
+        setConclusiones(draftState);
         setLoadingData(false);
         return;
       }
 
-      const state: ConclusionesState = {};
+      const remoteState: ConclusionesState = {};
       for (const row of data || []) {
         const key = makeKey(row.estudiante_id, row.area, row.competencia);
-        state[key] = {
+        remoteState[key] = {
           logros: row.logros || '',
           dificultades: row.dificultades || '',
           mejora: row.mejora || '',
-          nivel_logro: row.nivel_logro || 'En Inicio',
+          nivel_logro: row.nivel_logro || DEFAULT_NIVEL_LOGRO,
         };
       }
-      setConclusiones(state);
+
+      serverStateRef.current = remoteState;
+      const mergedState = {
+        ...remoteState,
+        ...draftState,
+      };
+
+      setConclusiones(mergedState);
+      persistDraftLocally(mergedState);
       setLoadingData(false);
     };
-    load();
-  }, [students]);
+    void load();
+  }, [allowedKeys, persistDraftLocally, students, user?.id]);
 
-  // Batch upsert helper to avoid statement timeout
-  const batchUpsert = useCallback(async (records: Array<{
-    estudiante_id: string;
-    area: string;
-    competencia: string;
-    logros: string;
-    dificultades: string;
-    mejora: string;
-    nivel_logro: string;
-    docente_user_id: string;
-  }>) => {
-    let successCount = 0;
-    let errorCount = 0;
-
-    for (let i = 0; i < records.length; i += BATCH_SIZE) {
-      const batch = records.slice(i, i + BATCH_SIZE);
-      const { error } = await supabase
-        .from('conclusiones_inicial')
-        .upsert(batch, { onConflict: 'estudiante_id,area,competencia' });
-
-      if (error) {
-        console.error('Batch upsert error:', error);
-        errorCount += batch.length;
-      } else {
-        successCount += batch.length;
-      }
-    }
-
-    return { successCount, errorCount };
-  }, []);
-
-  // Build records from current state
-  const buildRecords = useCallback((state: ConclusionesState) => {
-    const records: Array<{
-      estudiante_id: string;
-      area: string;
-      competencia: string;
-      logros: string;
-      dificultades: string;
-      mejora: string;
-      nivel_logro: string;
-      docente_user_id: string;
-    }> = [];
+  const buildMutationPlan = useCallback((state: ConclusionesState, keys: Set<string>) => {
+    const upserts: ConclusionRecord[] = [];
+    const deletes: ConclusionDeleteTarget[] = [];
 
     for (const student of students) {
       for (const areaInfo of AREAS_INICIAL) {
         for (const comp of areaInfo.competencias) {
           const key = makeKey(student.id, areaInfo.area, comp);
-          const data = state[key];
-          if (data && (data.logros.trim() || data.dificultades.trim() || data.mejora.trim())) {
-            records.push({
+          if (!keys.has(key)) continue;
+
+          const data = normalizeConclusionData(state[key]);
+
+          if (hasMeaningfulConclusionContent(data)) {
+            upserts.push({
               estudiante_id: student.id,
               area: areaInfo.area,
               competencia: comp,
               logros: data.logros,
               dificultades: data.dificultades,
               mejora: data.mejora,
-              nivel_logro: data.nivel_logro || 'En Inicio',
+              nivel_logro: data.nivel_logro,
               docente_user_id: user?.id || '',
+            });
+          } else {
+            deletes.push({
+              key,
+              estudiante_id: student.id,
+              area: areaInfo.area,
+              competencia: comp,
             });
           }
         }
       }
     }
-    return records;
+
+    return { upserts, deletes };
   }, [students, user?.id]);
 
-  // Auto-save: triggers 5 seconds after last change
+  // Batch persistence helper to avoid statement timeout
+  const persistMutations = useCallback(async (keysToPersist?: Set<string>) => {
+    const targetKeys = keysToPersist && keysToPersist.size > 0
+      ? new Set(keysToPersist)
+      : collectChangedKeys(conclusionesRef.current);
+
+    if (targetKeys.size === 0) {
+      return { successCount: 0, deleteCount: 0, errorCount: 0, hadChanges: false };
+    }
+
+    if (saveInFlightRef.current) {
+      queuedSaveRef.current = true;
+      return { successCount: 0, deleteCount: 0, errorCount: 0, hadChanges: true };
+    }
+
+    saveInFlightRef.current = true;
+
+    let successCount = 0;
+    let deleteCount = 0;
+    let errorCount = 0;
+
+    try {
+      const { upserts, deletes } = buildMutationPlan(conclusionesRef.current, targetKeys);
+
+      for (let i = 0; i < upserts.length; i += BATCH_SIZE) {
+        const batch = upserts.slice(i, i + BATCH_SIZE);
+        const { error } = await supabase
+          .from('conclusiones_inicial')
+          .upsert(batch, { onConflict: 'estudiante_id,area,competencia' });
+
+        if (error) {
+          console.error('Batch upsert error:', error);
+          errorCount += batch.length;
+        } else {
+          successCount += batch.length;
+        }
+      }
+
+      for (const target of deletes) {
+        const { error } = await supabase
+          .from('conclusiones_inicial')
+          .delete()
+          .match({
+            estudiante_id: target.estudiante_id,
+            area: target.area,
+            competencia: target.competencia,
+          });
+
+        if (error) {
+          console.error('Delete conclusion error:', error);
+          errorCount += 1;
+        } else {
+          deleteCount += 1;
+        }
+      }
+
+      if (errorCount === 0) {
+        const currentState = conclusionesRef.current;
+
+        for (const key of targetKeys) {
+          dirtyKeysRef.current.delete(key);
+
+          if (hasMeaningfulConclusionContent(currentState[key])) {
+            serverStateRef.current[key] = normalizeConclusionData(currentState[key]);
+          } else {
+            delete serverStateRef.current[key];
+          }
+        }
+
+        setLastSaved(new Date());
+      }
+
+      return { successCount, deleteCount, errorCount, hadChanges: true };
+    } finally {
+      saveInFlightRef.current = false;
+
+      if (queuedSaveRef.current) {
+        queuedSaveRef.current = false;
+        void persistMutations(new Set(dirtyKeysRef.current));
+      }
+    }
+  }, [buildMutationPlan, collectChangedKeys]);
+
+  // Auto-save: triggers after inactivity and only persists changed records
   const doAutoSave = useCallback(async () => {
-    const records = buildRecords(conclusionesRef.current);
-    if (records.length === 0) return;
+    const dirtyKeys = new Set(dirtyKeysRef.current);
+    if (dirtyKeys.size === 0) return;
 
     setAutoSaving(true);
     try {
-      const { errorCount } = await batchUpsert(records);
-      if (errorCount === 0) {
-        setLastSaved(new Date());
-      }
+      await persistMutations(dirtyKeys);
     } catch (err) {
       console.error('Auto-save error:', err);
     } finally {
       setAutoSaving(false);
     }
-  }, [buildRecords, batchUpsert]);
+  }, [persistMutations]);
 
   const updateField = useCallback((studentId: string, area: string, competencia: string, field: keyof ConclusionData, value: string) => {
     const key = makeKey(studentId, area, competencia);
-    setConclusiones(prev => ({
-      ...prev,
-      [key]: {
-        logros: prev[key]?.logros || '',
-        dificultades: prev[key]?.dificultades || '',
-        mejora: prev[key]?.mejora || '',
-        nivel_logro: prev[key]?.nivel_logro || 'En Inicio',
-        [field]: value,
-      },
-    }));
+    dirtyKeysRef.current.add(key);
 
-    // Reset auto-save timer (5 seconds of inactivity)
+    setConclusiones(prev => {
+      const nextState = {
+        ...prev,
+        [key]: {
+          ...normalizeConclusionData(prev[key]),
+          [field]: value,
+        },
+      };
+
+      persistDraftLocally(nextState);
+      return nextState;
+    });
+
+    // Reset auto-save timer
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
-      doAutoSave();
-    }, 5000);
-  }, [doAutoSave]);
+      void doAutoSave();
+    }, AUTO_SAVE_DELAY_MS);
+  }, [doAutoSave, persistDraftLocally]);
 
-  // Save before page unload
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Preserve draft before page unload; sync continues on next edit/manual save
   useEffect(() => {
     const handleBeforeUnload = () => {
-      doAutoSave();
+      persistDraftLocally(conclusionesRef.current);
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [doAutoSave]);
+  }, [persistDraftLocally]);
 
   const getStudentProgress = (studentId: string) => {
     let total = 0;
@@ -232,8 +366,8 @@ const DigitacionInicial = ({ students }: Props) => {
       for (const comp of areaInfo.competencias) {
         total++;
         const key = makeKey(studentId, areaInfo.area, comp);
-        const data = conclusiones[key];
-        if (data && data.logros.trim() && data.dificultades.trim() && data.mejora.trim()) {
+        const data = normalizeConclusionData(conclusiones[key]);
+        if (data.logros.trim() && data.dificultades.trim() && data.mejora.trim()) {
           filled++;
         }
       }
@@ -244,25 +378,25 @@ const DigitacionInicial = ({ students }: Props) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const records = buildRecords(conclusiones);
+      const result = await persistMutations();
 
-      if (records.length === 0) {
-        toast({ title: 'No hay datos para guardar', variant: 'destructive' });
+      if (!result.hadChanges) {
+        toast({ title: 'No hay cambios pendientes por guardar' });
         setSaving(false);
         return;
       }
 
-      const { successCount, errorCount } = await batchUpsert(records);
-
-      if (errorCount > 0) {
+      if (result.errorCount > 0) {
         toast({
           title: 'Guardado parcial',
-          description: `${successCount} guardados, ${errorCount} con error. Intente nuevamente.`,
+          description: `${result.successCount} guardados, ${result.deleteCount} eliminados y ${result.errorCount} con error. Intente nuevamente.`,
           variant: 'destructive',
         });
       } else {
-        setLastSaved(new Date());
-        toast({ title: '✅ Guardado exitosamente', description: `${successCount} conclusiones guardadas.` });
+        toast({
+          title: '✅ Guardado exitosamente',
+          description: `${result.successCount} conclusiones guardadas${result.deleteCount > 0 ? ` y ${result.deleteCount} limpiadas` : ''}.`,
+        });
       }
     } catch (err: any) {
       console.error('Save error:', err);
@@ -356,7 +490,7 @@ const DigitacionInicial = ({ students }: Props) => {
 
                         {areaInfo.competencias.map(comp => {
                           const key = makeKey(student.id, areaInfo.area, comp);
-                          const data = conclusiones[key] || { logros: '', dificultades: '', mejora: '', nivel_logro: 'En Inicio' };
+                          const data = normalizeConclusionData(conclusiones[key]);
                           const nivelInfo = NIVELES_LOGRO.find(n => n.value === data.nivel_logro);
 
                           return (

@@ -6,8 +6,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const AUTH_LIST_PAGE_SIZE = 1000;
-
 function jsonResponse(body: Record<string, unknown>, status: number) {
   return new Response(JSON.stringify(body), {
     status,
@@ -15,7 +13,6 @@ function jsonResponse(body: Record<string, unknown>, status: number) {
   });
 }
 
-// Allowed role assignments per caller role
 const ALLOWED_ROLE_MAP: Record<string, string[]> = {
   administrador: ["director", "subdirector", "docente", "estudiante", "especialista", "padre", "administrador"],
   director: ["subdirector", "docente", "estudiante"],
@@ -42,56 +39,39 @@ function buildProfileData(params: RepairParams) {
     nombre_completo: params.nombre_completo.trim(),
     must_change_password: true,
   };
-
   if (params.institucion_id) profileData.institucion_id = params.institucion_id;
   if (params.grado_seccion_id && !params.is_pip) profileData.grado_seccion_id = params.grado_seccion_id;
   if (params.especialidad) profileData.especialidad = params.especialidad;
   profileData.is_pip = !!params.is_pip;
-
   return profileData;
 }
 
-async function listAllAuthUsers(adminClient: any) {
-  const users: any[] = [];
-  let page = 1;
+/** Find existing auth user by DNI via profiles table - O(1) instead of listing all users */
+async function findAuthUserByDni(adminClient: any, dni: string) {
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("user_id")
+    .eq("dni", dni.trim())
+    .maybeSingle();
 
-  while (true) {
-    const { data, error } = await adminClient.auth.admin.listUsers({
-      page,
-      perPage: AUTH_LIST_PAGE_SIZE,
-    });
+  if (!profile?.user_id) return null;
 
-    if (error) throw error;
-
-    const batch = data.users || [];
-    users.push(...batch);
-
-    if (batch.length < AUTH_LIST_PAGE_SIZE) break;
-    page += 1;
-  }
-
-  return users;
+  const { data: { user }, error } = await adminClient.auth.admin.getUserById(profile.user_id);
+  if (error || !user) return null;
+  return user;
 }
 
 async function repairIncompleteUser(adminClient: any, params: RepairParams) {
-  const normalizedEmail = params.email.trim().toLowerCase();
-  const authUsers = await listAllAuthUsers(adminClient);
-  const existingAuthUser = authUsers.find((user: any) => user.email?.toLowerCase() === normalizedEmail);
+  // Look up by DNI (fast) instead of listing all auth users
+  const existingAuthUser = await findAuthUserByDni(adminClient, params.dni);
 
   if (!existingAuthUser) {
     return { repaired: false, reason: "not_found" };
   }
 
   const [{ data: existingProfile, error: profileReadError }, { data: existingRoles, error: rolesReadError }] = await Promise.all([
-    adminClient
-      .from("profiles")
-      .select("id, user_id")
-      .eq("user_id", existingAuthUser.id)
-      .maybeSingle(),
-    adminClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", existingAuthUser.id),
+    adminClient.from("profiles").select("id, user_id").eq("user_id", existingAuthUser.id).maybeSingle(),
+    adminClient.from("user_roles").select("role").eq("user_id", existingAuthUser.id),
   ]);
 
   if (profileReadError) throw profileReadError;
@@ -105,7 +85,7 @@ async function repairIncompleteUser(adminClient: any, params: RepairParams) {
   }
 
   const { error: authUpdateError } = await adminClient.auth.admin.updateUserById(existingAuthUser.id, {
-    email: normalizedEmail,
+    email: params.email.trim().toLowerCase(),
     password: params.password,
     user_metadata: {
       ...(existingAuthUser.user_metadata || {}),
@@ -120,7 +100,6 @@ async function repairIncompleteUser(adminClient: any, params: RepairParams) {
   }
 
   const profileData = buildProfileData(params);
-
   const profileResult = hasProfile
     ? await adminClient.from("profiles").update(profileData).eq("user_id", existingAuthUser.id)
     : await adminClient.from("profiles").insert({ user_id: existingAuthUser.id, ...profileData });
@@ -139,32 +118,20 @@ async function repairIncompleteUser(adminClient: any, params: RepairParams) {
       console.error("Repair role cleanup error:", deleteRolesError.message);
       return { repaired: false, reason: "role_cleanup_failed" };
     }
-
-    const { error: insertRoleError } = await adminClient
-      .from("user_roles")
-      .insert({ user_id: existingAuthUser.id, role: params.role });
-
+    const { error: insertRoleError } = await adminClient.from("user_roles").insert({ user_id: existingAuthUser.id, role: params.role });
     if (insertRoleError) {
       console.error("Repair role insert error:", insertRoleError.message);
       return { repaired: false, reason: "role_insert_failed" };
     }
   }
 
-  const { error: clearDocenteGradosError } = await adminClient
-    .from("docente_grados")
-    .delete()
-    .eq("user_id", existingAuthUser.id);
-
-  if (clearDocenteGradosError) {
-    console.error("Repair docente_grados cleanup error:", clearDocenteGradosError.message);
-  }
+  await adminClient.from("docente_grados").delete().eq("user_id", existingAuthUser.id);
 
   if (Array.isArray(params.grado_seccion_ids) && params.grado_seccion_ids.length > 0 && !params.is_pip) {
     const inserts = params.grado_seccion_ids.map((gsId: string) => ({
       user_id: existingAuthUser.id,
       grado_seccion_id: gsId,
     }));
-
     const { error: docenteGradosError } = await adminClient.from("docente_grados").insert(inserts);
     if (docenteGradosError) {
       console.error("Repair docente_grados insert error:", docenteGradosError.message);
@@ -172,13 +139,7 @@ async function repairIncompleteUser(adminClient: any, params: RepairParams) {
     }
   }
 
-  return {
-    repaired: true,
-    user: {
-      id: existingAuthUser.id,
-      email: normalizedEmail,
-    },
-  };
+  return { repaired: true, user: { id: existingAuthUser.id, email: existingAuthUser.email } };
 }
 
 Deno.serve(async (req) => {
@@ -215,7 +176,6 @@ Deno.serve(async (req) => {
 
     const callerRoleList = (callerRoles || []).map((r: { role: string }) => r.role);
 
-    // Check if caller is a PIP docente (equivalent to director)
     let isPIPDocente = false;
     if (callerRoleList.includes("docente")) {
       const { data: callerProfile } = await adminClient
@@ -236,18 +196,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const {
-      email,
-      password,
-      dni,
-      nombre_completo,
-      role,
-      institucion_id,
-      grado_seccion_id,
-      grado_seccion_ids,
-      especialidad,
-      is_pip,
-    } = body;
+    const { email, password, dni, nombre_completo, role, institucion_id, grado_seccion_id, grado_seccion_ids, especialidad, is_pip } = body;
 
     if (!email || !password || !dni || !nombre_completo) {
       return jsonResponse({ error: "Faltan campos obligatorios" }, 400);
@@ -258,18 +207,15 @@ Deno.serve(async (req) => {
     const normalizedName = String(nombre_completo).trim();
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (typeof email !== "string" || !emailRegex.test(normalizedEmail) || normalizedEmail.length > 255) {
+    if (!emailRegex.test(normalizedEmail) || normalizedEmail.length > 255) {
       return jsonResponse({ error: "Correo electrónico inválido" }, 400);
     }
-
-    if (typeof dni !== "string" || !/^\d{8}$/.test(normalizedDni)) {
+    if (!/^\d{8}$/.test(normalizedDni)) {
       return jsonResponse({ error: "DNI debe ser exactamente 8 dígitos" }, 400);
     }
-
-    if (typeof nombre_completo !== "string" || normalizedName.length < 2 || normalizedName.length > 200) {
+    if (normalizedName.length < 2 || normalizedName.length > 200) {
       return jsonResponse({ error: "Nombre completo inválido" }, 400);
     }
-
     if (typeof password !== "string" || password.length < 6 || password.length > 128) {
       return jsonResponse({ error: "La contraseña debe tener entre 6 y 128 caracteres" }, 400);
     }
@@ -294,41 +240,23 @@ Deno.serve(async (req) => {
 
       if (msg.includes("already been registered") || msg.includes("already exists")) {
         const repaired = await repairIncompleteUser(adminClient, {
-          email: normalizedEmail,
-          password,
-          dni: normalizedDni,
-          nombre_completo: normalizedName,
-          role,
-          institucion_id,
-          grado_seccion_id,
-          grado_seccion_ids,
-          especialidad,
-          is_pip,
+          email: normalizedEmail, password, dni: normalizedDni, nombre_completo: normalizedName,
+          role, institucion_id, grado_seccion_id, grado_seccion_ids, especialidad, is_pip,
         });
 
-        if (repaired.repaired) {
-          return jsonResponse({ user: repaired.user, repaired: true }, 200);
-        }
-
-        if (repaired.reason === "dni_taken") {
-          return jsonResponse({ error: "El DNI ya está registrado en el sistema. Verifique que no exista un usuario previo con ese DNI." }, 400);
-        }
-
+        if (repaired.repaired) return jsonResponse({ user: repaired.user, repaired: true }, 200);
+        if (repaired.reason === "dni_taken") return jsonResponse({ error: "El DNI ya está registrado en el sistema." }, 400);
         return jsonResponse({ error: "El correo electrónico ya está registrado." }, 400);
       }
 
       if (msg.includes("profiles_dni_key") || msg.includes("duplicate key") || msg.includes("database error")) {
-        return jsonResponse({ error: "El DNI ya está registrado en el sistema. Verifique que no exista un usuario previo con ese DNI." }, 400);
+        return jsonResponse({ error: "El DNI ya está registrado en el sistema." }, 400);
       }
-
       return jsonResponse({ error: `No se pudo crear el usuario. ${createError.message}` }, 400);
     }
 
     if (role && newUser.user) {
-      const { error: roleError } = await adminClient
-        .from("user_roles")
-        .insert({ user_id: newUser.user.id, role });
-
+      const { error: roleError } = await adminClient.from("user_roles").insert({ user_id: newUser.user.id, role });
       if (roleError) {
         console.error("Role assignment error:", roleError.message);
         await Promise.allSettled([
@@ -341,7 +269,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update profile with institucion_id, grado_seccion_id, especialidad, and is_pip
     if (newUser.user) {
       const updateData: Record<string, unknown> = {};
       if (institucion_id) updateData.institucion_id = institucion_id;
@@ -351,28 +278,12 @@ Deno.serve(async (req) => {
       updateData.must_change_password = true;
 
       if (Object.keys(updateData).length > 0) {
-        const { error: profileError } = await adminClient
-          .from("profiles")
-          .update(updateData)
-          .eq("user_id", newUser.user.id);
-
-        if (profileError) {
-          console.error("Profile update error:", profileError.message);
-        }
+        await adminClient.from("profiles").update(updateData).eq("user_id", newUser.user.id);
       }
 
-      // Insert multiple grado_seccion assignments for secondary teachers
       if (Array.isArray(grado_seccion_ids) && grado_seccion_ids.length > 0 && !is_pip) {
-        const inserts = grado_seccion_ids.map((gsId: string) => ({
-          user_id: newUser.user.id,
-          grado_seccion_id: gsId,
-        }));
-        const { error: dgError } = await adminClient
-          .from("docente_grados")
-          .insert(inserts);
-        if (dgError) {
-          console.error("docente_grados insert error:", dgError.message);
-        }
+        const inserts = grado_seccion_ids.map((gsId: string) => ({ user_id: newUser.user.id, grado_seccion_id: gsId }));
+        await adminClient.from("docente_grados").insert(inserts);
       }
     }
 

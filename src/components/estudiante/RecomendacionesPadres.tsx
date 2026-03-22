@@ -18,6 +18,15 @@ interface RecomendacionesPadresData {
   mensaje_motivacional: string;
 }
 
+interface ConclusionInicialInput {
+  area: string;
+  competencia: string;
+  logros: string;
+  dificultades: string;
+  mejora: string;
+  nivel_logro: string;
+}
+
 interface Props {
   nombre_estudiante: string;
   resultados: {
@@ -29,6 +38,7 @@ interface Props {
   grado?: string;
   autoGenerate?: boolean;
   onDataReady?: (data: RecomendacionesPadresData) => void;
+  conclusionesInicial?: ConclusionInicialInput[];
 }
 
 export type { RecomendacionesPadresData };
@@ -36,10 +46,12 @@ export type { RecomendacionesPadresData };
 const areaIcons: Record<string, typeof BookOpen> = {
   'Matemática': GraduationCap,
   'Comprensión Lectora': BookOpen,
+  'Comunicación': BookOpen,
   'Habilidades Socioemocionales': Heart,
+  'Personal Social - Habilidades Socioemocionales': Heart,
 };
 
-const RecomendacionesPadres = ({ nombre_estudiante, resultados, nivel_educativo, grado, autoGenerate = false, onDataReady }: Props) => {
+const RecomendacionesPadres = ({ nombre_estudiante, resultados, nivel_educativo, grado, autoGenerate = false, onDataReady, conclusionesInicial }: Props) => {
   const [recomendaciones, setRecomendaciones] = useState<RecomendacionesPadresData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,9 +59,11 @@ const RecomendacionesPadres = ({ nombre_estudiante, resultados, nivel_educativo,
 
   // Filter out areas without results
   const areasConResultados = resultados.filter(r => r.puntaje !== null);
+  const hasConclusiones = conclusionesInicial && conclusionesInicial.length > 0;
+  const canGenerate = areasConResultados.length > 0 || hasConclusiones;
 
   const handleGenerar = async () => {
-    if (areasConResultados.length === 0) {
+    if (!canGenerate) {
       toast({ title: 'Sin resultados', description: 'No hay resultados disponibles para generar recomendaciones.', variant: 'destructive' });
       return;
     }
@@ -57,14 +71,17 @@ const RecomendacionesPadres = ({ nombre_estudiante, resultados, nivel_educativo,
     setLoading(true);
     setError(null);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('parent-recommendations', {
-        body: {
-          nombre_estudiante,
-          resultados: areasConResultados,
-          nivel_educativo,
-          grado,
-        },
-      });
+      const body: Record<string, unknown> = {
+        nombre_estudiante,
+        resultados: areasConResultados,
+        nivel_educativo,
+        grado,
+      };
+      if (hasConclusiones) {
+        body.conclusiones_inicial = conclusionesInicial;
+      }
+
+      const { data, error: fnError } = await supabase.functions.invoke('parent-recommendations', { body });
 
       if (fnError) {
         throw new Error(fnError.message || 'Error al generar recomendaciones');
@@ -88,13 +105,13 @@ const RecomendacionesPadres = ({ nombre_estudiante, resultados, nivel_educativo,
   // Auto-generate on mount if requested
   const didAuto = useRef(false);
   useEffect(() => {
-    if (autoGenerate && areasConResultados.length > 0 && !didAuto.current) {
+    if (autoGenerate && canGenerate && !didAuto.current) {
       didAuto.current = true;
       handleGenerar();
     }
   }, [autoGenerate]);
 
-  if (areasConResultados.length === 0) {
+  if (!canGenerate) {
     return null;
   }
 

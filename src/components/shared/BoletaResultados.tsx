@@ -123,6 +123,23 @@ const getPreguntas = (config: any): { correcta: string; texto?: string }[] => {
   return [];
 };
 
+/** Merge logros, dificultades, mejora into a single coherent paragraph */
+const buildUnifiedConclusion = (logros: string, dificultades: string, mejora: string): string => {
+  const parts: string[] = [];
+  if (logros && logros.trim()) {
+    parts.push(logros.trim().replace(/\.$/, ''));
+  }
+  if (dificultades && dificultades.trim()) {
+    const d = dificultades.trim();
+    parts.push('sin embargo, ' + d.charAt(0).toLowerCase() + d.slice(1).replace(/\.$/, ''));
+  }
+  if (mejora && mejora.trim()) {
+    const m = mejora.trim();
+    parts.push('para mejorar, se recomienda ' + m.charAt(0).toLowerCase() + m.slice(1).replace(/\.$/, ''));
+  }
+  return parts.length > 0 ? parts.join('; ') + '.' : '';
+};
+
 const ConclusionDescriptiva = ({ competencia, nivel }: { competencia: Competencia; nivel: string }) => {
   const data = competencia.conclusiones[nivel];
   if (!data) return null;
@@ -180,7 +197,8 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
   const [results, setResults] = useState<AreaResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [openAreas, setOpenAreas] = useState<Record<string, boolean>>({
-    'Matemática': true, 'Comprensión Lectora': true, 'Habilidades Socioemocionales': true
+    'Matemática': true, 'Comprensión Lectora': true, 'Habilidades Socioemocionales': true,
+    'Comunicación': true, 'Personal Social - Habilidades Socioemocionales': true,
   });
   const [openRespuestas, setOpenRespuestas] = useState<Record<string, boolean>>({});
   const [gradoInfo, setGradoInfo] = useState<{ nivel: string; grado: string; seccion: string } | null>(null);
@@ -277,107 +295,109 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
 
   const handleDownloadPDF = () => {
     if (!boletaRef.current) return;
+    const isInicial = gradoInfo?.nivel === 'Inicial';
 
-    // Build a clean printable HTML from the boleta data
-    const areasHtml = results.map(area => {
-      if (area.puntaje === null) return '';
-      const competencias = COMPETENCIAS[area.area] || [];
-      const preguntas = getPreguntas(area.configPreguntas);
-      const hasConfig = preguntas.length > 0;
+    // ===== Build areas HTML =====
+    let areasHtml = '';
 
-      const borderColor = area.nivel === 'En Inicio' ? '#ef4444' : area.nivel === 'En Proceso' ? '#f59e0b' : area.nivel === 'Logro Esperado' ? '#22c55e' : '#1e40af';
-      const badgeBg = area.nivel === 'En Inicio' ? '#fee2e2' : area.nivel === 'En Proceso' ? '#fef3c7' : area.nivel === 'Logro Esperado' ? '#dcfce7' : '#dbeafe';
-      const badgeColor = area.nivel === 'En Inicio' ? '#991b1b' : area.nivel === 'En Proceso' ? '#92400e' : area.nivel === 'Logro Esperado' ? '#166534' : '#1e3a5f';
-      const letter = nivelLetter[area.nivel || ''] || '—';
+    if (isInicial && conclusionesInicial.length > 0) {
+      // INICIAL: Build from conclusiones_inicial
+      areasHtml = AREAS_INICIAL.map(areaInfo => {
+        const areaConcs = conclusionesInicial.filter(c => c.area === areaInfo.area);
+        if (areaConcs.length === 0) return '';
 
-      // Respuestas grid
-      let respuestasHtml = '';
-      if (area.respuestas && area.respuestas.length > 0 && hasConfig) {
-        const items = area.respuestas.map((resp, i) => {
-          const correcta = preguntas[i]?.correcta?.toUpperCase() || '';
-          const dada = resp?.toUpperCase() || '—';
-          const ok = correcta && dada === correcta;
-          const bg = ok ? '#f0fdf4' : '#fef2f2';
-          const bc = ok ? '#bbf7d0' : '#fecaca';
-          const symbol = ok ? '✓' : '✗';
-          const extra = !ok && correcta ? ` → ${correcta}` : '';
-          return `<div style="display:flex;align-items:center;gap:4px;padding:3px 6px;border-radius:4px;border:1px solid ${bc};background:${bg};font-size:10px;">
-            <span>${symbol}</span><b>P${i+1}:</b> ${dada}${extra}
+        const conclusionesHtml = areaConcs.map(conc => {
+          const letter = nivelLetter[conc.nivel_logro] || '—';
+          const badgeBg = conc.nivel_logro === 'En Inicio' ? '#fee2e2' : conc.nivel_logro === 'En Proceso' ? '#fef3c7' : conc.nivel_logro === 'Logro Esperado' ? '#dcfce7' : '#dbeafe';
+          const badgeColor = conc.nivel_logro === 'En Inicio' ? '#991b1b' : conc.nivel_logro === 'En Proceso' ? '#92400e' : conc.nivel_logro === 'Logro Esperado' ? '#166534' : '#1e3a5f';
+          const unified = buildUnifiedConclusion(conc.logros, conc.dificultades, conc.mejora);
+
+          return `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:10px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <b style="font-size:11px;">${conc.competencia}</b>
+              <span style="background:${badgeBg};color:${badgeColor};padding:2px 8px;border-radius:10px;font-weight:bold;font-size:10px;">${letter} – ${conc.nivel_logro}</span>
+            </div>
+            <p style="font-size:10px;color:#333;line-height:1.5;text-align:justify;">${unified}</p>
           </div>`;
         }).join('');
-        const totalCorrectas = area.respuestas.filter((r, i) => {
-          const c = preguntas[i]?.correcta;
-          return c && r?.toUpperCase() === c.toUpperCase();
-        }).length;
-        respuestasHtml = `<div style="margin-top:8px;"><b style="font-size:11px;">📝 Detalle de Respuestas (${totalCorrectas}/${area.respuestas.length} correctas)</b>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px;">${items}</div></div>`;
-      }
 
-      // Conclusiones
-      const conclusionesHtml = area.nivel ? competencias.map(comp => {
-        const d = comp.conclusiones[area.nivel!];
-        if (!d) return '';
-        return `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px;margin-bottom:6px;">
-          <b style="font-size:11px;">${comp.nombre}</b>
-          <div style="font-size:10px;margin-top:4px;">
-            <div>✅ <b>Logros:</b> ${d.logros}</div>
-            <div style="margin-top:2px;">⚠️ <b>Dificultades:</b> ${d.dificultades}</div>
-            <div style="margin-top:2px;">💡 <b>Sugerencias:</b> ${d.mejora}</div>
-          </div>
+        return `<div style="border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:12px;border-left:4px solid #1e40af;">
+          <h2 style="font-size:14px;margin-bottom:8px;">${areaInfo.area}</h2>
+          <div style="margin-top:4px;">${conclusionesHtml}</div>
         </div>`;
-      }).join('') : '';
+      }).join('');
 
-      return `<div style="border-left:4px solid ${borderColor};border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:12px;">
-        <h2 style="font-size:14px;margin-bottom:8px;">${area.label}</h2>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <div><span style="color:#666;font-size:11px;">Puntaje:</span> <b style="font-size:18px;">${area.puntaje}/20</b>
-            <span style="margin-left:12px;color:#666;font-size:11px;">Nivel:</span> <b>${area.nivel}</b></div>
-          <span style="background:${badgeBg};color:${badgeColor};padding:2px 10px;border-radius:12px;font-weight:bold;font-size:12px;">${letter}</span>
-        </div>
-        ${respuestasHtml}
-        ${conclusionesHtml ? `<div style="margin-top:8px;"><b style="font-size:11px;">${area.area === 'Comprensión Lectora' ? '📖 Conclusiones por Nivel de Lectura (Competencia: Lee diversos tipos de textos escritos en su lengua materna)' : '📋 Conclusiones Descriptivas por Competencia'}</b><div style="margin-top:4px;">${conclusionesHtml}</div></div>` : ''}
-        ${(() => {
-          const ai = aiAnalysis[area.area];
-          if (!ai) return '';
-          const nivelBadgePdf: Record<string, string> = {
-            'En Inicio': 'background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;',
-            'En Proceso': 'background:#fef3c7;color:#92400e;border:1px solid #fcd34d;',
-            'Logro Esperado': 'background:#dcfce7;color:#166534;border:1px solid #86efac;',
-            'Logro Destacado': 'background:#dbeafe;color:#1e3a5f;border:1px solid #93c5fd;',
-          };
-          return `<div style="margin-top:10px;">
-            <b style="font-size:11px;color:#6d28d9;">🤖 Análisis Personalizado</b>
-            <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:6px;padding:8px;margin-top:4px;font-size:10px;">
-              <p>${ai.resumen}</p>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">
-              <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:6px;">
-                <b style="font-size:10px;color:#166534;">✅ Fortalezas</b>
-                <ul style="font-size:9px;margin:2px 0 0 12px;">${ai.fortalezas.map(f => `<li>${f}</li>`).join('')}</ul>
-              </div>
-              <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:6px;">
-                <b style="font-size:10px;color:#991b1b;">⚠️ Áreas de mejora</b>
-                <ul style="font-size:9px;margin:2px 0 0 12px;">${ai.dificultades.map(d => `<li>${d}</li>`).join('')}</ul>
-              </div>
-            </div>
-            ${ai.por_competencia?.length ? `<div style="margin-top:6px;">
-              <b style="font-size:10px;">📊 Por Competencia</b>
-              ${ai.por_competencia.map(c => `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:6px;margin-top:4px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <b style="font-size:10px;">${c.competencia}</b>
-                  <span style="font-size:9px;padding:1px 6px;border-radius:8px;${nivelBadgePdf[c.nivel] || ''}">${c.aciertos}/${c.total} — ${c.nivel}</span>
-                </div>
-                <p style="font-size:9px;margin-top:2px;color:#555;">${c.descripcion}</p>
-              </div>`).join('')}
-            </div>` : ''}
-            <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:6px;padding:6px;margin-top:6px;">
-              <b style="font-size:10px;color:#6d28d9;">💡 Recomendaciones</b>
-              <ul style="font-size:9px;margin:2px 0 0 12px;">${ai.recomendaciones.map(r => `<li>${r}</li>`).join('')}</ul>
+      // Add AI Analysis for Inicial
+      const aiKeys = Object.keys(aiAnalysis);
+      if (aiKeys.length > 0) {
+        areasHtml += buildAIAnalysisPdfHtml(aiAnalysis, 'Análisis Personalizado Integral');
+      }
+    } else {
+      // PRIMARIA/SECUNDARIA: Normal results
+      areasHtml = results.map(area => {
+        if (area.puntaje === null) return '';
+        const competencias = COMPETENCIAS[area.area] || [];
+        const preguntas = getPreguntas(area.configPreguntas);
+        const hasConfig = preguntas.length > 0;
+
+        const borderColor = area.nivel === 'En Inicio' ? '#ef4444' : area.nivel === 'En Proceso' ? '#f59e0b' : area.nivel === 'Logro Esperado' ? '#22c55e' : '#1e40af';
+        const badgeBg = area.nivel === 'En Inicio' ? '#fee2e2' : area.nivel === 'En Proceso' ? '#fef3c7' : area.nivel === 'Logro Esperado' ? '#dcfce7' : '#dbeafe';
+        const badgeColor = area.nivel === 'En Inicio' ? '#991b1b' : area.nivel === 'En Proceso' ? '#92400e' : area.nivel === 'Logro Esperado' ? '#166534' : '#1e3a5f';
+        const letter = nivelLetter[area.nivel || ''] || '—';
+
+        // Respuestas grid
+        let respuestasHtml = '';
+        if (area.respuestas && area.respuestas.length > 0 && hasConfig) {
+          const items = area.respuestas.map((resp, i) => {
+            const correcta = preguntas[i]?.correcta?.toUpperCase() || '';
+            const dada = resp?.toUpperCase() || '—';
+            const ok = correcta && dada === correcta;
+            const bg = ok ? '#f0fdf4' : '#fef2f2';
+            const bc = ok ? '#bbf7d0' : '#fecaca';
+            const symbol = ok ? '✓' : '✗';
+            const extra = !ok && correcta ? ` → ${correcta}` : '';
+            return `<div style="display:flex;align-items:center;gap:4px;padding:3px 6px;border-radius:4px;border:1px solid ${bc};background:${bg};font-size:10px;">
+              <span>${symbol}</span><b>P${i+1}:</b> ${dada}${extra}
+            </div>`;
+          }).join('');
+          const totalCorrectas = area.respuestas.filter((r, i) => {
+            const c = preguntas[i]?.correcta;
+            return c && r?.toUpperCase() === c.toUpperCase();
+          }).length;
+          respuestasHtml = `<div style="margin-top:8px;"><b style="font-size:11px;">📝 Detalle de Respuestas (${totalCorrectas}/${area.respuestas.length} correctas)</b>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px;">${items}</div></div>`;
+        }
+
+        // Conclusiones
+        const conclusionesHtml = area.nivel ? competencias.map(comp => {
+          const d = comp.conclusiones[area.nivel!];
+          if (!d) return '';
+          return `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px;margin-bottom:6px;">
+            <b style="font-size:11px;">${comp.nombre}</b>
+            <div style="font-size:10px;margin-top:4px;">
+              <div>✅ <b>Logros:</b> ${d.logros}</div>
+              <div style="margin-top:2px;">⚠️ <b>Dificultades:</b> ${d.dificultades}</div>
+              <div style="margin-top:2px;">💡 <b>Sugerencias:</b> ${d.mejora}</div>
             </div>
           </div>`;
-        })()}
-      </div>`;
-    }).join('');
+        }).join('') : '';
+
+        // AI Analysis per area
+        const aiHtml = buildAreaAIPdfHtml(aiAnalysis[area.area]);
+
+        return `<div style="border-left:4px solid ${borderColor};border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:12px;">
+          <h2 style="font-size:14px;margin-bottom:8px;">${area.label}</h2>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div><span style="color:#666;font-size:11px;">Puntaje:</span> <b style="font-size:18px;">${area.puntaje}/20</b>
+              <span style="margin-left:12px;color:#666;font-size:11px;">Nivel:</span> <b>${area.nivel}</b></div>
+            <span style="background:${badgeBg};color:${badgeColor};padding:2px 10px;border-radius:12px;font-weight:bold;font-size:12px;">${letter}</span>
+          </div>
+          ${respuestasHtml}
+          ${conclusionesHtml ? `<div style="margin-top:8px;"><b style="font-size:11px;">${area.area === 'Comprensión Lectora' ? '📖 Conclusiones por Nivel de Lectura (Competencia: Lee diversos tipos de textos escritos en su lengua materna)' : '📋 Conclusiones Descriptivas por Competencia'}</b><div style="margin-top:4px;">${conclusionesHtml}</div></div>` : ''}
+          ${aiHtml}
+        </div>`;
+      }).join('');
+    }
 
     // Parent recommendations HTML for PDF
     const parentRecsHtml = parentRecs ? `<div style="border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:12px;border-left:4px solid #f59e0b;">
@@ -492,63 +512,80 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
                 </CardContent>
               </Card>
             ) : (
-              AREAS_INICIAL.map(areaInfo => {
-                const AreaIcon = areaInfo.icon;
-                const areaConcs = conclusionesInicial.filter(c => c.area === areaInfo.area);
-                if (areaConcs.length === 0) return null;
-                const isOpen = openAreas[areaInfo.area] ?? true;
+              <>
+                {AREAS_INICIAL.map(areaInfo => {
+                  const AreaIcon = areaInfo.icon;
+                  const areaConcs = conclusionesInicial.filter(c => c.area === areaInfo.area);
+                  if (areaConcs.length === 0) return null;
+                  const isOpen = openAreas[areaInfo.area] ?? true;
 
-                return (
-                  <Card key={areaInfo.area} className="shadow-card border-l-4 border-primary">
+                  return (
+                    <Card key={areaInfo.area} className="shadow-card border-l-4 border-primary">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                          <AreaIcon className="h-5 w-5" />
+                          {areaInfo.area}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <Collapsible open={isOpen} onOpenChange={() => toggleArea(areaInfo.area)}>
+                          <CollapsibleTrigger className="w-full flex items-center justify-between bg-primary/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-primary/20 transition-colors">
+                            <span>📋 Conclusiones Descriptivas por Competencia</span>
+                            {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-3 space-y-3">
+                            {areaConcs.map((conc, i) => {
+                              const nivelLtr = nivelLetter[conc.nivel_logro] || '—';
+                              const unified = buildUnifiedConclusion(conc.logros, conc.dificultades, conc.mejora);
+                              return (
+                                <div key={i} className={cn('bg-card border rounded-lg p-4 space-y-3', conc.nivel_logro ? nivelStyle[conc.nivel_logro] : 'border-border')}>
+                                  <div className="flex items-center justify-between flex-wrap gap-2">
+                                    <h4 className="text-sm font-semibold text-foreground">{conc.competencia}</h4>
+                                    <div className={cn(
+                                      'px-3 py-1 rounded-full text-xs font-bold',
+                                      conc.nivel_logro === 'En Inicio' && 'bg-nivel-inicio text-destructive-foreground',
+                                      conc.nivel_logro === 'En Proceso' && 'bg-nivel-proceso text-secondary-foreground',
+                                      conc.nivel_logro === 'Logro Esperado' && 'bg-nivel-logro text-accent-foreground',
+                                      conc.nivel_logro === 'Logro Destacado' && 'bg-nivel-destacado text-primary-foreground',
+                                    )}>
+                                      {nivelLtr} – {conc.nivel_logro}
+                                    </div>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground leading-relaxed text-justify">
+                                    {unified}
+                                  </p>
+                                </div>
+                              );
+                            })}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+
+                {/* AI Analysis for Inicial - single integrated analysis */}
+                {showAI && (
+                  <Card className="shadow-card border-l-4 border-primary/60">
                     <CardHeader className="pb-3">
                       <CardTitle className="flex items-center gap-2 text-lg">
-                        <AreaIcon className="h-5 w-5" />
-                        {areaInfo.area}
+                        🤖 Análisis Personalizado
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <Collapsible open={isOpen} onOpenChange={() => toggleArea(areaInfo.area)}>
-                        <CollapsibleTrigger className="w-full flex items-center justify-between bg-primary/10 rounded-lg px-4 py-2.5 text-sm font-medium text-foreground hover:bg-primary/20 transition-colors">
-                          <span>📋 Conclusiones Descriptivas por Competencia</span>
-                          {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="mt-3 space-y-3">
-                          {areaConcs.map((conc, i) => {
-                            const nivelLtr = nivelLetter[conc.nivel_logro] || '—';
-                            return (
-                              <div key={i} className={cn('bg-card border rounded-lg p-4 space-y-3', conc.nivel_logro ? nivelStyle[conc.nivel_logro] : 'border-border')}>
-                                <div className="flex items-center justify-between flex-wrap gap-2">
-                                  <h4 className="text-sm font-semibold text-foreground">{conc.competencia}</h4>
-                                  <div className={cn(
-                                    'px-3 py-1 rounded-full text-xs font-bold',
-                                    conc.nivel_logro === 'En Inicio' && 'bg-nivel-inicio text-destructive-foreground',
-                                    conc.nivel_logro === 'En Proceso' && 'bg-nivel-proceso text-secondary-foreground',
-                                    conc.nivel_logro === 'Logro Esperado' && 'bg-nivel-logro text-accent-foreground',
-                                    conc.nivel_logro === 'Logro Destacado' && 'bg-nivel-destacado text-primary-foreground',
-                                  )}>
-                                    {nivelLtr} – {conc.nivel_logro}
-                                  </div>
-                                </div>
-                                <div className="space-y-2 text-sm">
-                                  {conc.logros && (
-                                    <div><span className="font-medium text-accent">✅ Logros: </span><span className="text-muted-foreground">{conc.logros}</span></div>
-                                  )}
-                                  {conc.dificultades && (
-                                    <div><span className="font-medium text-destructive">⚠️ Dificultades: </span><span className="text-muted-foreground">{conc.dificultades}</span></div>
-                                  )}
-                                  {conc.mejora && (
-                                    <div><span className="font-medium text-primary">💡 Sugerencias: </span><span className="text-muted-foreground">{conc.mejora}</span></div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </CollapsibleContent>
-                      </Collapsible>
+                    <CardContent>
+                      <AIConclusiones
+                        area="Integral"
+                        nivel={gradoInfo?.nivel}
+                        grado={gradoInfo?.grado}
+                        nombre_estudiante={studentName}
+                        autoGenerate
+                        onDataReady={handleAIDataReady}
+                        conclusionesInicial={conclusionesInicial}
+                      />
                     </CardContent>
                   </Card>
-                );
-              })
+                )}
+              </>
             )}
           </>
         ) : (
@@ -706,6 +743,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
                 grado={gradoInfo?.grado}
                 autoGenerate
                 onDataReady={handleParentRecsReady}
+                conclusionesInicial={isInicial ? conclusionesInicial : undefined}
               />
             </CardContent>
           </Card>
@@ -714,5 +752,57 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
     </div>
   );
 };
+
+/** Build AI analysis HTML for a single area in the PDF */
+function buildAreaAIPdfHtml(ai: ConclusionesIA | undefined): string {
+  if (!ai) return '';
+  const nivelBadgePdf: Record<string, string> = {
+    'En Inicio': 'background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;',
+    'En Proceso': 'background:#fef3c7;color:#92400e;border:1px solid #fcd34d;',
+    'Logro Esperado': 'background:#dcfce7;color:#166534;border:1px solid #86efac;',
+    'Logro Destacado': 'background:#dbeafe;color:#1e3a5f;border:1px solid #93c5fd;',
+  };
+  return `<div style="margin-top:10px;">
+    <b style="font-size:11px;color:#6d28d9;">🤖 Análisis Personalizado</b>
+    <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:6px;padding:8px;margin-top:4px;font-size:10px;">
+      <p>${ai.resumen}</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:6px;">
+        <b style="font-size:10px;color:#166534;">✅ Fortalezas</b>
+        <ul style="font-size:9px;margin:2px 0 0 12px;">${ai.fortalezas.map(f => `<li>${f}</li>`).join('')}</ul>
+      </div>
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:6px;">
+        <b style="font-size:10px;color:#991b1b;">⚠️ Áreas de mejora</b>
+        <ul style="font-size:9px;margin:2px 0 0 12px;">${ai.dificultades.map(d => `<li>${d}</li>`).join('')}</ul>
+      </div>
+    </div>
+    ${ai.por_competencia?.length ? `<div style="margin-top:6px;">
+      <b style="font-size:10px;">📊 Por Competencia</b>
+      ${ai.por_competencia.map(c => `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:6px;margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <b style="font-size:10px;">${c.competencia}</b>
+          <span style="font-size:9px;padding:1px 6px;border-radius:8px;${nivelBadgePdf[c.nivel] || ''}">${c.aciertos > 0 ? `${c.aciertos}/${c.total} — ` : ''}${c.nivel}</span>
+        </div>
+        <p style="font-size:9px;margin-top:2px;color:#555;">${c.descripcion}</p>
+      </div>`).join('')}
+    </div>` : ''}
+    <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:6px;padding:6px;margin-top:6px;">
+      <b style="font-size:10px;color:#6d28d9;">💡 Recomendaciones</b>
+      <ul style="font-size:9px;margin:2px 0 0 12px;">${ai.recomendaciones.map(r => `<li>${r}</li>`).join('')}</ul>
+    </div>
+  </div>`;
+}
+
+/** Build AI analysis HTML for Inicial (integral) in the PDF */
+function buildAIAnalysisPdfHtml(aiAnalysis: Record<string, ConclusionesIA>, title: string): string {
+  // For Inicial, we have a single "Integral" key
+  const ai = aiAnalysis['Integral'];
+  if (!ai) return '';
+  return `<div style="border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:12px;border-left:4px solid #6d28d9;">
+    <h2 style="font-size:14px;margin-bottom:8px;">🤖 ${title}</h2>
+    ${buildAreaAIPdfHtml(ai)}
+  </div>`;
+}
 
 export default BoletaResultados;

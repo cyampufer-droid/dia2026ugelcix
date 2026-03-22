@@ -12,11 +12,15 @@ serve(async (req) => {
   }
 
   try {
-    const { nombre_estudiante, resultados, nivel_educativo, grado } = await req.json();
+    const { nombre_estudiante, resultados, nivel_educativo, grado, conclusiones_inicial } = await req.json();
 
-    if (!resultados || !Array.isArray(resultados) || resultados.length === 0) {
+    // Accept either standard resultados OR conclusiones_inicial for Inicial level
+    const hasResultados = resultados && Array.isArray(resultados) && resultados.some((r: any) => r.puntaje !== null);
+    const hasConclusiones = conclusiones_inicial && Array.isArray(conclusiones_inicial) && conclusiones_inicial.length > 0;
+
+    if (!hasResultados && !hasConclusiones) {
       return new Response(
-        JSON.stringify({ error: "Se requieren resultados del estudiante" }),
+        JSON.stringify({ error: "Se requieren resultados o conclusiones del estudiante" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -24,26 +28,40 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Build results summary
-    const resumenResultados = resultados
-      .filter((r: any) => r.puntaje !== null)
-      .map((r: any) => `- ${r.area}: ${r.puntaje}/20 - ${r.nivel_logro}`)
-      .join("\n");
+    // Build results summary based on data type
+    let resumenResultados: string;
+
+    if (hasConclusiones) {
+      // Inicial mode: use teacher-written descriptive conclusions
+      resumenResultados = conclusiones_inicial
+        .map((c: any) => `- ${c.area} / ${c.competencia}: Nivel ${c.nivel_logro}\n  Logros: ${c.logros || 'No registrado'}\n  Dificultades: ${c.dificultades || 'No registrado'}\n  Sugerencias del docente: ${c.mejora || 'No registrado'}`)
+        .join("\n\n");
+    } else {
+      resumenResultados = resultados
+        .filter((r: any) => r.puntaje !== null)
+        .map((r: any) => `- ${r.area}: ${r.puntaje}/20 - ${r.nivel_logro}`)
+        .join("\n");
+    }
+
+    const esInicial = nivel_educativo === 'Inicial' || hasConclusiones;
 
     const systemPrompt = `Eres un orientador educativo especializado en el sistema educativo peruano (CNEB), 
-experto en comunicación con padres de familia. Tu rol es generar recomendaciones prácticas, claras y empáticas 
+experto en comunicación con padres de familia${esInicial ? ' de niños de educación Inicial' : ''}. Tu rol es generar recomendaciones prácticas, claras y empáticas 
 para que los padres apoyen el aprendizaje de sus hijos en el hogar.
 
 CONTEXTO:
 - Sistema DIA 2026 (Diagnóstico Integral de Aprendizajes) de la UGEL Chiclayo, Perú
 - Niveles de logro: C (En Inicio), B (En Proceso), A (Logro Esperado), AD (Logro Destacado)
-- Áreas evaluadas: Matemática, Comprensión Lectora, Habilidades Socioemocionales
+${esInicial 
+  ? '- Áreas evaluadas en Inicial: Matemática, Comunicación, Personal Social - Habilidades Socioemocionales\n- La evaluación es descriptiva (no numérica) y se basa en observación del docente'
+  : '- Áreas evaluadas: Matemática, Comprensión Lectora, Habilidades Socioemocionales'}
 
 PRINCIPIOS:
 - Usa un lenguaje sencillo, cálido y motivador
 - Las recomendaciones deben ser PRÁCTICAS y realizables en casa
 - Evita tecnicismos pedagógicos
 - Incluye actividades que se puedan hacer en familia
+${esInicial ? '- Las actividades deben ser LÚDICAS y apropiadas para niños pequeños (juegos, canciones, cuentos, exploración)\n- Incluye actividades de psicomotricidad, arte y expresión creativa' : ''}
 - Considera el contexto socioeconómico diverso (no todos tienen acceso a tecnología avanzada)
 - Resalta siempre lo positivo antes de las áreas de mejora
 - Adapta el nivel de complejidad al grado educativo del estudiante`;
@@ -53,7 +71,7 @@ PRINCIPIOS:
 **Nivel educativo:** ${nivel_educativo || "No especificado"}
 **Grado:** ${grado || "No especificado"}
 
-**Resultados del diagnóstico:**
+**${hasConclusiones ? 'Conclusiones descriptivas del docente' : 'Resultados del diagnóstico'}:**
 ${resumenResultados}
 
 Genera un JSON con la siguiente estructura exacta:

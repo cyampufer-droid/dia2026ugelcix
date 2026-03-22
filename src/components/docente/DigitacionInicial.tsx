@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -61,13 +61,20 @@ interface Props {
   students: Student[];
 }
 
+const BATCH_SIZE = 20;
+
 const DigitacionInicial = ({ students }: Props) => {
   const [conclusiones, setConclusiones] = useState<ConclusionesState>({});
   const [openStudents, setOpenStudents] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [loadingData, setLoadingData] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const conclusionesRef = useRef(conclusiones);
+  conclusionesRef.current = conclusiones;
 
   const makeKey = (studentId: string, area: string, competencia: string) =>
     `${studentId}_${area}_${competencia}`;
@@ -104,6 +111,91 @@ const DigitacionInicial = ({ students }: Props) => {
     load();
   }, [students]);
 
+  // Batch upsert helper to avoid statement timeout
+  const batchUpsert = useCallback(async (records: Array<{
+    estudiante_id: string;
+    area: string;
+    competencia: string;
+    logros: string;
+    dificultades: string;
+    mejora: string;
+    nivel_logro: string;
+    docente_user_id: string;
+  }>) => {
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < records.length; i += BATCH_SIZE) {
+      const batch = records.slice(i, i + BATCH_SIZE);
+      const { error } = await supabase
+        .from('conclusiones_inicial')
+        .upsert(batch, { onConflict: 'estudiante_id,area,competencia' });
+
+      if (error) {
+        console.error('Batch upsert error:', error);
+        errorCount += batch.length;
+      } else {
+        successCount += batch.length;
+      }
+    }
+
+    return { successCount, errorCount };
+  }, []);
+
+  // Build records from current state
+  const buildRecords = useCallback((state: ConclusionesState) => {
+    const records: Array<{
+      estudiante_id: string;
+      area: string;
+      competencia: string;
+      logros: string;
+      dificultades: string;
+      mejora: string;
+      nivel_logro: string;
+      docente_user_id: string;
+    }> = [];
+
+    for (const student of students) {
+      for (const areaInfo of AREAS_INICIAL) {
+        for (const comp of areaInfo.competencias) {
+          const key = makeKey(student.id, areaInfo.area, comp);
+          const data = state[key];
+          if (data && (data.logros.trim() || data.dificultades.trim() || data.mejora.trim())) {
+            records.push({
+              estudiante_id: student.id,
+              area: areaInfo.area,
+              competencia: comp,
+              logros: data.logros,
+              dificultades: data.dificultades,
+              mejora: data.mejora,
+              nivel_logro: data.nivel_logro || 'En Inicio',
+              docente_user_id: user?.id || '',
+            });
+          }
+        }
+      }
+    }
+    return records;
+  }, [students, user?.id]);
+
+  // Auto-save: triggers 5 seconds after last change
+  const doAutoSave = useCallback(async () => {
+    const records = buildRecords(conclusionesRef.current);
+    if (records.length === 0) return;
+
+    setAutoSaving(true);
+    try {
+      const { errorCount } = await batchUpsert(records);
+      if (errorCount === 0) {
+        setLastSaved(new Date());
+      }
+    } catch (err) {
+      console.error('Auto-save error:', err);
+    } finally {
+      setAutoSaving(false);
+    }
+  }, [buildRecords, batchUpsert]);
+
   const updateField = useCallback((studentId: string, area: string, competencia: string, field: keyof ConclusionData, value: string) => {
     const key = makeKey(studentId, area, competencia);
     setConclusiones(prev => ({
@@ -116,7 +208,22 @@ const DigitacionInicial = ({ students }: Props) => {
         [field]: value,
       },
     }));
-  }, []);
+
+    // Reset auto-save timer (5 seconds of inactivity)
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      doAutoSave();
+    }, 5000);
+  }, [doAutoSave]);
+
+  // Save before page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      doAutoSave();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [doAutoSave]);
 
   const getStudentProgress = (studentId: string) => {
     let total = 0;
@@ -137,37 +244,7 @@ const DigitacionInicial = ({ students }: Props) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const records: Array<{
-        estudiante_id: string;
-        area: string;
-        competencia: string;
-        logros: string;
-        dificultades: string;
-        mejora: string;
-        nivel_logro: string;
-        docente_user_id: string;
-      }> = [];
-
-      for (const student of students) {
-        for (const areaInfo of AREAS_INICIAL) {
-          for (const comp of areaInfo.competencias) {
-            const key = makeKey(student.id, areaInfo.area, comp);
-            const data = conclusiones[key];
-            if (data && (data.logros.trim() || data.dificultades.trim() || data.mejora.trim())) {
-              records.push({
-                estudiante_id: student.id,
-                area: areaInfo.area,
-                competencia: comp,
-                logros: data.logros,
-                dificultades: data.dificultades,
-                mejora: data.mejora,
-                nivel_logro: data.nivel_logro || 'En Inicio',
-                docente_user_id: user?.id || '',
-              });
-            }
-          }
-        }
-      }
+      const records = buildRecords(conclusiones);
 
       if (records.length === 0) {
         toast({ title: 'No hay datos para guardar', variant: 'destructive' });
@@ -175,13 +252,18 @@ const DigitacionInicial = ({ students }: Props) => {
         return;
       }
 
-      const { error } = await supabase
-        .from('conclusiones_inicial')
-        .upsert(records, { onConflict: 'estudiante_id,area,competencia' });
+      const { successCount, errorCount } = await batchUpsert(records);
 
-      if (error) throw error;
-
-      toast({ title: '✅ Guardado exitosamente', description: `${records.length} conclusiones guardadas.` });
+      if (errorCount > 0) {
+        toast({
+          title: 'Guardado parcial',
+          description: `${successCount} guardados, ${errorCount} con error. Intente nuevamente.`,
+          variant: 'destructive',
+        });
+      } else {
+        setLastSaved(new Date());
+        toast({ title: '✅ Guardado exitosamente', description: `${successCount} conclusiones guardadas.` });
+      }
     } catch (err: any) {
       console.error('Save error:', err);
       toast({ title: 'Error al guardar', description: err.message, variant: 'destructive' });
@@ -205,13 +287,27 @@ const DigitacionInicial = ({ students }: Props) => {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-foreground">Conclusiones Descriptivas – Inicial</h1>
           <p className="text-sm text-muted-foreground">
-            Redacte las conclusiones descriptivas por competencia para cada estudiante
+            Redacte las conclusiones descriptivas por competencia para cada estudiante. Se guarda automáticamente.
           </p>
         </div>
-        <Button onClick={handleSave} disabled={saving} className="gap-2">
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Guardar todo
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {autoSaving && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Guardando…
+            </span>
+          )}
+          {lastSaved && !autoSaving && (
+            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3 text-green-500" />
+              Guardado {lastSaved.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
+          <Button onClick={handleSave} disabled={saving || autoSaving} className="gap-2">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Guardar todo
+          </Button>
+        </div>
       </div>
 
       {/* Legend */}
@@ -342,7 +438,7 @@ const DigitacionInicial = ({ students }: Props) => {
 
       {students.length > 0 && (
         <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={saving} size="lg" className="gap-2">
+          <Button onClick={handleSave} disabled={saving || autoSaving} size="lg" className="gap-2">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Guardar todas las conclusiones
           </Button>

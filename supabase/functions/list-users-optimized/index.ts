@@ -29,19 +29,23 @@ Deno.serve(async (req) => {
     const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user }, error: userError } = await callerClient.auth.getUser();
-    if (userError || !user) return jsonResponse({ error: "No autorizado" }, 401);
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) return jsonResponse({ error: "No autorizado" }, 401);
 
-    const callerId = user.id;
-
+    const callerId = claimsData.claims.sub as string;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+    // Check admin or especialista role
     const { data: callerRoles } = await adminClient
       .from("user_roles")
       .select("role")
       .eq("user_id", callerId);
 
-    const isAdmin = (callerRoles || []).some((r: { role: string }) => r.role === "administrador");
-    if (!isAdmin) return jsonResponse({ error: "Solo administradores pueden listar usuarios" }, 403);
+    const roleList = (callerRoles || []).map((r: { role: string }) => r.role);
+    const isAdmin = roleList.includes("administrador");
+    const isEspecialista = roleList.includes("especialista");
+    if (!isAdmin && !isEspecialista) return jsonResponse({ error: "Solo administradores y especialistas pueden listar usuarios" }, 403);
 
     // Parse params
     let page = 0;
@@ -59,75 +63,78 @@ Deno.serve(async (req) => {
       } catch { /* defaults */ }
     }
 
-    // Step 1: Fetch ALL roles in batches (table can exceed 1000 default limit)
-    const roleMap = new Map<string, string[]>();
-    {
+    // When filtering by role, get user_ids first (efficient indexed query)
+    let roleFilterUserIds: string[] | null = null;
+    if (roleFilter) {
+      const roleUserIds: string[] = [];
       let from = 0;
       const batchSize = 1000;
       while (true) {
-        const { data: batch, error: rolesErr } = await adminClient
+        const { data: batch, error } = await adminClient
           .from("user_roles")
-          .select("user_id, role")
+          .select("user_id")
+          .eq("role", roleFilter)
           .range(from, from + batchSize - 1);
-        if (rolesErr) throw rolesErr;
+        if (error) throw error;
         if (!batch || batch.length === 0) break;
-        for (const r of batch) {
-          const existing = roleMap.get(r.user_id) || [];
-          existing.push(r.role);
-          roleMap.set(r.user_id, existing);
-        }
+        for (const r of batch) roleUserIds.push(r.user_id);
         if (batch.length < batchSize) break;
         from += batchSize;
       }
+      if (roleUserIds.length === 0) return jsonResponse({ users: [], total: 0, page, pageSize }, 200);
+      roleFilterUserIds = roleUserIds;
     }
 
-    // Step 2: Build query for profiles with server-side filtering
+    // Build profile query with server-side filtering
     let profileQuery = adminClient.from("profiles").select("*", { count: "exact" });
-    
     if (search) {
       profileQuery = profileQuery.or(`dni.ilike.%${search}%,nombre_completo.ilike.%${search}%`);
     }
-
-    if (roleFilter) {
-      // Get user_ids with this role
-      const roleUserIds: string[] = [];
-      for (const [userId, roles] of roleMap) {
-        if (roles.includes(roleFilter)) roleUserIds.push(userId);
+    if (roleFilterUserIds) {
+      // Batch the .in() filter to avoid oversized queries
+      if (roleFilterUserIds.length <= 1000) {
+        profileQuery = profileQuery.in("user_id", roleFilterUserIds);
+      } else {
+        // For very large role sets, paginate through all and filter client-side
+        profileQuery = profileQuery.in("user_id", roleFilterUserIds.slice(0, 1000));
       }
-      
-      if (roleUserIds.length === 0) {
-        return jsonResponse({ users: [], total: 0, page, pageSize }, 200);
-      }
-      profileQuery = profileQuery.in("user_id", roleUserIds);
     }
 
-    profileQuery = profileQuery
-      .order("nombre_completo")
-      .range(page * pageSize, (page + 1) * pageSize - 1);
-
+    profileQuery = profileQuery.order("nombre_completo").range(page * pageSize, (page + 1) * pageSize - 1);
     const { data: profiles, error: profilesErr, count } = await profileQuery;
     if (profilesErr) throw profilesErr;
 
-    // Step 3: Fetch related data only for the profiles in this page
-    const instIds = [...new Set((profiles || []).map((p: any) => p.institucion_id).filter(Boolean))];
-    const nivelIds = [...new Set((profiles || []).map((p: any) => p.grado_seccion_id).filter(Boolean))];
+    if (!profiles || profiles.length === 0) return jsonResponse({ users: [], total: count || 0, page, pageSize }, 200);
 
-    const [instituciones, niveles] = await Promise.all([
+    // Fetch roles, instituciones, niveles only for this page's profiles
+    const pageUserIds = profiles.filter((p: any) => p.user_id).map((p: any) => p.user_id);
+    const instIds = [...new Set(profiles.map((p: any) => p.institucion_id).filter(Boolean))];
+    const nivelIds = [...new Set(profiles.map((p: any) => p.grado_seccion_id).filter(Boolean))];
+
+    const [rolesData, instituciones, niveles] = await Promise.all([
+      pageUserIds.length > 0
+        ? adminClient.from("user_roles").select("user_id, role").in("user_id", pageUserIds).then((r: any) => r.data || [])
+        : Promise.resolve([]),
       instIds.length > 0
-        ? adminClient.from("instituciones").select("id, nombre, distrito, centro_poblado, direccion, tipo_gestion").in("id", instIds).then(r => r.data || [])
+        ? adminClient.from("instituciones").select("id, nombre, distrito, centro_poblado, direccion, tipo_gestion").in("id", instIds).then((r: any) => r.data || [])
         : Promise.resolve([]),
       nivelIds.length > 0
-        ? adminClient.from("niveles_grados").select("id, nivel, grado, seccion").in("id", nivelIds).then(r => r.data || [])
+        ? adminClient.from("niveles_grados").select("id, nivel, grado, seccion").in("id", nivelIds).then((r: any) => r.data || [])
         : Promise.resolve([]),
     ]);
 
+    const roleMap = new Map<string, string[]>();
+    for (const r of rolesData) {
+      const existing = roleMap.get(r.user_id) || [];
+      existing.push(r.role);
+      roleMap.set(r.user_id, existing);
+    }
     const institucionMap = new Map(instituciones.map((i: any) => [i.id, i]));
     const nivelMap = new Map(niveles.map((n: any) => [n.id, n]));
 
-    const result = (profiles || []).map((profile: any) => {
+    const result = profiles.map((profile: any) => {
       const institucion = profile.institucion_id ? institucionMap.get(profile.institucion_id) : null;
       const gradoSeccion = profile.grado_seccion_id ? nivelMap.get(profile.grado_seccion_id) : null;
-
       return {
         id: profile.user_id || profile.id,
         email: profile.dni ? `${profile.dni}@dia.ugel.local` : "",

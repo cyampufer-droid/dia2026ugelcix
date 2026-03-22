@@ -13,6 +13,7 @@ function jsonResponse(body: unknown, status: number) {
   });
 }
 
+// Redirects to list-users-optimized - this legacy endpoint now uses the same efficient logic
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -24,80 +25,87 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     // Verify caller
-    const callerClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user: caller }, error: authError } = await callerClient.auth.getUser();
-    if (authError || !caller) return jsonResponse({ error: "No autorizado" }, 401);
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) return jsonResponse({ error: "No autorizado" }, 401);
 
-    // Check admin role
+    const callerId = claimsData.claims.sub as string;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
-    const { data: callerRoles } = await adminClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", caller.id);
 
+    const { data: callerRoles } = await adminClient.from("user_roles").select("role").eq("user_id", callerId);
     const isAdmin = (callerRoles || []).some((r: { role: string }) => r.role === "administrador");
     if (!isAdmin) return jsonResponse({ error: "Solo administradores pueden listar usuarios" }, 403);
 
-    // Fetch all auth users (paginated)
-    const allUsers: any[] = [];
-    let page = 1;
-    const perPage = 1000;
+    // Fetch profiles in batches (no auth.admin.listUsers - saves massive CPU)
+    const allProfiles: any[] = [];
+    let from = 0;
+    const pageSize = 1000;
     while (true) {
-      const { data: { users }, error } = await adminClient.auth.admin.listUsers({ page, perPage });
+      const { data, error } = await adminClient.from("profiles").select("*").order("nombre_completo").range(from, from + pageSize - 1);
       if (error) throw error;
-      allUsers.push(...users);
-      if (users.length < perPage) break;
-      page++;
+      if (!data || data.length === 0) break;
+      allProfiles.push(...data);
+      if (data.length < pageSize) break;
+      from += pageSize;
     }
 
-    // Fetch all profiles, roles, instituciones, and niveles_grados
-    const [profilesRes, rolesRes, institucionesRes, nivelesRes] = await Promise.all([
-      adminClient.from("profiles").select("*"),
-      adminClient.from("user_roles").select("*"),
-      adminClient.from("instituciones").select("*"),
-      adminClient.from("niveles_grados").select("*"),
+    // Fetch roles in batches
+    const roleMap = new Map<string, string[]>();
+    from = 0;
+    while (true) {
+      const { data: batch, error } = await adminClient.from("user_roles").select("user_id, role").range(from, from + pageSize - 1);
+      if (error) throw error;
+      if (!batch || batch.length === 0) break;
+      for (const r of batch) {
+        const existing = roleMap.get(r.user_id) || [];
+        existing.push(r.role);
+        roleMap.set(r.user_id, existing);
+      }
+      if (batch.length < pageSize) break;
+      from += pageSize;
+    }
+
+    // Fetch instituciones and niveles
+    const instIds = [...new Set(allProfiles.map(p => p.institucion_id).filter(Boolean))];
+    const nivelIds = [...new Set(allProfiles.map(p => p.grado_seccion_id).filter(Boolean))];
+
+    const [instRes, nivelRes] = await Promise.all([
+      instIds.length > 0
+        ? adminClient.from("instituciones").select("id, nombre, distrito, centro_poblado, direccion, tipo_gestion").in("id", instIds)
+        : Promise.resolve({ data: [] }),
+      nivelIds.length > 0
+        ? adminClient.from("niveles_grados").select("id, nivel, grado, seccion").in("id", nivelIds)
+        : Promise.resolve({ data: [] }),
     ]);
 
-    const profiles = profilesRes.data || [];
-    const roles = rolesRes.data || [];
-    const instituciones = institucionesRes.data || [];
-    const niveles = nivelesRes.data || [];
+    const institucionMap = new Map((instRes.data || []).map((i: any) => [i.id, i]));
+    const nivelMap = new Map((nivelRes.data || []).map((n: any) => [n.id, n]));
 
-    const profileMap = new Map(profiles.map((p: any) => [p.user_id, p]));
-    const roleMap = new Map<string, string[]>();
-    for (const r of roles) {
-      const existing = roleMap.get(r.user_id) || [];
-      existing.push(r.role);
-      roleMap.set(r.user_id, existing);
-    }
-    const institucionMap = new Map(instituciones.map((i: any) => [i.id, i]));
-    const nivelMap = new Map(niveles.map((n: any) => [n.id, n]));
-
-    const result = allUsers.map((u) => {
-      const profile = profileMap.get(u.id);
-      const institucion = profile?.institucion_id ? institucionMap.get(profile.institucion_id) : null;
-      const gradoSeccion = profile?.grado_seccion_id ? nivelMap.get(profile.grado_seccion_id) : null;
-
+    const result = allProfiles.map((p: any) => {
+      const inst = p.institucion_id ? institucionMap.get(p.institucion_id) : null;
+      const nivel = p.grado_seccion_id ? nivelMap.get(p.grado_seccion_id) : null;
       return {
-        id: u.id,
-        email: u.email,
-        dni: profile?.dni || u.user_metadata?.dni || "",
-        nombre_completo: profile?.nombre_completo || u.user_metadata?.nombre_completo || "",
-        roles: roleMap.get(u.id) || [],
-        institucion_id: profile?.institucion_id,
-        institucion_nombre: institucion?.nombre || "",
-        distrito: institucion?.distrito || "",
-        centro_poblado: institucion?.centro_poblado || "",
-        direccion: institucion?.direccion || "",
-        tipo_gestion: institucion?.tipo_gestion || "",
-        nivel: gradoSeccion?.nivel || "",
-        grado: gradoSeccion?.grado || "",
-        seccion: gradoSeccion?.seccion || "",
-        created_at: u.created_at,
+        id: p.user_id || p.id,
+        email: p.dni ? `${p.dni}@dia.ugel.local` : "",
+        dni: p.dni || "",
+        nombre_completo: p.nombre_completo || "",
+        roles: p.user_id ? (roleMap.get(p.user_id) || []) : [],
+        institucion_id: p.institucion_id,
+        institucion_nombre: (inst as any)?.nombre || "",
+        distrito: (inst as any)?.distrito || "",
+        centro_poblado: (inst as any)?.centro_poblado || "",
+        direccion: (inst as any)?.direccion || "",
+        tipo_gestion: (inst as any)?.tipo_gestion || "",
+        nivel: (nivel as any)?.nivel || "",
+        grado: (nivel as any)?.grado || "",
+        seccion: (nivel as any)?.seccion || "",
+        created_at: p.created_at,
       };
     });
 

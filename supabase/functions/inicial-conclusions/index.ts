@@ -90,13 +90,14 @@ async function getCallerContext(authHeader: string) {
     global: { headers: { Authorization: authHeader } },
   });
 
-  const { data: userData, error: userError } = await callerClient.auth.getUser();
-  if (userError || !userData.user) {
+  const token = authHeader.replace("Bearer ", "");
+  const { data: claimsData, error: claimsError } = await callerClient.auth.getClaims(token);
+  if (claimsError || !claimsData?.claims?.sub) {
     throw new Error("No autorizado");
   }
 
+  const callerId = claimsData.claims.sub as string;
   const adminClient = createClient(supabaseUrl, serviceRoleKey);
-  const callerId = userData.user.id;
 
   const [rolesRes, profileRes, gradosRes] = await Promise.all([
     adminClient.from("user_roles").select("role").eq("user_id", callerId),

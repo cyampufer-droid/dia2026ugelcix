@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import AIConclusiones, { type ConclusionesIA } from '@/components/estudiante/AIConclusiones';
 import RecomendacionesPadres, { type RecomendacionesPadresData } from '@/components/estudiante/RecomendacionesPadres';
+import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 
 const AREAS = [
   { key: 'Matemática', label: 'Matemática', icon: Calculator },
@@ -278,11 +279,16 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
 
       // For Inicial level, load teacher-written conclusions
       if (fetchedNivel === 'Inicial') {
-        const { data: concData } = await supabase
-          .from('conclusiones_inicial')
-          .select('area, competencia, logros, dificultades, mejora, nivel_logro')
-          .eq('estudiante_id', studentProfileId);
-        if (concData) setConclusionesInicial(concData as ConclusionInicialData[]);
+        try {
+          const response = await invokeEdgeFunction<{ conclusions: Array<ConclusionInicialData & { estudiante_id: string }> }>('inicial-conclusions', {
+            action: 'list',
+            student_id: studentProfileId,
+          });
+          setConclusionesInicial((response?.conclusions || []).map(({ estudiante_id: _ignored, ...rest }) => rest));
+        } catch (error) {
+          console.error('Error loading Inicial conclusions:', error);
+          setConclusionesInicial([]);
+        }
       }
 
       setLoading(false);

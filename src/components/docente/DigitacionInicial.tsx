@@ -6,10 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Save, Loader2, ChevronDown, ChevronUp, Calculator, BookOpen, Heart, User, CheckCircle2 } from 'lucide-react';
 import type { Student } from '@/components/docente/DigitacionGrid';
+import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 import {
   areConclusionDataEqual,
   DEFAULT_NIVEL_LOGRO,
@@ -62,7 +62,6 @@ interface Props {
   students: Student[];
 }
 
-const BATCH_SIZE = 10;
 const AUTO_SAVE_DELAY_MS = 4000;
 
 interface ConclusionRecord {
@@ -146,12 +145,15 @@ const DigitacionInicial = ({ students }: Props) => {
       }
 
       const studentIds = students.map(s => s.id);
-      const { data, error } = await supabase
-        .from('conclusiones_inicial')
-        .select('estudiante_id, area, competencia, logros, dificultades, mejora, nivel_logro')
-        .in('estudiante_id', studentIds);
+      let data: ConclusionRecord[] = [];
 
-      if (error) {
+      try {
+        const response = await invokeEdgeFunction<{ conclusions: ConclusionRecord[] }>('inicial-conclusions', {
+          action: 'list',
+          student_ids: studentIds,
+        });
+        data = response?.conclusions || [];
+      } catch (error) {
         console.error('Error loading conclusiones:', error);
         setConclusiones(draftState);
         setLoadingData(false);
@@ -244,37 +246,14 @@ const DigitacionInicial = ({ students }: Props) => {
     try {
       const { upserts, deletes } = buildMutationPlan(conclusionesRef.current, targetKeys);
 
-      for (let i = 0; i < upserts.length; i += BATCH_SIZE) {
-        const batch = upserts.slice(i, i + BATCH_SIZE);
-        const { error } = await supabase
-          .from('conclusiones_inicial')
-          .upsert(batch, { onConflict: 'estudiante_id,area,competencia' });
+      const response = await invokeEdgeFunction<{ upserts_saved: number; deletes_processed: number }>('inicial-conclusions', {
+        action: 'sync',
+        upserts,
+        deletes,
+      });
 
-        if (error) {
-          console.error('Batch upsert error:', error);
-          errorCount += batch.length;
-        } else {
-          successCount += batch.length;
-        }
-      }
-
-      for (const target of deletes) {
-        const { error } = await supabase
-          .from('conclusiones_inicial')
-          .delete()
-          .match({
-            estudiante_id: target.estudiante_id,
-            area: target.area,
-            competencia: target.competencia,
-          });
-
-        if (error) {
-          console.error('Delete conclusion error:', error);
-          errorCount += 1;
-        } else {
-          deleteCount += 1;
-        }
-      }
+      successCount = response?.upserts_saved ?? 0;
+      deleteCount = response?.deletes_processed ?? 0;
 
       if (errorCount === 0) {
         const currentState = conclusionesRef.current;

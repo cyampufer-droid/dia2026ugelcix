@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
-import { saveDigitacionOffline, getAllDigitaciones } from '@/lib/offlineDb';
+import { saveDigitacionOffline, getAllDigitaciones, markAsSynced, clearSyncedRecords } from '@/lib/offlineDb';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Save, Wifi, WifiOff, CloudUpload, Loader2, BookOpen, Calculator, Heart, CheckCircle2 } from 'lucide-react';
@@ -241,22 +241,100 @@ const Digitacion = () => {
   const handleSaveLocal = async () => {
     setSaving(true);
     try {
-      let totalRecords = 0;
+      // Collect all records to save
+      const records: { studentId: string; evalId: string; answers: string[] }[] = [];
       for (const ev of evaluaciones) {
         const evalData = respuestas[ev.id] || {};
         for (const [studentId, answers] of Object.entries(evalData)) {
           if (answers.some(a => a !== '')) {
-            await saveDigitacionOffline(studentId, ev.id, answers);
-            totalRecords++;
+            records.push({ studentId, evalId: ev.id, answers });
           }
         }
       }
-      await refreshPendingCount();
-      setLastSaved(new Date());
-      toast({ title: '💾 Guardado correctamente', description: `${totalRecords} registros guardados en el dispositivo. Presione "Sincronizar" para enviar a la nube.` });
+
+      if (records.length === 0) {
+        toast({ title: 'No hay datos para guardar' });
+        setSaving(false);
+        return;
+      }
+
+      // Always save locally first as backup
+      for (const r of records) {
+        await saveDigitacionOffline(r.studentId, r.evalId, r.answers);
+      }
+
+      // If online, save directly to cloud
+      if (isOnline) {
+        // Build answer key map from evaluaciones
+        const answerKeyMap: Record<string, string[]> = {};
+        for (const ev of evaluaciones) {
+          if (ev.config_preguntas?.respuestas_correctas) {
+            answerKeyMap[ev.id] = ev.config_preguntas.respuestas_correctas;
+          }
+        }
+
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (const r of records) {
+          const answerKey = answerKeyMap[r.evalId];
+          let puntaje = 0;
+          if (answerKey) {
+            for (let i = 0; i < r.answers.length; i++) {
+              if (r.answers[i] && r.answers[i] === answerKey[i]) {
+                puntaje++;
+              }
+            }
+          }
+
+          const { error } = await supabase
+            .from('resultados')
+            .upsert({
+              estudiante_id: r.studentId,
+              evaluacion_id: r.evalId,
+              respuestas_dadas: r.answers,
+              puntaje_total: puntaje,
+              fecha_sincronizacion: new Date().toISOString(),
+            }, { onConflict: 'estudiante_id,evaluacion_id' })
+            .select();
+
+          if (error) {
+            console.error('Save to cloud error:', error);
+            errorCount++;
+          } else {
+            await markAsSynced(`${r.studentId}_${r.evalId}`);
+            successCount++;
+          }
+        }
+
+        await clearSyncedRecords();
+        await refreshPendingCount();
+        setLastSaved(new Date());
+
+        if (errorCount > 0) {
+          toast({
+            title: 'Guardado parcial',
+            description: `${successCount} registros guardados en la nube, ${errorCount} con error. Los datos están seguros en el dispositivo.`,
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: '✅ Guardado en la nube',
+            description: `${successCount} registros guardados y sincronizados correctamente.`,
+          });
+        }
+      } else {
+        // Offline: just confirm local save
+        await refreshPendingCount();
+        setLastSaved(new Date());
+        toast({
+          title: '💾 Guardado en dispositivo',
+          description: `${records.length} registros guardados localmente. Se sincronizarán automáticamente al tener internet.`,
+        });
+      }
     } catch (err) {
       console.error(err);
-      toast({ title: 'Error al guardar', variant: 'destructive' });
+      toast({ title: 'Error al guardar', description: 'Intente nuevamente.', variant: 'destructive' });
     } finally {
       setSaving(false);
     }

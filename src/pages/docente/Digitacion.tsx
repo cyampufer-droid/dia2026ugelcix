@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
-import { saveDigitacionOffline, getAllDigitaciones } from '@/lib/offlineDb';
+import { saveDigitacionOffline, getAllDigitaciones, markAsSynced, clearSyncedRecords } from '@/lib/offlineDb';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Save, Wifi, WifiOff, CloudUpload, Loader2, BookOpen, Calculator, Heart, CheckCircle2 } from 'lucide-react';

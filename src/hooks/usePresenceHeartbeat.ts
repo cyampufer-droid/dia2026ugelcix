@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-const HEARTBEAT_INTERVAL = 60_000; // 1 minute
+const HEARTBEAT_INTERVAL = 300_000; // 5 minutes
 
 export const usePresenceHeartbeat = () => {
   const { user } = useAuth();

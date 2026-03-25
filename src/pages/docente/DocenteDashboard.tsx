@@ -163,15 +163,33 @@ const DocenteDashboard = () => {
     const load = async () => {
       if (!profile?.grado_seccion_id) return;
 
-      const [studentsRes, evalsRes, resultadosRes] = await Promise.all([
+      // First get student IDs, then count their results
+      const { data: studentProfiles } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('grado_seccion_id', profile.grado_seccion_id);
+      
+      const studentIds = (studentProfiles || []).map(s => s.id);
+
+      const [studentsRes, evalsRes] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('grado_seccion_id', profile.grado_seccion_id),
         supabase.from('evaluaciones').select('id', { count: 'exact', head: true }),
-        supabase.from('resultados').select('id', { count: 'exact', head: true }),
       ]);
+
+      let digitadoCount = 0;
+      if (studentIds.length > 0) {
+        for (let i = 0; i < studentIds.length; i += 500) {
+          const batch = studentIds.slice(i, i + 500);
+          const { count } = await supabase
+            .from('resultados')
+            .select('id', { count: 'exact', head: true })
+            .in('estudiante_id', batch);
+          digitadoCount += count ?? 0;
+        }
+      }
 
       const studentCount = studentsRes.count ?? 0;
       const evalCount = evalsRes.count ?? 0;
-      const digitadoCount = resultadosRes.count ?? 0;
       const total = studentCount * evalCount;
 
       setStats({

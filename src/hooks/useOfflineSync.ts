@@ -62,35 +62,42 @@ export function useOfflineSync() {
       let successCount = 0;
       let errorCount = 0;
 
-      for (const record of pending) {
-        // Calculate score by comparing against answer key
+      // Prepare all rows with calculated scores
+      const upsertRows = pending.map(record => {
         const answerKey = answerKeyMap[record.evaluacion_id];
         let puntaje = 0;
         if (answerKey) {
           for (let i = 0; i < record.respuestas.length; i++) {
-            if (record.respuestas[i] && record.respuestas[i] === answerKey[i]) {
-              puntaje++;
-            }
+            if (record.respuestas[i] && record.respuestas[i] === answerKey[i]) puntaje++;
           }
         }
+        return {
+          estudiante_id: record.estudiante_id,
+          evaluacion_id: record.evaluacion_id,
+          respuestas_dadas: record.respuestas,
+          puntaje_total: puntaje,
+          fecha_sincronizacion: new Date().toISOString(),
+          _localId: record.id,
+        };
+      });
 
+      // Batch upsert in chunks of 50
+      const BATCH_SIZE = 50;
+      for (let i = 0; i < upsertRows.length; i += BATCH_SIZE) {
+        const batch = upsertRows.slice(i, i + BATCH_SIZE);
+        const upsertData = batch.map(({ _localId, ...rest }) => rest);
         const { error } = await supabase
           .from('resultados')
-          .upsert({
-            estudiante_id: record.estudiante_id,
-            evaluacion_id: record.evaluacion_id,
-            respuestas_dadas: record.respuestas,
-            puntaje_total: puntaje,
-            fecha_sincronizacion: new Date().toISOString(),
-          }, { onConflict: 'estudiante_id,evaluacion_id' })
-          .select();
+          .upsert(upsertData, { onConflict: 'estudiante_id,evaluacion_id' });
 
         if (error) {
-          console.error('Sync error:', error);
-          errorCount++;
+          console.error('Batch sync error:', error);
+          errorCount += batch.length;
         } else {
-          await markAsSynced(record.id);
-          successCount++;
+          successCount += batch.length;
+          for (const row of batch) {
+            await markAsSynced(row._localId);
+          }
         }
       }
 

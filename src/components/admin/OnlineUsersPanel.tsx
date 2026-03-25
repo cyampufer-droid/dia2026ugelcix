@@ -26,14 +26,15 @@ const OnlineUsersPanel = () => {
       .from('profiles')
       .select('nombre_completo, dni, last_seen')
       .gte('last_seen', threshold)
-      .order('last_seen', { ascending: false });
+      .order('last_seen', { ascending: false })
+      .limit(50);
     setUsers((data as OnlineUser[]) || []);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchOnline();
-    const interval = setInterval(fetchOnline, 30_000);
+    const interval = setInterval(fetchOnline, 60_000);
     return () => clearInterval(interval);
   }, []);
 

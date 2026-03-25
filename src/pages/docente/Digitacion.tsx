@@ -276,34 +276,39 @@ const Digitacion = () => {
         let successCount = 0;
         let errorCount = 0;
 
-        for (const r of records) {
+        // Batch upsert: prepare all rows, then upsert in chunks of 50
+        const upsertRows = records.map(r => {
           const answerKey = answerKeyMap[r.evalId];
           let puntaje = 0;
           if (answerKey) {
             for (let i = 0; i < r.answers.length; i++) {
-              if (r.answers[i] && r.answers[i] === answerKey[i]) {
-                puntaje++;
-              }
+              if (r.answers[i] && r.answers[i] === answerKey[i]) puntaje++;
             }
           }
+          return {
+            estudiante_id: r.studentId,
+            evaluacion_id: r.evalId,
+            respuestas_dadas: r.answers,
+            puntaje_total: puntaje,
+            fecha_sincronizacion: new Date().toISOString(),
+          };
+        });
 
+        const BATCH_SIZE = 50;
+        for (let i = 0; i < upsertRows.length; i += BATCH_SIZE) {
+          const batch = upsertRows.slice(i, i + BATCH_SIZE);
           const { error } = await supabase
             .from('resultados')
-            .upsert({
-              estudiante_id: r.studentId,
-              evaluacion_id: r.evalId,
-              respuestas_dadas: r.answers,
-              puntaje_total: puntaje,
-              fecha_sincronizacion: new Date().toISOString(),
-            }, { onConflict: 'estudiante_id,evaluacion_id' })
-            .select();
+            .upsert(batch, { onConflict: 'estudiante_id,evaluacion_id' });
 
           if (error) {
-            console.error('Save to cloud error:', error);
-            errorCount++;
+            console.error('Batch save error:', error);
+            errorCount += batch.length;
           } else {
-            await markAsSynced(`${r.studentId}_${r.evalId}`);
-            successCount++;
+            successCount += batch.length;
+            for (const row of batch) {
+              await markAsSynced(`${row.estudiante_id}_${row.evaluacion_id}`);
+            }
           }
         }
 

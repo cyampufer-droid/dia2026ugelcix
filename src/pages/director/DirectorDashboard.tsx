@@ -36,25 +36,21 @@ const DirectorDashboard = () => {
 
         if (!error && statsData && statsData.length > 0) {
           const s = statsData[0];
-          // Check if there are any digitized results for this institution's students
-          const { data: instStudents } = await supabase
+          // Quick check: just get 1 student with a result to know if results exist
+          const { data: sampleStudent } = await supabase
             .from('profiles')
             .select('id')
             .eq('institucion_id', profile.institucion_id)
-            .limit(5000);
+            .not('grado_seccion_id', 'is', null)
+            .limit(1);
           
           let resCount = 0;
-          if (instStudents && instStudents.length > 0) {
-            const studentIds = instStudents.map(s => s.id);
-            // Check in batches
-            for (let i = 0; i < studentIds.length; i += 500) {
-              const batch = studentIds.slice(i, i + 500);
-              const { count } = await supabase
-                .from('resultados')
-                .select('id', { count: 'exact', head: true })
-                .in('estudiante_id', batch);
-              if ((count ?? 0) > 0) { resCount = count ?? 0; break; }
-            }
+          if (sampleStudent?.length) {
+            const { count } = await supabase
+              .from('resultados')
+              .select('id', { count: 'exact', head: true })
+              .eq('estudiante_id', sampleStudent[0].id);
+            resCount = count ?? 0;
           }
 
           setStats({

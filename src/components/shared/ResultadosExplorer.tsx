@@ -150,86 +150,51 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
       try {
         setLoading(true);
 
-        // Fetch evaluaciones
-        const { data: evals } = await supabase.from('evaluaciones').select('id, area');
-        setEvaluaciones(evals || []);
+        // Fetch evaluaciones, instituciones, niveles_grados in parallel with the RPC
+        const fetchInstituciones = async (): Promise<Institucion[]> => {
+          if (scope === 'global') {
+            const { data } = await supabase.from('instituciones').select('id, nombre, distrito, provincia');
+            return (data as Institucion[]) || [];
+          } else if (scope === 'institucion' && institucionId) {
+            const { data } = await supabase.from('instituciones').select('id, nombre, distrito, provincia').eq('id', institucionId);
+            return (data as Institucion[]) || [];
+          }
+          return [];
+        };
 
-        // Fetch instituciones
-        if (scope === 'global') {
-          const { data } = await supabase.from('instituciones').select('id, nombre, distrito, provincia');
-          setInstituciones(data || []);
-        } else if (scope === 'institucion' && institucionId) {
-          const { data } = await supabase.from('instituciones').select('id, nombre, distrito, provincia').eq('id', institucionId);
-          setInstituciones(data || []);
-        }
-
-        // Fetch niveles_grados
-        let ngQuery = supabase.from('niveles_grados').select('id, nivel, grado, seccion, institucion_id');
+        let ngQueryBuilder = supabase.from('niveles_grados').select('id, nivel, grado, seccion, institucion_id');
         if (scope === 'institucion' && institucionId) {
-          ngQuery = ngQuery.eq('institucion_id', institucionId);
+          ngQueryBuilder = ngQueryBuilder.eq('institucion_id', institucionId);
         } else if (scope === 'seccion' && gradoSeccionId) {
-          ngQuery = ngQuery.eq('id', gradoSeccionId);
+          ngQueryBuilder = ngQueryBuilder.eq('id', gradoSeccionId);
         }
-        const { data: ngData } = await ngQuery.order('nivel').order('grado');
-        setNivelesGrados(ngData || []);
+        const ngPromise = ngQueryBuilder.order('nivel').order('grado').then(r => r.data || []);
 
-        // Fetch profiles scoped
-        const baseQuery = supabase.from('profiles').select('id, user_id, nombre_completo, dni, institucion_id, grado_seccion_id');
+        const evalsPromise = supabase.from('evaluaciones').select('id, area').then(r => r.data || []);
 
-        // Fetch in chunks for large datasets
-        const allProfilesRaw: (ProfileData & { user_id: string | null })[] = [];
-        let from = 0;
-        const chunkSize = 1000;
-        while (true) {
-          let query = baseQuery;
-          if (scope === 'institucion' && institucionId) {
-            query = query.eq('institucion_id', institucionId);
-          } else if (scope === 'seccion' && gradoSeccionId) {
-            query = query.eq('grado_seccion_id', gradoSeccionId);
-          }
-          const { data } = await query.order('nombre_completo').range(from, from + chunkSize - 1);
-          if (!data || data.length === 0) break;
-          allProfilesRaw.push(...(data as any));
-          if (data.length < chunkSize) break;
-          from += chunkSize;
-        }
+        // Single RPC call replaces 3 batched client-side loops
+        const rpcPromise = supabase.rpc('get_resultados_explorer', {
+          _scope: scope,
+          _institucion_id: institucionId || null,
+          _grado_seccion_id: gradoSeccionId || null,
+        });
 
-        // Filter to only estudiantes (exclude docentes, directors, etc.)
-        const userIds = allProfilesRaw.filter(p => p.user_id).map(p => p.user_id!);
-        let studentUserIds = new Set<string>();
-        if (userIds.length > 0) {
-          for (let i = 0; i < userIds.length; i += 500) {
-            const chunk = userIds.slice(i, i + 500);
-            const { data: roles } = await supabase
-              .from('user_roles')
-              .select('user_id, role')
-              .in('user_id', chunk);
-            (roles || [])
-              .filter(r => r.role === 'estudiante')
-              .forEach(r => studentUserIds.add(r.user_id));
-          }
-        }
-        const allProfiles = allProfilesRaw
-          .filter(p => p.user_id && studentUserIds.has(p.user_id))
-          .map(({ id, nombre_completo, dni, institucion_id, grado_seccion_id }) => 
-            ({ id, nombre_completo, dni, institucion_id, grado_seccion_id }));
-        setProfiles(allProfiles);
+        const [evals, instData, ngData, rpcRes] = await Promise.all([
+          evalsPromise, fetchInstituciones(), ngPromise, rpcPromise,
+        ]);
 
-        // Fetch resultados
-        if (allProfiles.length > 0) {
-          const studentIds = allProfiles.map(p => p.id);
-          const allResultados: RawResult[] = [];
-          for (let i = 0; i < studentIds.length; i += 500) {
-            const chunk = studentIds.slice(i, i + 500);
-            const { data } = await supabase
-              .from('resultados')
-              .select('estudiante_id, evaluacion_id, puntaje_total, nivel_logro')
-              .in('estudiante_id', chunk);
-            if (data) allResultados.push(...data);
-          }
-          setResultados(allResultados);
-        } else {
+        setEvaluaciones(evals);
+        setInstituciones(instData);
+        setNivelesGrados(ngData as NivelGrado[]);
+
+        if (rpcRes.error) {
+          console.error('RPC error:', rpcRes.error);
+          setProfiles([]);
           setResultados([]);
+        } else {
+          const rpcData = rpcRes.data as any;
+          setProfiles(rpcData?.profiles || []);
+          setResultados(rpcData?.resultados || []);
         }
       } catch (err) {
         console.error('Error loading ResultadosExplorer data:', err);

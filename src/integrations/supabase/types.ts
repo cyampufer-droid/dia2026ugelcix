@@ -389,6 +389,14 @@ export type Database = {
           total: number
         }[]
       }
+      get_resultados_explorer: {
+        Args: {
+          _grado_seccion_id?: string
+          _institucion_id?: string
+          _scope: string
+        }
+        Returns: Json
+      }
       get_user_grado_seccion: { Args: { _user_id: string }; Returns: string }
       get_user_institucion: { Args: { _user_id: string }; Returns: string }
       has_role: {

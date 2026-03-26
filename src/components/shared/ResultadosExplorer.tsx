@@ -151,14 +151,16 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
         setLoading(true);
 
         // Fetch evaluaciones, instituciones, niveles_grados in parallel with the RPC
-        let instPromise: Promise<Institucion[]>;
-        if (scope === 'global') {
-          instPromise = supabase.from('instituciones').select('id, nombre, distrito, provincia').then(r => r.data as Institucion[] || []);
-        } else if (scope === 'institucion' && institucionId) {
-          instPromise = supabase.from('instituciones').select('id, nombre, distrito, provincia').eq('id', institucionId).then(r => r.data as Institucion[] || []);
-        } else {
-          instPromise = Promise.resolve([]);
-        }
+        const fetchInstituciones = async (): Promise<Institucion[]> => {
+          if (scope === 'global') {
+            const { data } = await supabase.from('instituciones').select('id, nombre, distrito, provincia');
+            return (data as Institucion[]) || [];
+          } else if (scope === 'institucion' && institucionId) {
+            const { data } = await supabase.from('instituciones').select('id, nombre, distrito, provincia').eq('id', institucionId);
+            return (data as Institucion[]) || [];
+          }
+          return [];
+        };
 
         let ngQueryBuilder = supabase.from('niveles_grados').select('id, nivel, grado, seccion, institucion_id');
         if (scope === 'institucion' && institucionId) {

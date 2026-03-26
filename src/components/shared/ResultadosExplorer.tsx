@@ -153,9 +153,9 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
         // Fetch evaluaciones, instituciones, niveles_grados in parallel with the RPC
         let instPromise: Promise<Institucion[]>;
         if (scope === 'global') {
-          instPromise = supabase.from('instituciones').select('id, nombre, distrito, provincia').then(r => r.data || []);
+          instPromise = supabase.from('instituciones').select('id, nombre, distrito, provincia').then(r => r.data as Institucion[] || []);
         } else if (scope === 'institucion' && institucionId) {
-          instPromise = supabase.from('instituciones').select('id, nombre, distrito, provincia').eq('id', institucionId).then(r => r.data || []);
+          instPromise = supabase.from('instituciones').select('id, nombre, distrito, provincia').eq('id', institucionId).then(r => r.data as Institucion[] || []);
         } else {
           instPromise = Promise.resolve([]);
         }

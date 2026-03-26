@@ -165,30 +165,6 @@ export type Database = {
         }
         Relationships: []
       }
-      login_logs: {
-        Row: {
-          id: string
-          logged_in_at: string
-          nombre_completo: string
-          role: string
-          user_id: string
-        }
-        Insert: {
-          id?: string
-          logged_in_at?: string
-          nombre_completo?: string
-          role?: string
-          user_id: string
-        }
-        Update: {
-          id?: string
-          logged_in_at?: string
-          nombre_completo?: string
-          role?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       niveles_grados: {
         Row: {
           created_at: string

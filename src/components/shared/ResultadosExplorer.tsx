@@ -180,7 +180,7 @@ const ResultadosExplorer = ({ scope, institucionId, gradoSeccionId, especialidad
         });
 
         const [evals, instData, ngData, rpcRes] = await Promise.all([
-          evalsPromise, instPromise, ngPromise, rpcPromise,
+          evalsPromise, fetchInstituciones(), ngPromise, rpcPromise,
         ]);
 
         setEvaluaciones(evals);

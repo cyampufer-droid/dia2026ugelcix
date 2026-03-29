@@ -136,7 +136,7 @@ const Login = () => {
                 <div className="flex items-start gap-2">
                   <Checkbox id="privacy-consent" checked={acceptPrivacy} onCheckedChange={(v) => setAcceptPrivacy(!!v)} className="mt-0.5" />
                   <Label htmlFor="privacy-consent" className="text-xs text-muted-foreground leading-tight cursor-pointer">
-                    Acepto el tratamiento de mis datos personales conforme a la <strong>Ley N.° 29733</strong> – Ley de Protección de Datos Personales. Los datos recopilados serán utilizados exclusivamente con fines educativos y de diagnóstico por la UGEL Chiclayo.
+                    Acepto el tratamiento de mis datos personales conforme a la <strong>Ley N.° 29733</strong> – Ley de Protección de Datos Personales. Los datos recopilados serán utilizados exclusivamente con fines educativos y de diagnóstico por la GRED Lambayeque.
                   </Label>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading || !acceptPrivacy}>

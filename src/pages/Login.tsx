@@ -83,7 +83,7 @@ const Login = () => {
             Diagnóstico Integral de Aprendizajes
           </h2>
           <p className="text-lg opacity-90 mb-8">
-            Plataforma de evaluación educativa 2026 para medir y mejorar los aprendizajes de los estudiantes de la provincia de Chiclayo.
+            Plataforma de evaluación educativa 2026 para medir y mejorar los aprendizajes de los estudiantes de la Región Lambayeque.
           </p>
           <div className="flex gap-6">
             <div className="flex items-center gap-2">

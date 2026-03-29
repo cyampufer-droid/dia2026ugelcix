@@ -19,12 +19,24 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-const DISTRITOS_VALIDOS = [
-  'Chiclayo', 'José Leonardo Ortiz', 'La Victoria', 'Cayaltí', 'Chongoyape',
-  'Eten', 'Puerto Eten', 'Lagunas', 'Monsefú', 'Nueva Arica', 'Oyotún',
-  'Pátapo', 'Picsi', 'Pimentel', 'Pomalca', 'Pucalá', 'Reque',
-  'Santa Rosa', 'Tumán', 'Zaña',
-];
+const PROVINCIAS_DISTRITOS: Record<string, string[]> = {
+  'Chiclayo': [
+    'Chiclayo', 'José Leonardo Ortiz', 'La Victoria', 'Cayaltí', 'Chongoyape',
+    'Eten', 'Puerto Eten', 'Lagunas', 'Monsefú', 'Nueva Arica', 'Oyotún',
+    'Pátapo', 'Picsi', 'Pimentel', 'Pomalca', 'Pucalá', 'Reque',
+    'Santa Rosa', 'Tumán', 'Zaña',
+  ],
+  'Lambayeque': [
+    'Lambayeque', 'Chóchope', 'Íllimo', 'Jayanca', 'Mochumí', 'Mórrope',
+    'Motupe', 'Olmos', 'Pacora', 'Salas', 'San José', 'Túcume',
+  ],
+  'Ferreñafe': [
+    'Ferreñafe', 'Cañaris', 'Incahuasi', 'Manuel Antonio Mesones Muro', 'Pítipo', 'Pueblo Nuevo',
+  ],
+};
+
+const PROVINCIAS_VALIDAS = Object.keys(PROVINCIAS_DISTRITOS);
+const DISTRITOS_VALIDOS = Object.values(PROVINCIAS_DISTRITOS).flat();
 
 // Normalize text for accent-insensitive comparison
 function normalizeText(text: string): string {
@@ -34,6 +46,18 @@ function normalizeText(text: string): string {
 function findDistrito(input: string): string | null {
   const normalized = normalizeText(input);
   return DISTRITOS_VALIDOS.find(d => normalizeText(d) === normalized) || null;
+}
+
+function findProvincia(input: string): string | null {
+  const normalized = normalizeText(input);
+  return PROVINCIAS_VALIDAS.find(p => normalizeText(p) === normalized) || null;
+}
+
+function getProvinciaForDistrito(distrito: string): string {
+  for (const [prov, distritos] of Object.entries(PROVINCIAS_DISTRITOS)) {
+    if (distritos.includes(distrito)) return prov;
+  }
+  return 'Chiclayo';
 }
 
 // --- CSV Bulk Upload logic ---

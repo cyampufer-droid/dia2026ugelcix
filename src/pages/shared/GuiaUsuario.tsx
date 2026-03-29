@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Printer, ArrowLeft, BookOpen, Shield, Users, School, GraduationCap, UserCog, FileSpreadsheet, BarChart3, ClipboardList, Monitor, Smartphone, Globe, KeyRound, ChevronRight, CheckCircle2, AlertTriangle, XCircle, Download, Eye, HelpCircle, Phone, Mail, MapPin, Clock, Star, Layers, Settings, UserPlus, FileText, PenTool, Award, BookOpenCheck, Headphones, Lock, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import diaLogo from '@/assets/dia_ugel_cix_2026.png';
-import dgpLogo from '@/assets/logo_dgp_ugel_cix.jpg';
+import dgpLogo from '@/assets/logo_gred_lambayeque.jpg';
 import screenLogin from '@/assets/tutorial/screen-login.jpg';
 import screenDirector from '@/assets/tutorial/screen-director.jpg';
 import screenDocente from '@/assets/tutorial/screen-docente.jpg';

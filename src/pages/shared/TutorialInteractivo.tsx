@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import diaLogo from '@/assets/dia_ugel_cix_2026.png';
-import dgpLogo from '@/assets/logo_dgp_ugel_cix.jpg';
+import dgpLogo from '@/assets/logo_gred_lambayeque.jpg';
 import screenLogin from '@/assets/tutorial/screen-login.jpg';
 import screenAdmin from '@/assets/tutorial/screen-admin.jpg';
 import screenDirector from '@/assets/tutorial/screen-director.jpg';

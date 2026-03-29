@@ -138,13 +138,13 @@ const GuiaUsuario = () => {
                 <img src={diaLogo} alt="DIA 2026" className="h-24 sm:h-32 w-24 sm:w-32 object-contain" />
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 shadow-lg">
-                <img src={dgpLogo} alt="DGP UGEL Chiclayo" className="h-24 sm:h-32 w-24 sm:w-32 object-contain rounded-xl" />
+                <img src={dgpLogo} <img src={dgpLogo} alt="GRED Lambayeque" className="h-24 sm:h-32 w-24 sm:w-32 object-contain rounded-xl" /> />
               </div>
             </div>
 
             {/* Subtitle */}
             <div className="inline-block px-6 py-2 rounded-full bg-secondary/90 text-secondary-foreground text-xs sm:text-sm font-bold tracking-wider uppercase shadow-lg">
-              UGEL Chiclayo – Dirección de Gestión Pedagógica
+              GRED Lambayeque – Plan Educativo Regional 2026
             </div>
 
             {/* Main title */}
@@ -185,11 +185,11 @@ const GuiaUsuario = () => {
         {/* ════════════════════════════════════════════════════════════ */}
         <div className="flex flex-col items-center justify-center text-center py-16 mb-8 print:py-8 print:mb-4 border-b-4 border-secondary/30">
           <div className="rounded-full bg-primary/5 p-6 mb-6 shadow-lg border-4 border-secondary/30">
-            <img src={dgpLogo} alt="DGP UGEL Chiclayo" className="h-36 sm:h-44 w-36 sm:w-44 object-contain rounded-full" />
+            <img src={dgpLogo} <img src={dgpLogo} alt="GRED Lambayeque" className="h-36 sm:h-44 w-36 sm:w-44 object-contain rounded-full" /> />
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-primary mb-2">Dirección de Gestión Pedagógica</h2>
-          <p className="text-lg font-semibold text-muted-foreground mb-1">UGEL Chiclayo</p>
-          <p className="text-sm text-muted-foreground mb-6">Unidad de Gestión Educativa Local – Provincia de Chiclayo</p>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-primary mb-2">Plan Educativo Regional 2026</h2>
+          <p className="text-lg font-semibold text-muted-foreground mb-1">GRED Lambayeque</p>
+          <p className="text-sm text-muted-foreground mb-6">Gerencia Regional de Educación – Región Lambayeque</p>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-lg text-center mt-4">
             <div className="bg-primary/5 rounded-xl p-4">
@@ -224,7 +224,7 @@ const GuiaUsuario = () => {
 
               <div className="space-y-4 text-base text-muted-foreground leading-relaxed">
                 <p>
-                  La <strong className="text-foreground">Dirección de Gestión Pedagógica (DGP)</strong> de la UGEL Chiclayo tiene el agrado de poner a disposición de toda la comunidad educativa el presente <strong className="text-foreground">Manual de Uso de la Herramienta Tecnológica DIA 2026</strong>, diseñado con el propósito de facilitar la comprensión y el correcto uso de esta plataforma digital que servirá como instrumento fundamental para el diagnóstico integral de los aprendizajes de nuestros estudiantes.
+                  La <strong className="text-foreground">Coordinación General Regional</strong> de la GRED Lambayeque tiene el agrado de poner a disposición de toda la comunidad educativa el presente <strong className="text-foreground">Manual de Uso de la Herramienta Tecnológica DIA 2026</strong>, diseñado con el propósito de facilitar la comprensión y el correcto uso de esta plataforma digital que servirá como instrumento fundamental para el diagnóstico integral de los aprendizajes de nuestros estudiantes. de poner a disposición de toda la comunidad educativa el presente <strong className="text-foreground">Manual de Uso de la Herramienta Tecnológica DIA 2026</strong>, diseñado con el propósito de facilitar la comprensión y el correcto uso de esta plataforma digital que servirá como instrumento fundamental para el diagnóstico integral de los aprendizajes de nuestros estudiantes.
                 </p>
                 <p>
                   El <strong className="text-foreground">Diagnóstico Integral de Aprendizajes (DIA)</strong> es una estrategia que nos permite recoger información valiosa sobre el nivel de desarrollo de las competencias de los estudiantes en las áreas de <strong className="text-foreground">Matemática, Comunicación (Lectura) y el aspecto Socioemocional</strong>, abarcando los tres niveles educativos: <strong className="text-foreground">Inicial, Primaria y Secundaria</strong>.
@@ -250,7 +250,7 @@ const GuiaUsuario = () => {
                   <div className="mt-2 inline-block px-4 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-bold uppercase tracking-wider">
                     Director de Gestión Pedagógica
                   </div>
-                  <p className="text-sm text-muted-foreground mt-2 font-semibold">UGEL Chiclayo – Lambayeque</p>
+                  <p className="text-sm text-muted-foreground mt-2 font-semibold">GRED Lambayeque</p>
                   <p className="text-xs text-muted-foreground">Marzo 2026</p>
                 </div>
                 <img src={dgpLogo} alt="DGP" className="h-20 w-20 object-contain rounded-full border-2 border-secondary/30 shadow" />
@@ -303,7 +303,7 @@ const GuiaUsuario = () => {
         <SectionTitle id="introduccion" icon={Star} number="01" title="INTRODUCCIÓN Y OBJETIVOS" />
 
         <p>
-          La plataforma <strong>Diagnóstico Integral de Aprendizajes (DIA) 2026</strong> es una herramienta tecnológica desarrollada por la <strong>Dirección de Gestión Pedagógica (DGP)</strong> de la <strong>UGEL Chiclayo</strong> para medir, registrar y analizar los niveles de aprendizaje de los estudiantes de la provincia de Chiclayo.
+          La plataforma <strong>Diagnóstico Integral de Aprendizajes (DIA) 2026</strong> es una herramienta tecnológica desarrollada por la <strong>Dirección de Gestión Pedagógica (DGP)</strong> La plataforma <strong>Diagnóstico Integral de Aprendizajes (DIA) 2026</strong> es una herramienta tecnológica desarrollada por la <strong>Coordinación General Regional</strong> de la <strong>GRED Lambayeque</strong> para medir, registrar y analizar los niveles de aprendizaje de los estudiantes de la Región Lambayeque.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
@@ -447,7 +447,7 @@ const GuiaUsuario = () => {
         <p className="mb-6">La plataforma tiene un sistema de roles jerárquico. Cada usuario accede solo a las funciones correspondientes a su rol:</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <RoleCard icon={Settings} role="Administrador" description="Personal de DGP – UGEL Chiclayo" color="border-primary/20 bg-primary/5"
+          <RoleCard icon={Settings} role="Administrador" description="<RoleCard icon={Settings} role="Administrador" description="Personal de GRED Lambayeque" color="border-primary/20 bg-primary/5"" color="border-primary/20 bg-primary/5"
             functions={['Gestión total del sistema', 'Crear/editar usuarios y roles', 'Registrar instituciones educativas', 'Acceso a reportes globales']} />
           <RoleCard icon={School} role="Director / Subdirector" description="Directivo de la institución educativa" color="border-secondary/20 bg-secondary/5"
             functions={['Configurar niveles, grados y secciones', 'Registrar personal docente', 'Ver resultados de toda la IE', 'Descargar evaluaciones de entrada']} />
@@ -1159,7 +1159,7 @@ const GuiaUsuario = () => {
 
         <div className="rounded-2xl gradient-primary text-primary-foreground p-8 mb-6">
           <h3 className="text-xl font-extrabold mb-4">Dirección de Gestión Pedagógica</h3>
-          <p className="font-semibold mb-4">UGEL Chiclayo</p>
+          <p className="font-semibold mb-4">GRED Lambayeque</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-3">
               <Mail className="h-5 w-5 text-secondary shrink-0" />
@@ -1196,10 +1196,10 @@ const GuiaUsuario = () => {
           <div className="text-center">
             <div className="flex items-center justify-center gap-6 mb-6">
               <img src={diaLogo} alt="DIA 2026" className="h-16 w-16 object-contain" />
-              <img src={dgpLogo} alt="DGP UGEL Chiclayo" className="h-16 w-16 object-contain rounded-full" />
+              <img src={dgpLogo} alt="GRED Lambayeque" className="h-16 w-16 object-contain rounded-full" />
             </div>
-            <p className="text-lg font-extrabold text-primary">UGEL CHICLAYO</p>
-            <p className="font-semibold text-muted-foreground">Dirección de Gestión Pedagógica</p>
+            <p className="text-lg font-extrabold text-primary">GRED LAMBAYEQUE</p>
+            <p className="font-semibold text-muted-foreground">Plan Educativo Regional 2026</p>
             <p className="text-sm text-muted-foreground mt-1">Diagnóstico Integral de Aprendizajes – DIA 2026</p>
             <div className="flex items-center justify-center gap-2 mt-4">
               <div className="h-0.5 w-16 bg-secondary rounded-full" />

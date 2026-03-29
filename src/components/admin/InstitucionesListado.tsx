@@ -10,17 +10,34 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 
-const DISTRITOS = [
-  'Todos', 'Chiclayo', 'José Leonardo Ortiz', 'La Victoria', 'Cayaltí', 'Chongoyape',
-  'Eten', 'Puerto Eten', 'Lagunas', 'Monsefú', 'Nueva Arica', 'Oyotún',
-  'Pátapo', 'Picsi', 'Pimentel', 'Pomalca', 'Pucalá', 'Reque',
-  'Santa Rosa', 'Tumán', 'Zaña',
-];
+const PROVINCIAS_DISTRITOS: Record<string, string[]> = {
+  'Chiclayo': [
+    'Chiclayo', 'José Leonardo Ortiz', 'La Victoria', 'Cayaltí', 'Chongoyape',
+    'Eten', 'Puerto Eten', 'Lagunas', 'Monsefú', 'Nueva Arica', 'Oyotún',
+    'Pátapo', 'Picsi', 'Pimentel', 'Pomalca', 'Pucalá', 'Reque',
+    'Santa Rosa', 'Tumán', 'Zaña',
+  ],
+  'Lambayeque': [
+    'Lambayeque', 'Chóchope', 'Íllimo', 'Jayanca', 'Mochumí', 'Mórrope',
+    'Motupe', 'Olmos', 'Pacora', 'Salas', 'San José', 'Túcume',
+  ],
+  'Ferreñafe': [
+    'Ferreñafe', 'Cañaris', 'Incahuasi', 'Manuel Antonio Mesones Muro', 'Pítipo', 'Pueblo Nuevo',
+  ],
+};
+
+const PROVINCIAS = ['Todos', ...Object.keys(PROVINCIAS_DISTRITOS)];
+const ALL_DISTRITOS = Object.values(PROVINCIAS_DISTRITOS).flat();
 
 const InstitucionesListado = () => {
   const [search, setSearch] = useState('');
+  const [provincia, setProvincia] = useState('Todos');
   const [distrito, setDistrito] = useState('Todos');
   const [tipoGestion, setTipoGestion] = useState('Todos');
+
+  const distritosDisponibles = provincia === 'Todos'
+    ? ALL_DISTRITOS
+    : PROVINCIAS_DISTRITOS[provincia] || [];
 
   const { data: instituciones, isLoading } = useQuery({
     queryKey: ['instituciones-listado'],
@@ -50,9 +67,10 @@ const InstitucionesListado = () => {
       inst.nombre.toLowerCase().includes(search.toLowerCase()) ||
       (inst.codigo_local || '').toLowerCase().includes(search.toLowerCase()) ||
       (inst.centro_poblado || '').toLowerCase().includes(search.toLowerCase());
+    const matchProvincia = provincia === 'Todos' || inst.provincia === provincia;
     const matchDistrito = distrito === 'Todos' || inst.distrito === distrito;
     const matchTipo = tipoGestion === 'Todos' || inst.tipo_gestion === tipoGestion;
-    return matchSearch && matchDistrito && matchTipo;
+    return matchSearch && matchProvincia && matchDistrito && matchTipo;
   });
 
   return (
@@ -77,12 +95,23 @@ const InstitucionesListado = () => {
               className="pl-9"
             />
           </div>
+          <Select value={provincia} onValueChange={v => { setProvincia(v); setDistrito('Todos'); }}>
+            <SelectTrigger className="w-full sm:w-44">
+              <SelectValue placeholder="Provincia" />
+            </SelectTrigger>
+            <SelectContent>
+              {PROVINCIAS.map(p => (
+                <SelectItem key={p} value={p}>{p}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={distrito} onValueChange={setDistrito}>
-            <SelectTrigger className="w-full sm:w-48">
+            <SelectTrigger className="w-full sm:w-52">
               <SelectValue placeholder="Distrito" />
             </SelectTrigger>
             <SelectContent>
-              {DISTRITOS.map(d => (
+              <SelectItem value="Todos">Todos</SelectItem>
+              {distritosDisponibles.map(d => (
                 <SelectItem key={d} value={d}>{d}</SelectItem>
               ))}
             </SelectContent>
@@ -111,6 +140,7 @@ const InstitucionesListado = () => {
                   <TableHead className="w-12">#</TableHead>
                   <TableHead>Nombre</TableHead>
                   <TableHead>Cód. Local</TableHead>
+                  <TableHead>Provincia</TableHead>
                   <TableHead>Distrito</TableHead>
                   <TableHead>Centro Poblado</TableHead>
                   <TableHead>Dirección</TableHead>
@@ -120,7 +150,7 @@ const InstitucionesListado = () => {
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                       No se encontraron instituciones
                     </TableCell>
                   </TableRow>
@@ -130,6 +160,7 @@ const InstitucionesListado = () => {
                       <TableCell className="font-mono text-xs text-muted-foreground">{i + 1}</TableCell>
                       <TableCell className="font-medium">{inst.nombre}</TableCell>
                       <TableCell className="text-muted-foreground">{inst.codigo_local || '—'}</TableCell>
+                      <TableCell>{inst.provincia || '—'}</TableCell>
                       <TableCell>{inst.distrito}</TableCell>
                       <TableCell className="text-muted-foreground">{inst.centro_poblado || '—'}</TableCell>
                       <TableCell className="text-muted-foreground text-xs max-w-[200px] truncate">{inst.direccion || '—'}</TableCell>

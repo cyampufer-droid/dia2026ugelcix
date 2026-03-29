@@ -19,12 +19,24 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-const DISTRITOS_VALIDOS = [
-  'Chiclayo', 'José Leonardo Ortiz', 'La Victoria', 'Cayaltí', 'Chongoyape',
-  'Eten', 'Puerto Eten', 'Lagunas', 'Monsefú', 'Nueva Arica', 'Oyotún',
-  'Pátapo', 'Picsi', 'Pimentel', 'Pomalca', 'Pucalá', 'Reque',
-  'Santa Rosa', 'Tumán', 'Zaña',
-];
+const PROVINCIAS_DISTRITOS: Record<string, string[]> = {
+  'Chiclayo': [
+    'Chiclayo', 'José Leonardo Ortiz', 'La Victoria', 'Cayaltí', 'Chongoyape',
+    'Eten', 'Puerto Eten', 'Lagunas', 'Monsefú', 'Nueva Arica', 'Oyotún',
+    'Pátapo', 'Picsi', 'Pimentel', 'Pomalca', 'Pucalá', 'Reque',
+    'Santa Rosa', 'Tumán', 'Zaña',
+  ],
+  'Lambayeque': [
+    'Lambayeque', 'Chóchope', 'Íllimo', 'Jayanca', 'Mochumí', 'Mórrope',
+    'Motupe', 'Olmos', 'Pacora', 'Salas', 'San José', 'Túcume',
+  ],
+  'Ferreñafe': [
+    'Ferreñafe', 'Cañaris', 'Incahuasi', 'Manuel Antonio Mesones Muro', 'Pítipo', 'Pueblo Nuevo',
+  ],
+};
+
+const PROVINCIAS_VALIDAS = Object.keys(PROVINCIAS_DISTRITOS);
+const DISTRITOS_VALIDOS = Object.values(PROVINCIAS_DISTRITOS).flat();
 
 // Normalize text for accent-insensitive comparison
 function normalizeText(text: string): string {
@@ -34,6 +46,18 @@ function normalizeText(text: string): string {
 function findDistrito(input: string): string | null {
   const normalized = normalizeText(input);
   return DISTRITOS_VALIDOS.find(d => normalizeText(d) === normalized) || null;
+}
+
+function findProvincia(input: string): string | null {
+  const normalized = normalizeText(input);
+  return PROVINCIAS_VALIDAS.find(p => normalizeText(p) === normalized) || null;
+}
+
+function getProvinciaForDistrito(distrito: string): string {
+  for (const [prov, distritos] of Object.entries(PROVINCIAS_DISTRITOS)) {
+    if (distritos.includes(distrito)) return prov;
+  }
+  return 'Chiclayo';
 }
 
 // --- CSV Bulk Upload logic ---
@@ -79,7 +103,15 @@ function parseCSV(text: string): ParsedRow[] {
     else {
       const matched = findDistrito(row.distrito);
       if (!matched) row.errors.push(`Distrito "${row.distrito}" no válido`);
-      else row.distrito = matched; // Normalize to canonical name
+      else row.distrito = matched;
+    }
+    // Normalize provincia
+    if (row.provincia) {
+      const matchedProv = findProvincia(row.provincia);
+      if (matchedProv) row.provincia = matchedProv;
+      else row.provincia = getProvinciaForDistrito(row.distrito);
+    } else if (row.distrito) {
+      row.provincia = getProvinciaForDistrito(row.distrito);
     }
     // Normalize tipo_gestion
     if (row.tipo_gestion) {
@@ -120,8 +152,14 @@ const ManualRegistro = () => {
   });
 
   const handleChange = (field: string, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+    if (field === 'provincia') {
+      setForm(prev => ({ ...prev, provincia: value, distrito: '' }));
+    } else {
+      setForm(prev => ({ ...prev, [field]: value }));
+    }
   };
+
+  const distritosForProvincia = PROVINCIAS_DISTRITOS[form.provincia] || [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,13 +208,26 @@ const ManualRegistro = () => {
             <Input id="codigo_local" value={form.codigo_local} onChange={e => handleChange('codigo_local', e.target.value)} placeholder="123456" maxLength={20} />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="provincia">Provincia *</Label>
+            <Select value={form.provincia} onValueChange={v => handleChange('provincia', v)}>
+              <SelectTrigger id="provincia">
+                <SelectValue placeholder="Seleccione provincia" />
+              </SelectTrigger>
+              <SelectContent>
+                {PROVINCIAS_VALIDAS.map(p => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="distrito">Distrito *</Label>
             <Select value={form.distrito} onValueChange={v => handleChange('distrito', v)}>
               <SelectTrigger id="distrito">
                 <SelectValue placeholder="Seleccione distrito" />
               </SelectTrigger>
               <SelectContent>
-                {DISTRITOS_VALIDOS.map(d => (
+                {distritosForProvincia.map(d => (
                   <SelectItem key={d} value={d}>{d}</SelectItem>
                 ))}
               </SelectContent>
@@ -300,10 +351,10 @@ const CargaMasiva = () => {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Columnas: <strong>nombre</strong> (obligatorio), <strong>codigo_local</strong>, <strong>provincia</strong> (def. Chiclayo), <strong>distrito</strong> (obligatorio), <strong>centro_poblado</strong>, <strong>direccion</strong>, <strong>tipo_gestion</strong> (Pública o Privada, def. Pública).
+            Columnas: <strong>nombre</strong> (obligatorio), <strong>codigo_local</strong>, <strong>provincia</strong> (Chiclayo, Lambayeque o Ferreñafe), <strong>distrito</strong> (obligatorio), <strong>centro_poblado</strong>, <strong>direccion</strong>, <strong>tipo_gestion</strong> (Pública o Privada, def. Pública).
           </p>
           <p className="text-sm text-muted-foreground">
-            Distritos válidos: {DISTRITOS_VALIDOS.join(', ')}.
+            Provincias válidas: {PROVINCIAS_VALIDAS.join(', ')}. Distritos válidos: {DISTRITOS_VALIDOS.join(', ')}.
           </p>
           <Button variant="outline" onClick={downloadTemplate}>
             <Download className="h-4 w-4 mr-2" />
@@ -351,6 +402,7 @@ const CargaMasiva = () => {
                     <TableHead>#</TableHead>
                     <TableHead>Nombre</TableHead>
                     <TableHead>Cód. Local</TableHead>
+                    <TableHead>Provincia</TableHead>
                     <TableHead>Distrito</TableHead>
                      <TableHead>Centro Poblado</TableHead>
                      <TableHead>Dirección</TableHead>
@@ -364,6 +416,7 @@ const CargaMasiva = () => {
                       <TableCell className="font-mono text-xs">{i + 1}</TableCell>
                       <TableCell>{row.nombre}</TableCell>
                       <TableCell>{row.codigo_local}</TableCell>
+                      <TableCell>{row.provincia}</TableCell>
                       <TableCell>{row.distrito}</TableCell>
                       <TableCell>{row.centro_poblado}</TableCell>
                       <TableCell>{row.direccion}</TableCell>

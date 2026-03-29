@@ -87,7 +87,7 @@ const CambiarContrasena = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
       <div className="w-full max-w-md">
         <div className="flex items-center gap-3 mb-6 justify-center">
-          <img src={diaLogo} alt="DIA GRED Lambayeque" className="h-14 w-14 object-contain" /> alt="DIA GRED Lambayeque" className="h-14 w-14 object-contain" /> className="h-14 w-14 object-contain" />
+          <img src={diaLogo} alt="DIA GRED Lambayeque" className="h-14 w-14 object-contain" />
           <h1 className="text-xl font-bold text-foreground">DIA 2026</h1>
         </div>
 

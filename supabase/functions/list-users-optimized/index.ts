@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
       totalCount = count || 0;
     }
 
-    if (!profiles || profiles.length === 0) return jsonResponse({ users: [], total: count || 0, page, pageSize }, 200);
+    if (!profiles || profiles.length === 0) return jsonResponse({ users: [], total: totalCount, page, pageSize }, 200);
 
     // Fetch roles, instituciones, niveles only for this page's profiles
     const pageUserIds = profiles.filter((p: any) => p.user_id).map((p: any) => p.user_id);
@@ -147,13 +147,13 @@ Deno.serve(async (req) => {
 
     const [rolesData, instituciones, niveles] = await Promise.all([
       pageUserIds.length > 0
-        ? adminClient.from("user_roles").select("user_id, role").in("user_id", pageUserIds).then((r: any) => r.data || [])
+        ? batchedIn("user_roles", "user_id, role", "user_id", pageUserIds)
         : Promise.resolve([]),
       instIds.length > 0
-        ? adminClient.from("instituciones").select("id, nombre, distrito, centro_poblado, direccion, tipo_gestion").in("id", instIds).then((r: any) => r.data || [])
+        ? batchedIn("instituciones", "id, nombre, distrito, centro_poblado, direccion, tipo_gestion", "id", instIds)
         : Promise.resolve([]),
       nivelIds.length > 0
-        ? adminClient.from("niveles_grados").select("id, nivel, grado, seccion").in("id", nivelIds).then((r: any) => r.data || [])
+        ? batchedIn("niveles_grados", "id, nivel, grado, seccion", "id", nivelIds)
         : Promise.resolve([]),
     ]);
 

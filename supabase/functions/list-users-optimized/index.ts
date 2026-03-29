@@ -189,7 +189,7 @@ Deno.serve(async (req) => {
       };
     });
 
-    return jsonResponse({ users: result, total: count || 0, page, pageSize }, 200);
+    return jsonResponse({ users: result, total: totalCount, page, pageSize }, 200);
   } catch (err) {
     console.error("Error:", err.message);
     return jsonResponse({ error: "Error interno del servidor" }, 500);

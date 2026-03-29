@@ -564,7 +564,7 @@ const TutorialInteractivo = () => {
               transition={{ delay: 0.3 }}
               className="text-sm font-bold uppercase tracking-widest text-secondary mb-2"
             >
-              UGEL Chiclayo · Dirección de Gestión Pedagógica
+              GRED Lambayeque · Plan Educativo Regional 2026
             </motion.p>
             <motion.h1
               initial={{ opacity: 0, y: 20 }}

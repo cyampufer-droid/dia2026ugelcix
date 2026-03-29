@@ -119,7 +119,7 @@ const Login = () => {
 
           <Card className="shadow-card border-border">
             <CardHeader className="text-center">
-              <img src={diaLogo} alt="DIA UGEL Chiclayo" className="h-16 w-16 object-contain mx-auto mb-2" />
+              <img src={diaLogo} alt="DIA GRED Lambayeque" className="h-16 w-16 object-contain mx-auto mb-2" />
               <CardTitle className="text-2xl font-bold text-foreground">Bienvenido</CardTitle>
               <CardDescription>Accede a la plataforma de diagnóstico</CardDescription>
             </CardHeader>

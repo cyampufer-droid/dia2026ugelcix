@@ -50,7 +50,7 @@ experto en comunicación con padres de familia${esInicial ? ' de niños de educa
 para que los padres apoyen el aprendizaje de sus hijos en el hogar.
 
 CONTEXTO:
-- Sistema DIA 2026 (Diagnóstico Integral de Aprendizajes) de la UGEL Chiclayo, Perú
+- Sistema DIA 2026 (Diagnóstico Integral de Aprendizajes) de la GRED Lambayeque, Perú
 - Niveles de logro: C (En Inicio), B (En Proceso), A (Logro Esperado), AD (Logro Destacado)
 ${esInicial 
   ? '- Áreas evaluadas en Inicial: Matemática, Comunicación, Personal Social - Habilidades Socioemocionales\n- La evaluación es descriptiva (no numérica) y se basa en observación del docente'

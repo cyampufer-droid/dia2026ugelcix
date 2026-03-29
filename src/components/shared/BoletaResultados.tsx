@@ -447,10 +447,10 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
       .student-box .name{font-size:13px;font-weight:700;color:#1e3a5f;} .student-box .dni{font-size:11px;color:#555;}
       @media print{body{padding:10px}}</style></head><body>
       <div class="header">
-        <img src="${logoUrl}" alt="DIA UGEL Chiclayo" />
+        <img src="${logoUrl}" alt="DIA GRED Lambayeque" />
         <div class="header-info">
           <h1>BOLETA DE RESULTADOS – DIA 2026</h1>
-          <p>Diagnóstico Integral de Aprendizajes – UGEL Chiclayo</p>
+          <p>Diagnóstico Integral de Aprendizajes – GRED Lambayeque</p>
           <div class="info-grid">
             <div><span class="label">Región:</span> <span class="value">Lambayeque</span></div>
             <div><span class="label">UGEL:</span> <span class="value">Chiclayo</span></div>
@@ -505,7 +505,7 @@ const BoletaResultados = ({ studentProfileId, studentName, showAI = false }: Pro
           {studentDni && <p className="text-xs text-muted-foreground">DNI: {studentDni}</p>}
           {institucionData.nombre && <p className="text-xs text-muted-foreground">I.E. {institucionData.nombre} – {institucionData.distrito}</p>}
           {gradoInfo && <p className="text-xs text-muted-foreground">{gradoInfo.nivel} – {gradoInfo.grado} "{gradoInfo.seccion}"</p>}
-          <p className="text-xs text-muted-foreground mt-1">Diagnóstico Integral de Aprendizajes 2026 – UGEL Chiclayo</p>
+          <p className="text-xs text-muted-foreground mt-1">Diagnóstico Integral de Aprendizajes 2026 – GRED Lambayeque</p>
         </div>
 
         {isInicial ? (

@@ -50,7 +50,7 @@ const AppLayout = () => {
               )}
               <span className="text-sm font-medium text-foreground hidden sm:inline">{profile?.nombre_completo}</span>
             </div>
-            <span className="text-xs text-muted-foreground hidden md:inline">DIA 2026 · UGEL Chiclayo</span>
+            <span className="text-xs text-muted-foreground hidden md:inline">DIA 2026 · GRED Lambayeque</span>
           </header>
           <main className="flex-1 p-4 md:p-6">
             <Outlet />

@@ -107,7 +107,7 @@ const AppSidebar = () => {
   return (
     <Sidebar collapsible="offcanvas">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
-        <h1 className="text-lg font-bold tracking-tight text-sidebar-foreground">UGEL Chiclayo</h1>
+        <h1 className="text-lg font-bold tracking-tight text-sidebar-foreground"><h1 className="text-lg font-bold tracking-tight text-sidebar-foreground">GRED Lambayeque</h1></h1>
         {!collapsed && <p className="text-xs text-sidebar-foreground/70 mt-1">Diagnóstico Integral 2026</p>}
       </SidebarHeader>
 

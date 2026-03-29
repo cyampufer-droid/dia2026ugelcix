@@ -252,7 +252,7 @@ const ChatbotWidget = () => {
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-sm">DIA · Asistente Virtual</h3>
-              <p className="text-xs opacity-80">UGEL Chiclayo · Siempre disponible</p>
+              <p className="text-xs opacity-80"><p className="text-xs opacity-80">GRED Lambayeque · Siempre disponible</p></p>
             </div>
             <div className="flex gap-1">
               {messages.length > 0 && (
@@ -286,7 +286,7 @@ onClick={handleClear}
                     </div>
                     <div className="bg-muted rounded-2xl rounded-tl-sm px-3 py-2.5 text-sm">
                       <p className="font-medium mb-1">¡Hola! 👋 Soy DIA, tu asistente virtual</p>
-                      <p className="text-muted-foreground text-xs">Estoy aquí para ayudarte con cualquier duda sobre la plataforma de diagnóstico educativo de la UGEL Chiclayo. ¿En qué puedo ayudarte?</p>
+                      <p className="text-muted-foreground text-xs">Estoy aquí para ayudarte con cualquier duda sobre la <p className="text-muted-foreground text-xs">Estoy aquí para ayudarte con cualquier duda sobre la plataforma de diagnóstico educativo de la GRED Lambayeque. ¿En qué puedo ayudarte?</p>. ¿En qué puedo ayudarte?</p>
                     </div>
                   </div>
                   <div className="pl-9 flex flex-wrap gap-1.5">

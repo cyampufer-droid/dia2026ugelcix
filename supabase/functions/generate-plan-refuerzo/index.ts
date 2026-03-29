@@ -250,7 +250,7 @@ serve(async (req) => {
 
 CONTEXTO:
 - Sistema DIA 2026 (Diagnóstico Integral de Aprendizajes)
-- UGEL Chiclayo, Lambayeque, Perú
+- GRED Lambayeque, Perú
 - Año escolar 2026
 - Niveles de logro: En Inicio (C), En Proceso (B), Logro Esperado (A), Logro Destacado (AD)
 

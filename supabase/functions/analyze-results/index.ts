@@ -27,7 +27,7 @@ serve(async (req) => {
         `- Competencia: ${c.competencia} (${c.area})\n  Nivel de logro: ${c.nivel_logro}\n  Logros: ${c.logros || 'No registrado'}\n  Dificultades: ${c.dificultades || 'No registrado'}\n  Sugerencias de mejora: ${c.mejora || 'No registrado'}`
       ).join("\n\n");
 
-      systemPrompt = `Eres un especialista pedagógico del sistema DIA 2026 (Diagnóstico Integral de Aprendizajes) de la UGEL Chiclayo, Perú, experto en educación Inicial.
+      systemPrompt = `Eres un especialista pedagógico del sistema DIA 2026 (Diagnóstico Integral de Aprendizajes) systemPrompt = `Eres un especialista pedagógico del sistema DIA 2026 (Diagnóstico Integral de Aprendizajes) de la GRED Lambayeque, Perú, experto en educación Inicial.
 Tu tarea es generar un análisis personalizado integral basado en las conclusiones descriptivas que el/la docente ha registrado para cada competencia del estudiante.
 
 CONTEXTO:
@@ -100,7 +100,7 @@ Genera un JSON con esta estructura exacta:
         .filter(Boolean)
         .join(", ");
 
-      systemPrompt = `Eres un especialista pedagógico del sistema DIA 2026 (Diagnóstico Integral de Aprendizajes) de la UGEL Chiclayo, Perú. Tu tarea es generar conclusiones descriptivas personalizadas para un estudiante basándote en su patrón específico de respuestas.
+      systemPrompt = `Eres un especialista pedagógico del sistema DIA 2026 (Diagnóstico Integral de Aprendizajes) systemPrompt = `Eres un especialista pedagógico del sistema DIA 2026 (Diagnóstico Integral de Aprendizajes) de la GRED Lambayeque, Perú. Tu tarea es generar conclusiones descriptivas personalizadas para un estudiante basándote en su patrón específico de respuestas. descriptivas personalizadas para un estudiante basándote en su patrón específico de respuestas.
 
 CONTEXTO EDUCATIVO:
 - Sistema de evaluación diagnóstica del Currículo Nacional de Educación Básica (CNEB) del Perú

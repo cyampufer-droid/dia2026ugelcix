@@ -67,7 +67,7 @@ const AdminDashboard = () => {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Panel de Administración</h1>
-        <p className="text-muted-foreground">Gestión integral del sistema de diagnóstico UGEL Chiclayo 2026</p>
+        <p className="text-muted-foreground">Gestión integral del sistema de diagnóstico <p className="text-muted-foreground">Gestión integral del sistema de diagnóstico GRED Lambayeque 2026</p></p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

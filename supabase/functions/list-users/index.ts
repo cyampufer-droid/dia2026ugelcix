@@ -42,7 +42,19 @@ Deno.serve(async (req) => {
     const isAdmin = (callerRoles || []).some((r: { role: string }) => r.role === "administrador");
     if (!isAdmin) return jsonResponse({ error: "Solo administradores pueden listar usuarios" }, 403);
 
-    // Fetch profiles in batches (no auth.admin.listUsers - saves massive CPU)
+    // Helper to query with batched .in() to avoid URL length limits
+    async function batchedIn(table: string, selectCols: string, filterCol: string, ids: string[]) {
+      const BATCH = 150;
+      const all: any[] = [];
+      for (let i = 0; i < ids.length; i += BATCH) {
+        const { data, error } = await adminClient.from(table).select(selectCols).in(filterCol, ids.slice(i, i + BATCH));
+        if (error) throw error;
+        if (data) all.push(...data);
+      }
+      return all;
+    }
+
+    // Fetch profiles in batches
     const allProfiles: any[] = [];
     let from = 0;
     const pageSize = 1000;
@@ -71,21 +83,17 @@ Deno.serve(async (req) => {
       from += pageSize;
     }
 
-    // Fetch instituciones and niveles
+    // Fetch instituciones and niveles using batched .in()
     const instIds = [...new Set(allProfiles.map(p => p.institucion_id).filter(Boolean))];
     const nivelIds = [...new Set(allProfiles.map(p => p.grado_seccion_id).filter(Boolean))];
 
-    const [instRes, nivelRes] = await Promise.all([
-      instIds.length > 0
-        ? adminClient.from("instituciones").select("id, nombre, distrito, centro_poblado, direccion, tipo_gestion").in("id", instIds)
-        : Promise.resolve({ data: [] }),
-      nivelIds.length > 0
-        ? adminClient.from("niveles_grados").select("id, nivel, grado, seccion").in("id", nivelIds)
-        : Promise.resolve({ data: [] }),
+    const [instData, nivelData] = await Promise.all([
+      instIds.length > 0 ? batchedIn("instituciones", "id, nombre, distrito, centro_poblado, direccion, tipo_gestion", "id", instIds) : Promise.resolve([]),
+      nivelIds.length > 0 ? batchedIn("niveles_grados", "id, nivel, grado, seccion", "id", nivelIds) : Promise.resolve([]),
     ]);
 
-    const institucionMap = new Map((instRes.data || []).map((i: any) => [i.id, i]));
-    const nivelMap = new Map((nivelRes.data || []).map((n: any) => [n.id, n]));
+    const institucionMap = new Map(instData.map((i: any) => [i.id, i]));
+    const nivelMap = new Map(nivelData.map((n: any) => [n.id, n]));
 
     const result = allProfiles.map((p: any) => {
       const inst = p.institucion_id ? institucionMap.get(p.institucion_id) : null;

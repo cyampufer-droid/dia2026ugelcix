@@ -63,8 +63,22 @@ Deno.serve(async (req) => {
       } catch { /* defaults */ }
     }
 
-    // When filtering by role, get user_ids first (efficient indexed query)
-    let roleFilterUserIds: string[] | null = null;
+    // Helper to query with batched .in() to avoid URL length limits
+    async function batchedIn(table: string, selectCols: string, filterCol: string, ids: string[], extraBuilder?: (q: any) => any) {
+      const BATCH = 150; // safe batch size for URL length
+      const all: any[] = [];
+      for (let i = 0; i < ids.length; i += BATCH) {
+        let q = adminClient.from(table).select(selectCols).in(filterCol, ids.slice(i, i + BATCH));
+        if (extraBuilder) q = extraBuilder(q);
+        const { data, error } = await q;
+        if (error) throw error;
+        if (data) all.push(...data);
+      }
+      return all;
+    }
+
+    // When filtering by role, get user_ids first
+    let roleFilterUserIds: Set<string> | null = null;
     if (roleFilter) {
       const roleUserIds: string[] = [];
       let from = 0;
@@ -82,27 +96,47 @@ Deno.serve(async (req) => {
         from += batchSize;
       }
       if (roleUserIds.length === 0) return jsonResponse({ users: [], total: 0, page, pageSize }, 200);
-      roleFilterUserIds = roleUserIds;
+      roleFilterUserIds = new Set(roleUserIds);
     }
 
-    // Build profile query with server-side filtering
-    let profileQuery = adminClient.from("profiles").select("*", { count: "exact" });
-    if (search) {
-      profileQuery = profileQuery.or(`dni.ilike.%${search}%,nombre_completo.ilike.%${search}%`);
-    }
+    // Build profile query - when role filtering, fetch ALL matching profiles client-side
+    // because .in() with thousands of IDs breaks URL limits
+    let profiles: any[] = [];
+    let totalCount = 0;
+
     if (roleFilterUserIds) {
-      // Batch the .in() filter to avoid oversized queries
-      if (roleFilterUserIds.length <= 1000) {
-        profileQuery = profileQuery.in("user_id", roleFilterUserIds);
-      } else {
-        // For very large role sets, paginate through all and filter client-side
-        profileQuery = profileQuery.in("user_id", roleFilterUserIds.slice(0, 1000));
-      }
-    }
+      // Fetch profiles in batches using the role-filtered user_ids
+      const idArray = [...roleFilterUserIds];
+      let allMatchingProfiles = await batchedIn("profiles", "*", "user_id", idArray);
 
-    profileQuery = profileQuery.order("nombre_completo").range(page * pageSize, (page + 1) * pageSize - 1);
-    const { data: profiles, error: profilesErr, count } = await profileQuery;
-    if (profilesErr) throw profilesErr;
+      // Apply search filter client-side
+      if (search) {
+        const s = search.toLowerCase();
+        allMatchingProfiles = allMatchingProfiles.filter((p: any) =>
+          (p.dni && p.dni.toLowerCase().includes(s)) ||
+          (p.nombre_completo && p.nombre_completo.toLowerCase().includes(s))
+        );
+      }
+
+      // Sort by nombre_completo
+      allMatchingProfiles.sort((a: any, b: any) =>
+        (a.nombre_completo || "").localeCompare(b.nombre_completo || "")
+      );
+
+      totalCount = allMatchingProfiles.length;
+      profiles = allMatchingProfiles.slice(page * pageSize, (page + 1) * pageSize);
+    } else {
+      // No role filter - use server-side pagination directly
+      let profileQuery = adminClient.from("profiles").select("*", { count: "exact" });
+      if (search) {
+        profileQuery = profileQuery.or(`dni.ilike.%${search}%,nombre_completo.ilike.%${search}%`);
+      }
+      profileQuery = profileQuery.order("nombre_completo").range(page * pageSize, (page + 1) * pageSize - 1);
+      const { data, error: profilesErr, count } = await profileQuery;
+      if (profilesErr) throw profilesErr;
+      profiles = data || [];
+      totalCount = count || 0;
+    }
 
     if (!profiles || profiles.length === 0) return jsonResponse({ users: [], total: count || 0, page, pageSize }, 200);
 

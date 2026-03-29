@@ -75,8 +75,8 @@ const Login = () => {
           <div className="flex items-center gap-4 mb-8">
             <img src={dgpLogo} alt="DGP UGEL Chiclayo" className="h-20 w-20 object-contain rounded-full" />
             <div>
-              <h1 className="text-2xl font-bold">UGEL Chiclayo</h1>
-              <p className="text-sm opacity-80">Dirección de Gestión Pedagógica</p>
+              <h1 className="text-2xl font-bold">GRED Lambayeque</h1>
+              <p className="text-sm opacity-80">Plan Educativo Regional 2026<br />Coordinación General Regional</p>
             </div>
           </div>
           <h2 className="text-4xl font-extrabold leading-tight mb-4">

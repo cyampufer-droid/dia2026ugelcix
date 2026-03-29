@@ -138,7 +138,7 @@ const GuiaUsuario = () => {
                 <img src={diaLogo} alt="DIA 2026" className="h-24 sm:h-32 w-24 sm:w-32 object-contain" />
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 shadow-lg">
-                <img src={dgpLogo} <img src={dgpLogo} alt="GRED Lambayeque" className="h-24 sm:h-32 w-24 sm:w-32 object-contain rounded-xl" /> />
+                <img src={dgpLogo} alt="GRED Lambayeque" className="h-24 sm:h-32 w-24 sm:w-32 object-contain rounded-xl" />
               </div>
             </div>
 
@@ -185,7 +185,7 @@ const GuiaUsuario = () => {
         {/* ════════════════════════════════════════════════════════════ */}
         <div className="flex flex-col items-center justify-center text-center py-16 mb-8 print:py-8 print:mb-4 border-b-4 border-secondary/30">
           <div className="rounded-full bg-primary/5 p-6 mb-6 shadow-lg border-4 border-secondary/30">
-            <img src={dgpLogo} <img src={dgpLogo} alt="GRED Lambayeque" className="h-36 sm:h-44 w-36 sm:w-44 object-contain rounded-full" /> />
+            <img src={dgpLogo} alt="GRED Lambayeque" className="h-36 sm:h-44 w-36 sm:w-44 object-contain rounded-full" />
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-primary mb-2">Plan Educativo Regional 2026</h2>
           <p className="text-lg font-semibold text-muted-foreground mb-1">GRED Lambayeque</p>
@@ -447,7 +447,7 @@ const GuiaUsuario = () => {
         <p className="mb-6">La plataforma tiene un sistema de roles jerárquico. Cada usuario accede solo a las funciones correspondientes a su rol:</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <RoleCard icon={Settings} role="Administrador" description="<RoleCard icon={Settings} role="Administrador" description="Personal de GRED Lambayeque" color="border-primary/20 bg-primary/5"" color="border-primary/20 bg-primary/5"
+          <RoleCard icon={Settings} role="Administrador" description="Personal de GRED Lambayeque" color="border-primary/20 bg-primary/5"
             functions={['Gestión total del sistema', 'Crear/editar usuarios y roles', 'Registrar instituciones educativas', 'Acceso a reportes globales']} />
           <RoleCard icon={School} role="Director / Subdirector" description="Directivo de la institución educativa" color="border-secondary/20 bg-secondary/5"
             functions={['Configurar niveles, grados y secciones', 'Registrar personal docente', 'Ver resultados de toda la IE', 'Descargar evaluaciones de entrada']} />

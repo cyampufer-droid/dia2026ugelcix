@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,33 +9,34 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import AppLayout from "./components/AppLayout";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ChatbotWidget from "./components/ChatbotWidget";
+import { lazyRetry } from "@/lib/lazyRetry";
 
-// Lazy-loaded pages for code splitting (optimized for low-end devices)
-const Index = lazy(() => import("./pages/Index"));
-const Login = lazy(() => import("./pages/Login"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
-const AdminUsuarios = lazy(() => import("./pages/admin/AdminUsuarios"));
-const AdminInstituciones = lazy(() => import("./pages/admin/AdminInstituciones"));
-const AdminResultados = lazy(() => import("./pages/admin/AdminResultados"));
-const DirectorDashboard = lazy(() => import("./pages/director/DirectorDashboard"));
-const InstitucionSetup = lazy(() => import("./pages/director/InstitucionSetup"));
-const NivelesSetup = lazy(() => import("./pages/director/NivelesSetup"));
-const PersonalRegistro = lazy(() => import("./pages/director/PersonalRegistro"));
-const DirectorResultados = lazy(() => import("./pages/director/DirectorResultados"));
-const DocenteDashboard = lazy(() => import("./pages/docente/DocenteDashboard"));
-const EstudiantesRegistro = lazy(() => import("./pages/docente/EstudiantesRegistro"));
-const Digitacion = lazy(() => import("./pages/docente/Digitacion"));
-const DocenteResultados = lazy(() => import("./pages/docente/DocenteResultados"));
-const EstudiantePrueba = lazy(() => import("./pages/estudiante/EstudiantePrueba"));
-const EstudianteResultados = lazy(() => import("./pages/estudiante/EstudianteResultados"));
-const EspecialistaDashboard = lazy(() => import("./pages/especialista/EspecialistaDashboard"));
-const EspecialistaUsuarios = lazy(() => import("./pages/especialista/EspecialistaUsuarios"));
-const PlanesRefuerzoListing = lazy(() => import("./pages/shared/PlanesRefuerzoListing"));
-const MiPerfil = lazy(() => import("./pages/shared/MiPerfil"));
-const GuiaUsuario = lazy(() => import("./pages/shared/GuiaUsuario"));
-const TutorialInteractivo = lazy(() => import("./pages/shared/TutorialInteractivo"));
-const CambiarContrasena = lazy(() => import("./pages/shared/CambiarContrasena"));
+// Lazy-loaded pages with retry logic for chunk loading failures
+const Index = lazyRetry(() => import("./pages/Index"));
+const Login = lazyRetry(() => import("./pages/Login"));
+const NotFound = lazyRetry(() => import("./pages/NotFound"));
+const AdminDashboard = lazyRetry(() => import("./pages/admin/AdminDashboard"));
+const AdminUsuarios = lazyRetry(() => import("./pages/admin/AdminUsuarios"));
+const AdminInstituciones = lazyRetry(() => import("./pages/admin/AdminInstituciones"));
+const AdminResultados = lazyRetry(() => import("./pages/admin/AdminResultados"));
+const DirectorDashboard = lazyRetry(() => import("./pages/director/DirectorDashboard"));
+const InstitucionSetup = lazyRetry(() => import("./pages/director/InstitucionSetup"));
+const NivelesSetup = lazyRetry(() => import("./pages/director/NivelesSetup"));
+const PersonalRegistro = lazyRetry(() => import("./pages/director/PersonalRegistro"));
+const DirectorResultados = lazyRetry(() => import("./pages/director/DirectorResultados"));
+const DocenteDashboard = lazyRetry(() => import("./pages/docente/DocenteDashboard"));
+const EstudiantesRegistro = lazyRetry(() => import("./pages/docente/EstudiantesRegistro"));
+const Digitacion = lazyRetry(() => import("./pages/docente/Digitacion"));
+const DocenteResultados = lazyRetry(() => import("./pages/docente/DocenteResultados"));
+const EstudiantePrueba = lazyRetry(() => import("./pages/estudiante/EstudiantePrueba"));
+const EstudianteResultados = lazyRetry(() => import("./pages/estudiante/EstudianteResultados"));
+const EspecialistaDashboard = lazyRetry(() => import("./pages/especialista/EspecialistaDashboard"));
+const EspecialistaUsuarios = lazyRetry(() => import("./pages/especialista/EspecialistaUsuarios"));
+const PlanesRefuerzoListing = lazyRetry(() => import("./pages/shared/PlanesRefuerzoListing"));
+const MiPerfil = lazyRetry(() => import("./pages/shared/MiPerfil"));
+const GuiaUsuario = lazyRetry(() => import("./pages/shared/GuiaUsuario"));
+const TutorialInteractivo = lazyRetry(() => import("./pages/shared/TutorialInteractivo"));
+const CambiarContrasena = lazyRetry(() => import("./pages/shared/CambiarContrasena"));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
@@ -46,7 +47,7 @@ const PageLoader = () => (
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 min cache for performance
+      staleTime: 5 * 60 * 1000,
       gcTime: 10 * 60 * 1000,
       retry: 1,
     },

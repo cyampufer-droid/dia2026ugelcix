@@ -146,16 +146,22 @@ const DocenteDashboard = () => {
   const handleAsociarAula = async () => {
     if (!selectedAula || !user) return;
     setSaving(true);
-    const { error } = await supabase
-      .from('profiles')
-      .update({ grado_seccion_id: selectedAula })
-      .eq('user_id', user.id);
-    setSaving(false);
-    if (error) {
-      toast.error('Error al asociar aula');
-    } else {
-      toast.success('Aula asociada correctamente');
-      window.location.reload();
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ grado_seccion_id: selectedAula })
+        .eq('user_id', user.id);
+      setSaving(false);
+      if (error) {
+        toast.error('Error al asociar aula: ' + (error.message || 'Intente nuevamente'));
+        return;
+      }
+      toast.success('Aula asociada correctamente. Recargando datos…');
+      // Reload data without full page reload to avoid ErrorBoundary crashes
+      setTimeout(() => window.location.reload(), 500);
+    } catch (err: any) {
+      setSaving(false);
+      toast.error('Error de conexión al asociar aula. Intente nuevamente.');
     }
   };
 

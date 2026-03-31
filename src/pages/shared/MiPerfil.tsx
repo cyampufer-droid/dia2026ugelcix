@@ -97,13 +97,17 @@ const MiPerfil = () => {
         .update({ grado_seccion_id: selectedGradoSeccion || null })
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        toast.error('Error al actualizar: ' + (error.message || 'Intente nuevamente'));
+        return;
+      }
 
       const ng = nivelesGrados.find(n => n.id === selectedGradoSeccion);
       setAulaInfo(ng || null);
+      await refreshProfile();
       toast.success('Perfil actualizado correctamente');
     } catch (err: any) {
-      toast.error('Error al actualizar: ' + (err.message || 'Error desconocido'));
+      toast.error('Error de conexión. Verifique su internet e intente nuevamente.');
     } finally {
       setSaving(false);
     }

@@ -172,11 +172,21 @@ const AdminUsuarios = () => {
   // Fetch instituciones on mount
   useEffect(() => {
     const fetchInstituciones = async () => {
-      const { data } = await supabase
-        .from('instituciones')
-        .select('id, nombre')
-        .order('nombre');
-      setInstituciones(data ?? []);
+      let all: Institucion[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from('instituciones')
+          .select('id, nombre')
+          .order('nombre')
+          .range(from, from + pageSize - 1);
+        if (error || !data || data.length === 0) break;
+        all = all.concat(data);
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      setInstituciones(all);
     };
     fetchInstituciones();
   }, []);

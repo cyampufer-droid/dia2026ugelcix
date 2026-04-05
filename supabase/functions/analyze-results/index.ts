@@ -100,7 +100,7 @@ Genera un JSON con esta estructura exacta:
         .filter(Boolean)
         .join(", ");
 
-      systemPrompt = `Eres un especialista pedagógico del sistema DIA 2026 (Diagnóstico Integral de Aprendizajes) systemPrompt = `Eres un especialista pedagógico del sistema DIA 2026 (Diagnóstico Integral de Aprendizajes) de la GRED Lambayeque, Perú. Tu tarea es generar conclusiones descriptivas personalizadas para un estudiante basándote en su patrón específico de respuestas. descriptivas personalizadas para un estudiante basándote en su patrón específico de respuestas.
+      systemPrompt = `Eres un especialista pedagógico del sistema DIA 2026 (Diagnóstico Integral de Aprendizajes) de la GRED Lambayeque, Perú. Tu tarea es generar conclusiones descriptivas personalizadas para un estudiante basándote en su patrón específico de respuestas.
 
 CONTEXTO EDUCATIVO:
 - Sistema de evaluación diagnóstica del Currículo Nacional de Educación Básica (CNEB) del Perú

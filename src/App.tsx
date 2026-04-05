@@ -10,6 +10,7 @@ import AppLayout from "./components/AppLayout";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ChatbotWidget from "./components/ChatbotWidget";
 import { lazyRetry } from "@/lib/lazyRetry";
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // Lazy-loaded pages with retry logic for chunk loading failures
 const Index = lazyRetry(() => import("./pages/Index"));
@@ -121,6 +122,7 @@ const App = () => (
             </Suspense>
           </AuthProvider>
         </BrowserRouter>
+        <SpeedInsights />
       </TooltipProvider>
     </QueryClientProvider>
   </ErrorBoundary>

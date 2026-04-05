@@ -265,51 +265,28 @@ const Digitacion = () => {
 
       // If online, save directly to cloud
       if (isOnline) {
-        // Build answer key map from evaluaciones
-        const answerKeyMap: Record<string, string[]> = {};
-        for (const ev of evaluaciones) {
-          if (ev.config_preguntas?.respuestas_correctas) {
-            answerKeyMap[ev.id] = ev.config_preguntas.respuestas_correctas;
-          }
-        }
+        // Use edge function to bypass slow RLS policies
+        const payload = records.map(r => ({
+          estudiante_id: r.studentId,
+          evaluacion_id: r.evalId,
+          respuestas: r.answers,
+        }));
 
         let successCount = 0;
         let errorCount = 0;
 
-        // Batch upsert: prepare all rows, then upsert in chunks of 50
-        const upsertRows = records.map(r => {
-          const answerKey = answerKeyMap[r.evalId];
-          let puntaje = 0;
-          if (answerKey) {
-            for (let i = 0; i < r.answers.length; i++) {
-              if (r.answers[i] && r.answers[i] === answerKey[i]) puntaje++;
-            }
-          }
-          return {
-            estudiante_id: r.studentId,
-            evaluacion_id: r.evalId,
-            respuestas_dadas: r.answers,
-            puntaje_total: puntaje,
-            fecha_sincronizacion: new Date().toISOString(),
-          };
-        });
+        try {
+          const result = await invokeEdgeFunction('save-digitacion', { records: payload });
+          successCount = result?.success || 0;
+          errorCount = result?.errors || 0;
 
-        const BATCH_SIZE = 50;
-        for (let i = 0; i < upsertRows.length; i += BATCH_SIZE) {
-          const batch = upsertRows.slice(i, i + BATCH_SIZE);
-          const { error } = await supabase
-            .from('resultados')
-            .upsert(batch, { onConflict: 'estudiante_id,evaluacion_id' });
-
-          if (error) {
-            console.error('Batch save error:', error);
-            errorCount += batch.length;
-          } else {
-            successCount += batch.length;
-            for (const row of batch) {
-              await markAsSynced(`${row.estudiante_id}_${row.evaluacion_id}`);
-            }
+          // Mark all as synced locally
+          for (const r of records) {
+            await markAsSynced(`${r.studentId}_${r.evalId}`);
           }
+        } catch (err) {
+          console.error('Edge function save error:', err);
+          errorCount = records.length;
         }
 
         await clearSyncedRecords();

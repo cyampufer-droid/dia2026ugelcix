@@ -11,6 +11,7 @@ import { Save, Wifi, WifiOff, CloudUpload, Loader2, BookOpen, Calculator, Heart,
 import { Badge } from '@/components/ui/badge';
 import DigitacionGrid, { type Student } from '@/components/docente/DigitacionGrid';
 import DigitacionInicial from '@/components/docente/DigitacionInicial';
+import { calcularPuntaje } from '@/lib/scoreUtils';
 
 const AREA_ICONS: Record<string, typeof Calculator> = {
   'Matemática': Calculator,
@@ -251,18 +252,15 @@ const Digitacion = () => {
 
       // If online, save directly to Supabase with score calculation
       if (isOnline) {
+        const evalMap = new Map(evaluaciones.map(e => [e.id, e]));
         const upsertRows = records.map(r => {
-          const ev = evaluaciones.find(e => e.id === r.evalId);
+          const ev = evalMap.get(r.evalId);
           const answerKey = ev?.config_preguntas?.respuestas_correctas || [];
-          let puntaje = 0;
-          for (let i = 0; i < r.answers.length; i++) {
-            if (r.answers[i] && answerKey[i] && r.answers[i] === answerKey[i]) puntaje++;
-          }
           return {
             estudiante_id: r.studentId,
             evaluacion_id: r.evalId,
             respuestas_dadas: r.answers,
-            puntaje_total: puntaje,
+            puntaje_total: calcularPuntaje(r.answers, answerKey),
             fecha_sincronizacion: new Date().toISOString(),
           };
         });

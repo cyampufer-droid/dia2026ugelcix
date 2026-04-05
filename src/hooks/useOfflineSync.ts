@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getPendingDigitaciones, markAsSynced, clearSyncedRecords } from '@/lib/offlineDb';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { calcularPuntaje } from '@/lib/scoreUtils';
 
 export function useOfflineSync() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -67,15 +68,11 @@ export function useOfflineSync() {
 
       const upsertRows = records.map(r => {
         const answerKey = answerKeyMap[r.evaluacion_id] || [];
-        let puntaje = 0;
-        for (let i = 0; i < r.respuestas.length; i++) {
-          if (r.respuestas[i] && answerKey[i] && r.respuestas[i] === answerKey[i]) puntaje++;
-        }
         return {
           estudiante_id: r.estudiante_id,
           evaluacion_id: r.evaluacion_id,
           respuestas_dadas: r.respuestas,
-          puntaje_total: puntaje,
+          puntaje_total: calcularPuntaje(r.respuestas, answerKey),
           fecha_sincronizacion: new Date().toISOString(),
         };
       });

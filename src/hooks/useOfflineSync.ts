@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getPendingDigitaciones, markAsSynced, clearSyncedRecords } from '@/lib/offlineDb';
 import { useToast } from '@/hooks/use-toast';
-import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
+import { supabase } from '@/integrations/supabase/client';
 
 export function useOfflineSync() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -50,13 +50,55 @@ export function useOfflineSync() {
         respuestas: r.respuestas,
       }));
 
-      const result = await invokeEdgeFunction('save-digitacion', { records });
-      const successCount = result?.success || 0;
-      const errorCount = result?.errors || 0;
+      // Fetch answer keys for score calculation
+      const evalIds = [...new Set(records.map(r => r.evaluacion_id))];
+      const { data: evaluaciones } = await supabase
+        .from('evaluaciones')
+        .select('id, config_preguntas')
+        .in('id', evalIds);
 
-      if (successCount > 0) {
-        for (const record of pending) {
-          await markAsSynced(record.id);
+      const answerKeyMap: Record<string, string[]> = {};
+      for (const ev of evaluaciones || []) {
+        const config = ev.config_preguntas as { respuestas_correctas?: string[] } | null;
+        if (config?.respuestas_correctas) {
+          answerKeyMap[ev.id] = config.respuestas_correctas;
+        }
+      }
+
+      const upsertRows = records.map(r => {
+        const answerKey = answerKeyMap[r.evaluacion_id] || [];
+        let puntaje = 0;
+        for (let i = 0; i < r.respuestas.length; i++) {
+          if (r.respuestas[i] && answerKey[i] && r.respuestas[i] === answerKey[i]) puntaje++;
+        }
+        return {
+          estudiante_id: r.estudiante_id,
+          evaluacion_id: r.evaluacion_id,
+          respuestas_dadas: r.respuestas,
+          puntaje_total: puntaje,
+          fecha_sincronizacion: new Date().toISOString(),
+        };
+      });
+
+      let successCount = 0;
+      let errorCount = 0;
+      const BATCH_SIZE = 50;
+
+      for (let i = 0; i < upsertRows.length; i += BATCH_SIZE) {
+        const batch = upsertRows.slice(i, i + BATCH_SIZE);
+        const { error } = await supabase
+          .from('resultados')
+          .upsert(batch, { onConflict: 'estudiante_id,evaluacion_id' });
+
+        if (error) {
+          console.error('Sync batch upsert error:', error);
+          errorCount += batch.length;
+        } else {
+          successCount += batch.length;
+          for (const row of batch) {
+            const record = pending.find(p => p.estudiante_id === row.estudiante_id && p.evaluacion_id === row.evaluacion_id);
+            if (record) await markAsSynced(record.id);
+          }
         }
       }
 

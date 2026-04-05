@@ -11,7 +11,6 @@ import { Save, Wifi, WifiOff, CloudUpload, Loader2, BookOpen, Calculator, Heart,
 import { Badge } from '@/components/ui/badge';
 import DigitacionGrid, { type Student } from '@/components/docente/DigitacionGrid';
 import DigitacionInicial from '@/components/docente/DigitacionInicial';
-import { invokeEdgeFunction } from '@/lib/invokeEdgeFunction';
 
 const AREA_ICONS: Record<string, typeof Calculator> = {
   'Matemática': Calculator,
@@ -53,7 +52,7 @@ const Digitacion = () => {
   const [nivelDocente, setNivelDocente] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const { toast } = useToast();
-  const { profile, user } = useAuth();
+  const { profile } = useAuth();
   const { isOnline, pendingCount, isSyncing, syncToCloud, refreshPendingCount } = useOfflineSync();
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const respuestasRef = useRef(respuestas);
@@ -61,26 +60,26 @@ const Digitacion = () => {
   const evaluacionesRef = useRef(evaluaciones);
   evaluacionesRef.current = evaluaciones;
 
-  // Load students via edge function (handles multi-grado, RLS bypass, fast)
+  // Load students directly from Supabase using docente's grado_seccion_id
   useEffect(() => {
     const loadStudents = async () => {
+      if (!profile?.grado_seccion_id) {
+        setLoadingStudents(false);
+        return;
+      }
       setLoadingStudents(true);
       try {
-        const data = await invokeEdgeFunction('list-my-students', {});
-        if (data?.students?.length) {
-          setStudents(data.students.map((s: any) => ({
+        const { data: studentData } = await supabase
+          .from('profiles')
+          .select('id, nombre_completo, dni')
+          .eq('grado_seccion_id', profile.grado_seccion_id)
+          .order('nombre_completo');
+        if (studentData?.length) {
+          setStudents(studentData.map(s => ({
             id: s.id,
             nombre_completo: s.nombre_completo,
             dni: s.dni,
           })));
-          // Set nivel from first student's data
-          if (data.students[0]?.nivel) {
-            setNivelDocente(data.students[0].nivel);
-          }
-        }
-        // Also get nivel from aulas if no students
-        if (data?.aulas?.length && !data?.students?.length) {
-          setNivelDocente(data.aulas[0].nivel);
         }
       } catch (err) {
         console.error('Error loading students:', err);
@@ -89,27 +88,14 @@ const Digitacion = () => {
       }
     };
     loadStudents();
-  }, []);
+  }, [profile]);
 
   // Load evaluaciones matching docente's grado
   useEffect(() => {
     const loadEvaluaciones = async () => {
-      if (!profile) return;
+      if (!profile?.grado_seccion_id) return;
 
-      let gradoSeccionId = profile.grado_seccion_id;
-
-      if (!gradoSeccionId && user) {
-        const { data: dg } = await supabase
-          .from('docente_grados')
-          .select('grado_seccion_id')
-          .eq('user_id', user.id)
-          .limit(1);
-        if (dg?.length) {
-          gradoSeccionId = dg[0].grado_seccion_id;
-        }
-      }
-
-      if (!gradoSeccionId) return;
+      const gradoSeccionId = profile.grado_seccion_id;
 
       const { data: ng } = await supabase
         .from('niveles_grados')
@@ -149,7 +135,7 @@ const Digitacion = () => {
       setRespuestas(prev => ({ ...init, ...prev }));
     };
     loadEvaluaciones();
-  }, [profile, user, nivelDocente]);
+  }, [profile, nivelDocente]);
 
   // Load saved offline data
   useEffect(() => {
@@ -263,30 +249,43 @@ const Digitacion = () => {
         await saveDigitacionOffline(r.studentId, r.evalId, r.answers);
       }
 
-      // If online, save directly to cloud
+      // If online, save directly to Supabase with score calculation
       if (isOnline) {
-        // Use edge function to bypass slow RLS policies
-        const payload = records.map(r => ({
-          estudiante_id: r.studentId,
-          evaluacion_id: r.evalId,
-          respuestas: r.answers,
-        }));
+        const upsertRows = records.map(r => {
+          const ev = evaluaciones.find(e => e.id === r.evalId);
+          const answerKey = ev?.config_preguntas?.respuestas_correctas || [];
+          let puntaje = 0;
+          for (let i = 0; i < r.answers.length; i++) {
+            if (r.answers[i] && answerKey[i] && r.answers[i] === answerKey[i]) puntaje++;
+          }
+          return {
+            estudiante_id: r.studentId,
+            evaluacion_id: r.evalId,
+            respuestas_dadas: r.answers,
+            puntaje_total: puntaje,
+            fecha_sincronizacion: new Date().toISOString(),
+          };
+        });
 
         let successCount = 0;
         let errorCount = 0;
+        const BATCH_SIZE = 50;
 
-        try {
-          const result = await invokeEdgeFunction('save-digitacion', { records: payload });
-          successCount = result?.success || 0;
-          errorCount = result?.errors || 0;
+        for (let i = 0; i < upsertRows.length; i += BATCH_SIZE) {
+          const batch = upsertRows.slice(i, i + BATCH_SIZE);
+          const { error } = await supabase
+            .from('resultados')
+            .upsert(batch, { onConflict: 'estudiante_id,evaluacion_id' });
 
-          // Mark all as synced locally
-          for (const r of records) {
-            await markAsSynced(`${r.studentId}_${r.evalId}`);
+          if (error) {
+            console.error('Batch upsert error:', error);
+            errorCount += batch.length;
+          } else {
+            successCount += batch.length;
+            for (const row of batch) {
+              await markAsSynced(`${row.estudiante_id}_${row.evaluacion_id}`);
+            }
           }
-        } catch (err) {
-          console.error('Edge function save error:', err);
-          errorCount = records.length;
         }
 
         await clearSyncedRecords();

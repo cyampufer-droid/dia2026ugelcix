@@ -143,7 +143,7 @@ async function resolveAllowedStudentIds(
   const isStudent = roles.includes("estudiante");
 
   return (students || [])
-    .filter((student) => {
+    .filter((student: any) => {
       if (isAdmin) return true;
 
       if (isDirector) {

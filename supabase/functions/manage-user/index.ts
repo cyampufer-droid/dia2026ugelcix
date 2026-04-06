@@ -232,8 +232,8 @@ Deno.serve(async (req) => {
     }
 
     return jsonResponse({ error: "Acción no válida" }, 400);
-  } catch (err) {
-    console.error("Error:", err.message);
+  } catch (err: unknown) {
+    console.error("Error:", (err as Error).message);
     return jsonResponse({ error: "Error interno del servidor" }, 500);
   }
 });

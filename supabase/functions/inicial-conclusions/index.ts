@@ -120,7 +120,7 @@ async function getCallerContext(authHeader: string) {
 }
 
 async function resolveAllowedStudentIds(
-  adminClient: ReturnType<typeof createClient>,
+  adminClient: any,
   callerId: string,
   roles: AppRole[],
   profile: CallerProfile | null,
@@ -143,7 +143,7 @@ async function resolveAllowedStudentIds(
   const isStudent = roles.includes("estudiante");
 
   return (students || [])
-    .filter((student) => {
+    .filter((student: any) => {
       if (isAdmin) return true;
 
       if (isDirector) {
@@ -164,7 +164,7 @@ async function resolveAllowedStudentIds(
 
       return false;
     })
-    .map((student) => student.id);
+    .map((student: any) => student.id);
 }
 
 Deno.serve(async (req) => {

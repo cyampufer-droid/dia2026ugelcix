@@ -99,8 +99,8 @@ Deno.serve(async (req) => {
     } else {
       return jsonResponse({ error: "Acción inválida. Use 'activate' o 'deactivate'" }, 400);
     }
-  } catch (err) {
-    console.error("Unexpected error:", err.message);
+  } catch (err: unknown) {
+    console.error("Unexpected error:", (err as Error).message);
     return jsonResponse({ error: "Error interno del servidor" }, 500);
   }
 });

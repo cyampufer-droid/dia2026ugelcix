@@ -118,8 +118,8 @@ Deno.serve(async (req) => {
     });
 
     return jsonResponse({ users: result }, 200);
-  } catch (err) {
-    console.error("Error:", err.message);
+  } catch (err: unknown) {
+    console.error("Error:", (err as Error).message);
     return jsonResponse({ error: "Error interno del servidor" }, 500);
   }
 });

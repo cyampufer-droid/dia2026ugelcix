@@ -208,14 +208,14 @@ serve(async (req) => {
       evalMap.set(ev.id, { area: ev.area, grado: ev.grado, nivel: ev.nivel });
     }
 
-    const resumenPorArea = {};
+    const resumenPorArea: Record<string, { total: number; enInicio: number; enProceso: number; logroEsperado: number; logroDestacado: number; puntajes: number[] }> = {};
     for (const r of resultadosQuery.resultados) {
       const ev = evalMap.get(r.evaluacion_id);
       if (!ev) continue;
-      if (!resumenPorArea[ev.area]) {
-        resumenPorArea[ev.area] = { total: 0, enInicio: 0, enProceso: 0, logroEsperado: 0, logroDestacado: 0, puntajes: [] };
+      if (!resumenPorArea[ev.area as string]) {
+        resumenPorArea[ev.area as string] = { total: 0, enInicio: 0, enProceso: 0, logroEsperado: 0, logroDestacado: 0, puntajes: [] };
       }
-      const a = resumenPorArea[ev.area];
+      const a = resumenPorArea[ev.area as string];
       a.total++;
       if (r.puntaje_total != null) a.puntajes.push(r.puntaje_total);
       switch (r.nivel_logro) {
@@ -227,8 +227,8 @@ serve(async (req) => {
     }
 
     const resumenTexto = Object.entries(resumenPorArea)
-      .map(([area, d]) => {
-        const promedio = d.puntajes.length > 0 ? (d.puntajes.reduce((a, b) => a + b, 0) / d.puntajes.length).toFixed(1) : "N/A";
+      .map(([area, d]: [string, { total: number; enInicio: number; enProceso: number; logroEsperado: number; logroDestacado: number; puntajes: number[] }]) => {
+        const promedio = d.puntajes.length > 0 ? (d.puntajes.reduce((a: number, b: number) => a + b, 0) / d.puntajes.length).toFixed(1) : "N/A";
         return `${area}: ${d.total} evaluaciones, Promedio=${promedio}/20, En Inicio=${d.enInicio}, En Proceso=${d.enProceso}, Logro Esperado=${d.logroEsperado}, Logro Destacado=${d.logroDestacado}`;
       })
       .join("\n");

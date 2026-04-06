@@ -78,27 +78,21 @@ Deno.serve(async (req) => {
     // Parallel: get aulas info + student profiles (assigned) + orphan students (no grado)
     const instId = callerProfile?.institucion_id;
     
-    const promises: Promise<any>[] = [
-      activeIds.length > 0
-        ? adminClient.from("niveles_grados").select("id, nivel, grado, seccion, institucion_id").in("id", activeIds)
-        : Promise.resolve({ data: [] }),
-      activeIds.length > 0
-        ? adminClient.from("profiles").select("id, user_id, dni, nombre_completo, grado_seccion_id")
-            .in("grado_seccion_id", activeIds).order("nombre_completo", { ascending: true })
-        : Promise.resolve({ data: [] }),
-    ];
-
-    // Also fetch orphan students (same institution, null grado_seccion_id)
-    if (instId) {
-      promises.push(
-        adminClient.from("profiles").select("id, user_id, dni, nombre_completo, grado_seccion_id, institucion_id")
+    const aulasPromise = activeIds.length > 0
+      ? adminClient.from("niveles_grados").select("id, nivel, grado, seccion, institucion_id").in("id", activeIds).then((r: any) => r)
+      : Promise.resolve({ data: [] });
+    const studentsPromise = activeIds.length > 0
+      ? adminClient.from("profiles").select("id, user_id, dni, nombre_completo, grado_seccion_id")
+          .in("grado_seccion_id", activeIds).order("nombre_completo", { ascending: true }).then((r: any) => r)
+      : Promise.resolve({ data: [] });
+    const orphanPromise = instId
+      ? adminClient.from("profiles").select("id, user_id, dni, nombre_completo, grado_seccion_id, institucion_id")
           .eq("institucion_id", instId).is("grado_seccion_id", null)
           .order("nombre_completo", { ascending: true })
-          .limit(500)
-      );
-    } else {
-      promises.push(Promise.resolve({ data: [] }));
-    }
+          .limit(500).then((r: any) => r)
+      : Promise.resolve({ data: [] });
+
+    const promises: Promise<any>[] = [aulasPromise, studentsPromise, orphanPromise];
 
     const [aulasRes, studentsRes, orphanRes] = await Promise.all(promises);
 

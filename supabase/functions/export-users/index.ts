@@ -211,8 +211,8 @@ Deno.serve(async (req) => {
       total: users.length,
       scope,
     }, 200);
-  } catch (err) {
-    console.error("Error:", err.message);
+  } catch (err: unknown) {
+    console.error("Error:", (err as Error).message);
     return jsonResponse({ error: "Error interno del servidor" }, 500);
   }
 });

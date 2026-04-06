@@ -227,8 +227,8 @@ serve(async (req) => {
     }
 
     const resumenTexto = Object.entries(resumenPorArea)
-      .map(([area, d]) => {
-        const promedio = d.puntajes.length > 0 ? (d.puntajes.reduce((a, b) => a + b, 0) / d.puntajes.length).toFixed(1) : "N/A";
+      .map(([area, d]: [string, { total: number; enInicio: number; enProceso: number; logroEsperado: number; logroDestacado: number; puntajes: number[] }]) => {
+        const promedio = d.puntajes.length > 0 ? (d.puntajes.reduce((a: number, b: number) => a + b, 0) / d.puntajes.length).toFixed(1) : "N/A";
         return `${area}: ${d.total} evaluaciones, Promedio=${promedio}/20, En Inicio=${d.enInicio}, En Proceso=${d.enProceso}, Logro Esperado=${d.logroEsperado}, Logro Destacado=${d.logroDestacado}`;
       })
       .join("\n");

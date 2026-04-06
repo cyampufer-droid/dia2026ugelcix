@@ -165,8 +165,8 @@ Deno.serve(async (req) => {
         id: a.id, nivel: a.nivel, grado: a.grado, seccion: a.seccion,
       })),
     }, 200);
-  } catch (err) {
-    console.error("Error:", err.message);
+  } catch (err: unknown) {
+    console.error("Error:", (err as Error).message);
     return jsonResponse({ error: "Error interno del servidor" }, 500);
   }
 });

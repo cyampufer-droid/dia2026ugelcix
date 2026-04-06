@@ -164,7 +164,7 @@ async function resolveAllowedStudentIds(
 
       return false;
     })
-    .map((student) => student.id);
+    .map((student: any) => student.id);
 }
 
 Deno.serve(async (req) => {

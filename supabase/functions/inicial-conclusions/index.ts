@@ -120,7 +120,7 @@ async function getCallerContext(authHeader: string) {
 }
 
 async function resolveAllowedStudentIds(
-  adminClient: ReturnType<typeof createClient>,
+  adminClient: any,
   callerId: string,
   roles: AppRole[],
   profile: CallerProfile | null,

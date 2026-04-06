@@ -208,14 +208,14 @@ serve(async (req) => {
       evalMap.set(ev.id, { area: ev.area, grado: ev.grado, nivel: ev.nivel });
     }
 
-    const resumenPorArea = {};
+    const resumenPorArea: Record<string, { total: number; enInicio: number; enProceso: number; logroEsperado: number; logroDestacado: number; puntajes: number[] }> = {};
     for (const r of resultadosQuery.resultados) {
       const ev = evalMap.get(r.evaluacion_id);
       if (!ev) continue;
-      if (!resumenPorArea[ev.area]) {
-        resumenPorArea[ev.area] = { total: 0, enInicio: 0, enProceso: 0, logroEsperado: 0, logroDestacado: 0, puntajes: [] };
+      if (!resumenPorArea[ev.area as string]) {
+        resumenPorArea[ev.area as string] = { total: 0, enInicio: 0, enProceso: 0, logroEsperado: 0, logroDestacado: 0, puntajes: [] };
       }
-      const a = resumenPorArea[ev.area];
+      const a = resumenPorArea[ev.area as string];
       a.total++;
       if (r.puntaje_total != null) a.puntajes.push(r.puntaje_total);
       switch (r.nivel_logro) {

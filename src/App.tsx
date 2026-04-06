@@ -37,6 +37,7 @@ const MiPerfil = lazyRetry(() => import("./pages/shared/MiPerfil"));
 const GuiaUsuario = lazyRetry(() => import("./pages/shared/GuiaUsuario"));
 const TutorialInteractivo = lazyRetry(() => import("./pages/shared/TutorialInteractivo"));
 const CambiarContrasena = lazyRetry(() => import("./pages/shared/CambiarContrasena"));
+const MigracionDatos = lazyRetry(() => import("./pages/admin/MigracionDatos"));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
@@ -75,6 +76,7 @@ const App = () => (
                   <Route path="/admin/instituciones" element={<ProtectedRoute allowedRoles={['administrador']}><AdminInstituciones /></ProtectedRoute>} />
                   <Route path="/admin/resultados" element={<ProtectedRoute allowedRoles={['administrador']}><AdminResultados /></ProtectedRoute>} />
                   <Route path="/admin/planes-refuerzo" element={<ProtectedRoute allowedRoles={['administrador']}><PlanesRefuerzoListing /></ProtectedRoute>} />
+                  <Route path="/admin/migracion" element={<ProtectedRoute allowedRoles={['administrador']}><MigracionDatos /></ProtectedRoute>} />
                 </Route>
 
                 {/* Director routes */}
